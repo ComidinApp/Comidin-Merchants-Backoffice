@@ -75,7 +75,7 @@ export default function Header() {
                 sx={{ ml: 1 }}
               >
                 <Label color="info" sx={{ textTransform: 'unset', height: 22, px: 0.5 }}>
-                  v5.7.0
+                  V1.0.0
                 </Label>
               </Link>
             }
@@ -88,18 +88,23 @@ export default function Header() {
           {mdUp && <NavDesktop data={navConfig} />}
 
           <Stack alignItems="center" direction={{ xs: 'row', md: 'row-reverse' }}>
-            <Button variant="contained" target="_blank" rel="noopener" href={paths.minimalUI}>
-              Purchase Now
+            <Button
+              variant="contained"
+              target="_blank"
+              rel="noopener"
+              href={paths.authDemo.classic.register}
+            >
+              Registra tu Comercio
             </Button>
 
             {mdUp && <LoginButton />}
 
-            <SettingsButton
+            {/* <SettingsButton
               sx={{
                 ml: { xs: 1, md: 0 },
                 mr: { md: 2 },
               }}
-            />
+            /> */}
 
             {!mdUp && <NavMobile data={navConfig} />}
           </Stack>

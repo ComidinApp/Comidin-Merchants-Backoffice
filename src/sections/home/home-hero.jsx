@@ -250,7 +250,7 @@ export default function HomeHero() {
           alt={lightMode ? 'light_1' : 'dark_1'}
           src={
             lightMode
-              ? `/assets/images/home/hero/light_1.webp`
+              ? `/assets/images/home/hero/home_light.webp`
               : `/assets/images/home/hero/dark_1.webp`
           }
           sx={{ position: 'absolute', mt: -5 }}
@@ -262,7 +262,7 @@ export default function HomeHero() {
           alt={lightMode ? 'light_1' : 'dark_1'}
           src={
             lightMode
-              ? `/assets/images/home/hero/light_1.webp`
+              ? `/assets/images/home/hero/home_light.webp`
               : `/assets/images/home/hero/dark_1.webp`
           }
           sx={{ position: 'absolute' }}

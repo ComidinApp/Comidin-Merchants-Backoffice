@@ -1,16 +1,21 @@
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 import {
   _analyticTasks,
   _analyticPosts,
   _analyticTraffic,
   _analyticOrderTimeline,
+  _appFeatured,
 } from 'src/_mock';
 
 import { useSettingsContext } from 'src/components/settings';
-
+import { SeoIllustration } from 'src/assets/illustrations';
+import { useMockedUser } from 'src/hooks/use-mocked-user';
+import AppFeatured from '../app-featured';
+import AppWelcome from '../app-welcome';
 import AnalyticsNews from '../analytics-news';
 import AnalyticsTasks from '../analytics-tasks';
 import AnalyticsCurrentVisits from '../analytics-current-visits';
@@ -24,23 +29,33 @@ import AnalyticsConversionRates from '../analytics-conversion-rates';
 // ----------------------------------------------------------------------
 
 export default function OverviewAnalyticsView() {
+  const { user } = useMockedUser();
   const settings = useSettingsContext();
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
-      <Typography
-        variant="h4"
-        sx={{
-          mb: { xs: 3, md: 5 },
-        }}
-      >
-        Hi, Welcome back 👋
-      </Typography>
+      <Grid container spacing={3}>
+        <Grid xs={12} md={8}>
+          <AppWelcome
+            title={`Bienvenido de vuelta 👋 \n ${user?.displayName}`}
+            description="Gracias por tu increible contribución, tu trabajo ha dejado una huella imborrale al mundo!"
+            img={<SeoIllustration />}
+            action={
+              <Button variant="contained" color="primary">
+                Go Now
+              </Button>
+            }
+          />
+        </Grid>
+        <Grid xs={12} md={4}>
+          <AppFeatured list={_appFeatured} />
+        </Grid>
+      </Grid>
 
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Weekly Sales"
+            title="Ventas Semanales"
             total={714000}
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
           />
@@ -48,7 +63,7 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="New Users"
+            title="Usuarios"
             total={1352831}
             color="info"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
@@ -57,7 +72,7 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Item Orders"
+            title="Pedidos"
             total={1723315}
             color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
@@ -66,7 +81,7 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Bug Reports"
+            title="Estoy quemado, ayuda"
             total={234}
             color="error"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}

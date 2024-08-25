@@ -23,7 +23,7 @@ export default function ContactsPopover() {
 
   return (
     <>
-      <IconButton
+      {/* <IconButton
         component={m.button}
         whileTap="tap"
         whileHover="hover"
@@ -67,7 +67,7 @@ export default function ContactsPopover() {
             </MenuItem>
           ))}
         </Scrollbar>
-      </CustomPopover>
+      </CustomPopover> */}
     </>
   );
 }

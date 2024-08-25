@@ -268,10 +268,10 @@ export const _roles = [
 // ----------------------------------------------------------------------
 
 export const _postTitles = [
-  '10 Essential Tips for Healthy Living',
-  'The Ultimate Guide to Productivity Hacks',
-  'Exploring the Hidden Gems of [Destination]',
-  'How to Master the Art of Public Speaking',
+  'Salva buena comida del desperdicio',
+  'Menos desperdicio, más planeta',
+  'Cada grano cuenta, no lo deseches',
+  /* 'How to Master the Art of Public Speaking',
   'The Future of Artificial Intelligence: Trends and Insights',
   'Delicious Recipes for a Vegan Diet',
   "A Beginner's Guide to Investing in Stocks",
@@ -291,7 +291,7 @@ export const _postTitles = [
   'Exploring the History and Culture of [City/Region]',
   'The Power of Positive Thinking: Transform Your Mindset',
   'The Influence of Music on Mood and Emotions',
-  'Travel Photography Tips: Capturing Memories Around the World',
+  'Travel Photography Tips: Capturing Memories Around the World', */
 ];
 
 // ----------------------------------------------------------------------
@@ -471,10 +471,10 @@ export const _taskNames = [
 // ----------------------------------------------------------------------
 
 export const _sentences = [
-  'The sun slowly set over the horizon, painting the sky in vibrant hues of orange and pink.',
-  'She eagerly opened the gift, her eyes sparkling with excitement.',
-  'The old oak tree stood tall and majestic, its branches swaying gently in the breeze.',
-  'The aroma of freshly brewed coffee filled the air, awakening my senses.',
+  'Fomenta el consumo de productos locales y de temporada.',
+  'Combina la sostenibilidad con el disfrute de la comida.',
+  'Date una segunda oportunidad! Transforma las sobras en nuevas recetas.',
+  /* 'The aroma of freshly brewed coffee filled the air, awakening my senses.',
   'The children giggled with joy as they ran through the sprinklers on a hot summer day.',
   'He carefully crafted a beautiful sculpture out of clay, his hands skillfully shaping the intricate details.',
   'The concert was a mesmerizing experience, with the music filling the venue and the crowd cheering in delight.',
@@ -494,7 +494,7 @@ export const _sentences = [
   'The athlete sprinted across the finish line, arms raised in victory as the crowd erupted in applause.',
   'The ancient ruins stood as a testament to a civilization long gone, their grandeur still awe-inspiring.',
   'The artist dipped the brush into vibrant paint, bringing the canvas to life with bold strokes and vivid colors.',
-  'The laughter of children echoed through the playground, filling the atmosphere with pure joy.',
+  'The laughter of children echoed through the playground, filling the atmosphere with pure joy.', */
 ];
 
 // ----------------------------------------------------------------------

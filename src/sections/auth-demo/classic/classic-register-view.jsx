@@ -57,15 +57,15 @@ export default function ClassicRegisterView() {
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5, position: 'relative' }}>
-      <Typography variant="h4">Get started absolutely free</Typography>
+      <Typography variant="h4">Registra tu comercio completamente gratis</Typography>
 
-      <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2"> Already have an account? </Typography>
+      {/* <Stack direction="row" spacing={0.5}>
+        <Typography variant="body2"> Ya tenes una cuenta? </Typography>
 
         <Link href={paths.authDemo.classic.login} component={RouterLink} variant="subtitle2">
-          Sign in
+          Iniciar sesion
         </Link>
-      </Stack>
+      </Stack> */}
     </Stack>
   );
 
@@ -93,16 +93,22 @@ export default function ClassicRegisterView() {
 
   const renderForm = (
     <Stack spacing={2.5}>
+      <RHFTextField name="commerce_name" label="Nombre del Comercio" />
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <RHFTextField name="firstName" label="First name" />
-        <RHFTextField name="lastName" label="Last name" />
+        <RHFTextField name="firstName" label="Nombre del Encargado" />
+        <RHFTextField name="lastName" label="Apellido del Encargado" />
+      </Stack>
+      <RHFTextField name="address" label="Direccion" />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <RHFTextField name="street_number" label="Numero" />
+        <RHFTextField name="postal_code" label="Codigo Postal" />
       </Stack>
 
-      <RHFTextField name="email" label="Email address" />
+      <RHFTextField name="email" label="Email del Encargado" />
 
       <RHFTextField
         name="password"
-        label="Password"
+        label="Contraseña"
         type={password.value ? 'text' : 'password'}
         InputProps={{
           endAdornment: (
@@ -123,7 +129,7 @@ export default function ClassicRegisterView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Create account
+        Enviar solicitud
       </LoadingButton>
     </Stack>
   );

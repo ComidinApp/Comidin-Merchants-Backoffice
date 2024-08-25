@@ -56,7 +56,7 @@ export default function HomeForDesigner() {
           rel="noopener"
           href={paths.figma}
         >
-          Pa la playstore mi rey
+          Play Store
         </Button>
 
         <Button
@@ -68,7 +68,7 @@ export default function HomeForDesigner() {
           rel="noopener"
           href={paths.figma}
         >
-          Pa la apple store mi rey
+          Apple Store
         </Button>
       </m.div>
     </Box>

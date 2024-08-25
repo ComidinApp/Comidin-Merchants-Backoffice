@@ -59,7 +59,7 @@ export default function HomeAdvertisement() {
         </m.div>
 
         <m.div variants={varFade().inRight}>
-          <Button
+          {/* <Button
             color="inherit"
             size="large"
             variant="outlined"
@@ -73,7 +73,7 @@ export default function HomeAdvertisement() {
             }}
           >
             Loguearse
-          </Button>
+          </Button> */}
         </m.div>
       </Stack>
     </Box>

@@ -29,7 +29,7 @@ export default function LanguagePopover() {
 
   return (
     <>
-      <IconButton
+      {/* <IconButton
         component={m.button}
         whileTap="tap"
         whileHover="hover"
@@ -58,7 +58,7 @@ export default function LanguagePopover() {
             {option.label}
           </MenuItem>
         ))}
-      </CustomPopover>
+      </CustomPopover> */}
     </>
   );
 }

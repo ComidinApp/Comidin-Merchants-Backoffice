@@ -10,10 +10,43 @@ import { useMockedUser } from 'src/hooks/use-mocked-user';
 
 import Label from 'src/components/label';
 
+import { m } from 'framer-motion';
+
+import Divider from '@mui/material/Divider';
+import { alpha } from '@mui/material/styles';
+import MenuItem from '@mui/material/MenuItem';
+import IconButton from '@mui/material/IconButton';
+
+import { useRouter } from 'src/routes/hooks';
+
+import { useAuthContext } from 'src/auth/hooks';
+
+import { varHover } from 'src/components/animate';
+import { useSnackbar } from 'src/components/snackbar';
+import CustomPopover, { usePopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 
 export default function NavUpgrade() {
+  const router = useRouter();
+
   const { user } = useMockedUser();
+
+  const { logout } = useAuthContext();
+
+  const { enqueueSnackbar } = useSnackbar();
+
+  const popover = usePopover();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      popover.onClose();
+      router.replace('/');
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Unable to logout!', { variant: 'error' });
+    }
+  };
 
   return (
     <Stack
@@ -41,7 +74,7 @@ export default function NavUpgrade() {
               borderBottomLeftRadius: 2,
             }}
           >
-            Free
+            Hola!
           </Label>
         </Box>
 
@@ -55,8 +88,8 @@ export default function NavUpgrade() {
           </Typography>
         </Stack>
 
-        <Button variant="contained" href={paths.minimalUI} target="_blank" rel="noopener">
-          Upgrade to Pro
+        <Button variant="contained" onClick={handleLogout} target="_blank" rel="noopener">
+          Cerrar Sesion
         </Button>
       </Stack>
     </Stack>

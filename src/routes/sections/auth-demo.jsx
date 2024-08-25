@@ -45,7 +45,7 @@ const authClassic = {
     {
       path: 'register',
       element: (
-        <AuthClassicLayout title="Manage the job more effectively with Minimal">
+        <AuthClassicLayout title="Suma tu comercio y comenza a vender!✨">
           <RegisterClassicPage />
         </AuthClassicLayout>
       ),

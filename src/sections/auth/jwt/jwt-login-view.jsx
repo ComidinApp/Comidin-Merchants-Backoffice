@@ -72,26 +72,26 @@ export default function JwtLoginView() {
   });
 
   const renderHead = (
-    <Stack spacing={2} sx={{ mb: 5 }}>
-      <Typography variant="h4">Sign in to Minimal</Typography>
+    <Stack spacing={2} sx={{ mb: 1 }}>
+      <Typography variant="h4">Inicia sesion en Comidin</Typography>
 
-      <Stack direction="row" spacing={0.5}>
+      {/* <Stack direction="row" spacing={0.5}>
         <Typography variant="body2">New user?</Typography>
 
         <Link component={RouterLink} href={paths.auth.jwt.register} variant="subtitle2">
           Create an account
         </Link>
-      </Stack>
+      </Stack> */}
     </Stack>
   );
 
   const renderForm = (
     <Stack spacing={2.5}>
-      <RHFTextField name="email" label="Email address" />
+      <RHFTextField name="email" label="Email" />
 
       <RHFTextField
         name="password"
-        label="Password"
+        label="Contraseña"
         type={password.value ? 'text' : 'password'}
         InputProps={{
           endAdornment: (
@@ -105,7 +105,7 @@ export default function JwtLoginView() {
       />
 
       <Link variant="body2" color="inherit" underline="always" sx={{ alignSelf: 'flex-end' }}>
-        Forgot password?
+        Olvidaste tu contraseña?
       </Link>
 
       <LoadingButton
@@ -116,7 +116,7 @@ export default function JwtLoginView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Login
+        Iniciar sesion
       </LoadingButton>
     </Stack>
   );

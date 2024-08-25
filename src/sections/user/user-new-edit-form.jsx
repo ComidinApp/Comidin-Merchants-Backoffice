@@ -189,7 +189,7 @@ export default function UserNewEditForm({ currentUser }) {
               />
             )}
 
-            <RHFSwitch
+            {/* <RHFSwitch
               name="isVerified"
               labelPlacement="start"
               label={
@@ -203,7 +203,7 @@ export default function UserNewEditForm({ currentUser }) {
                 </>
               }
               sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
-            />
+            /> */}
 
             {currentUser && (
               <Stack justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
