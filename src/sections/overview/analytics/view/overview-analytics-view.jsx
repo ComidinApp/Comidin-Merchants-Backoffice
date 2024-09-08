@@ -1,21 +1,22 @@
+import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 
+import { useMockedUser } from 'src/hooks/use-mocked-user';
+
+import { SeoIllustration } from 'src/assets/illustrations';
 import {
+  _appFeatured,
   _analyticTasks,
   _analyticPosts,
   _analyticTraffic,
   _analyticOrderTimeline,
-  _appFeatured,
 } from 'src/_mock';
 
 import { useSettingsContext } from 'src/components/settings';
-import { SeoIllustration } from 'src/assets/illustrations';
-import { useMockedUser } from 'src/hooks/use-mocked-user';
-import AppFeatured from '../app-featured';
+
 import AppWelcome from '../app-welcome';
+import AppFeatured from '../app-featured';
 import AnalyticsNews from '../analytics-news';
 import AnalyticsTasks from '../analytics-tasks';
 import AnalyticsCurrentVisits from '../analytics-current-visits';

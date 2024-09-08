@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
-import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
@@ -137,7 +136,7 @@ export default function InvoiceTableRow({
           View
         </MenuItem>
 
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             onEditRow();
             popover.onClose();
@@ -147,9 +146,9 @@ export default function InvoiceTableRow({
           Edit
         </MenuItem>
 
-        <Divider sx={{ borderStyle: 'dashed' }} />
+        <Divider sx={{ borderStyle: 'dashed' }} /> */}
 
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             confirm.onTrue();
             popover.onClose();
@@ -158,7 +157,7 @@ export default function InvoiceTableRow({
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
           Delete
-        </MenuItem>
+        </MenuItem> */}
       </CustomPopover>
 
       <ConfirmDialog

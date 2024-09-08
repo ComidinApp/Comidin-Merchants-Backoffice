@@ -9,7 +9,6 @@ import { Upload, UploadBox, UploadAvatar } from '../upload';
 
 export function RHFUploadAvatar({ name, ...other }) {
   const { control } = useFormContext();
-
   return (
     <Controller
       name={name}

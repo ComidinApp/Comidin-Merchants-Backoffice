@@ -1,30 +1,18 @@
 import PropTypes from 'prop-types';
-import { useDropzone } from 'react-dropzone';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { alpha } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 
 import Image from '../image';
 import Iconify from '../iconify';
-import RejectionFiles from './errors-rejection-files';
 
 // ----------------------------------------------------------------------
 
 export default function UploadAvatar({ error, file, disabled, helperText, sx, ...other }) {
-  const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
-    multiple: false,
-    disabled,
-    accept: {
-      'image/*': [],
-    },
-    ...other,
-  });
-
   const hasFile = !!file;
 
-  const hasError = isDragReject || !!error;
+  const hasError = !!error;
 
   const imgUrl = typeof file === 'string' ? file : file?.preview;
 
@@ -75,9 +63,7 @@ export default function UploadAvatar({ error, file, disabled, helperText, sx, ..
         }),
       }}
     >
-      <Iconify icon="solar:camera-add-bold" width={32} />
-
-      <Typography variant="caption">{file ? 'Update photo' : 'Upload photo'}</Typography>
+      <Iconify width={32} />
     </Stack>
   );
 
@@ -99,7 +85,6 @@ export default function UploadAvatar({ error, file, disabled, helperText, sx, ..
   return (
     <>
       <Box
-        {...getRootProps()}
         sx={{
           p: 1,
           m: 'auto',
@@ -109,9 +94,9 @@ export default function UploadAvatar({ error, file, disabled, helperText, sx, ..
           overflow: 'hidden',
           borderRadius: '50%',
           border: (theme) => `1px dashed ${alpha(theme.palette.grey[500], 0.2)}`,
-          ...(isDragActive && {
+          ...{
             opacity: 0.72,
-          }),
+          },
           ...(disabled && {
             opacity: 0.48,
             pointerEvents: 'none',
@@ -130,14 +115,10 @@ export default function UploadAvatar({ error, file, disabled, helperText, sx, ..
           ...sx,
         }}
       >
-        <input {...getInputProps()} />
-
         {renderContent}
       </Box>
 
       {helperText && helperText}
-
-      <RejectionFiles fileRejections={fileRejections} />
     </>
   );
 }

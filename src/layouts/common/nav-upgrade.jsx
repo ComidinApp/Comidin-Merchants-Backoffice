@@ -1,29 +1,19 @@
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 
-import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
 import { useMockedUser } from 'src/hooks/use-mocked-user';
 
-import Label from 'src/components/label';
-
-import { m } from 'framer-motion';
-
-import Divider from '@mui/material/Divider';
-import { alpha } from '@mui/material/styles';
-import MenuItem from '@mui/material/MenuItem';
-import IconButton from '@mui/material/IconButton';
-
-import { useRouter } from 'src/routes/hooks';
-
 import { useAuthContext } from 'src/auth/hooks';
 
-import { varHover } from 'src/components/animate';
+import Label from 'src/components/label';
 import { useSnackbar } from 'src/components/snackbar';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import { usePopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 
 export default function NavUpgrade() {

@@ -9,9 +9,6 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
-import { paths } from 'src/routes/paths';
-import { RouterLink } from 'src/routes/components';
-
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import Iconify from 'src/components/iconify';

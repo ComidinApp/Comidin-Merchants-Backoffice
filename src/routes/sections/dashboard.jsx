@@ -20,6 +20,11 @@ const ProductDetailsPage = lazy(() => import('src/pages/dashboard/product/detail
 const ProductListPage = lazy(() => import('src/pages/dashboard/product/list'));
 const ProductCreatePage = lazy(() => import('src/pages/dashboard/product/new'));
 const ProductEditPage = lazy(() => import('src/pages/dashboard/product/edit'));
+// PUBLICATION
+const PublicationDetailsPage = lazy(() => import('src/pages/dashboard/publication/details'));
+const PublicationListPage = lazy(() => import('src/pages/dashboard/publication/list'));
+const PublicationCreatePage = lazy(() => import('src/pages/dashboard/publication/new'));
+const PublicationEditPage = lazy(() => import('src/pages/dashboard/publication/edit'));
 // ORDER
 const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
 const OrderDetailsPage = lazy(() => import('src/pages/dashboard/order/details'));
@@ -103,6 +108,16 @@ export const dashboardRoutes = [
           { path: ':id', element: <ProductDetailsPage /> },
           { path: 'new', element: <ProductCreatePage /> },
           { path: ':id/edit', element: <ProductEditPage /> },
+        ],
+      },
+      {
+        path: 'publication',
+        children: [
+          { element: <PublicationListPage />, index: true },
+          { path: 'list', element: <PublicationListPage /> },
+          { path: ':id', element: <PublicationDetailsPage /> },
+          { path: 'new', element: <PublicationCreatePage /> },
+          { path: ':id/edit', element: <PublicationEditPage /> },
         ],
       },
       {

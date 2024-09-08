@@ -14,7 +14,7 @@ export default function UserEditPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: User Edit</title>
+        <title> Editar Usuario</title>
       </Helmet>
 
       <UserEditView id={`${id}`} />

@@ -1,14 +1,9 @@
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-
 import Container from '@mui/material/Container';
-
 import { paths } from 'src/routes/paths';
-
-import { _userList } from 'src/_mock';
-
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
-
 import UserNewEditForm from '../user-new-edit-form';
 
 // ----------------------------------------------------------------------
@@ -16,7 +11,26 @@ import UserNewEditForm from '../user-new-edit-form';
 export default function UserEditView({ id }) {
   const settings = useSettingsContext();
 
-  const currentUser = _userList.find((user) => user.id === id);
+  const [employee, setEmployee] = useState(null);
+
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/employee/${id}`);
+        const data = await response.json();
+        console.log(data);
+        setEmployee(data || null);
+      } catch (error) {
+        console.error('Error fetching employee:', error);
+      }
+    };
+
+    if (id) {
+      fetchEmployee();
+    }
+  }, [id]);
+
+  const currentUser = employee;
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
@@ -31,18 +45,22 @@ export default function UserEditView({ id }) {
             name: 'User',
             href: paths.dashboard.user.root,
           },
-          { name: currentUser?.name },
+          { name: currentUser?.first_name || 'Loading...' }, // Manejar el caso en que no haya un currentUser
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
         }}
       />
 
-      <UserNewEditForm currentUser={currentUser} />
+      {currentUser ? (
+        <UserNewEditForm currentUser={currentUser} />
+      ) : (
+        <p>Loading user data...</p> // Mostrar mensaje de carga si no hay datos
+      )}
     </Container>
   );
 }
 
 UserEditView.propTypes = {
-  id: PropTypes.string,
+  id: PropTypes.string.isRequired, // Cambiado a isRequired si id es obligatorio
 };

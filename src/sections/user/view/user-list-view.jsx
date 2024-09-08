@@ -1,5 +1,5 @@
 import isEqual from 'lodash/isEqual';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -39,6 +39,7 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import axios from '../../../utils/axios';
 import UserTableRow from '../user-table-row';
 import UserTableToolbar from '../user-table-toolbar';
 import UserTableFiltersResult from '../user-table-filters-result';
@@ -75,7 +76,9 @@ export default function UserListView() {
 
   const confirm = useBoolean();
 
-  const [tableData, setTableData] = useState(_userList);
+  const [tableData, setTableData] = useState([]);
+
+  const [loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState(defaultFilters);
 
@@ -106,6 +109,37 @@ export default function UserListView() {
     },
     [table]
   );
+
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/role');
+        const data = await response.json();
+        setRoles(data || []);
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
+  const roleNames = roles.map((role) => role.name);
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:3000/employee');
+      setTableData(Array.isArray(response?.data) ? response.data : []);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error('Error fetching user data:', error);
+      enqueueSnackbar('Error fetching user data', { variant: 'error' });
+    }
+  }, [enqueueSnackbar, setLoading]);
 
   const handleResetFilters = useCallback(() => {
     setFilters(defaultFilters);
@@ -150,6 +184,10 @@ export default function UserListView() {
     },
     [handleFilters]
   );
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
 
   return (
     <>
@@ -203,7 +241,7 @@ export default function UserListView() {
                       'default'
                     }
                   >
-                    {['active', 'pending', 'banned', 'rejected'].includes(tab.value)
+                    {['active', 'pending', 'banned'].includes(tab.value)
                       ? tableData.filter((user) => user.status === tab.value).length
                       : tableData.length}
                   </Label>
@@ -212,12 +250,7 @@ export default function UserListView() {
             ))}
           </Tabs>
 
-          <UserTableToolbar
-            filters={filters}
-            onFilters={handleFilters}
-            //
-            roleOptions={_roles}
-          />
+          <UserTableToolbar filters={filters} onFilters={handleFilters} roleOptions={roleNames} />
 
           {canReset && (
             <UserTableFiltersResult
@@ -278,18 +311,17 @@ export default function UserListView() {
                       <UserTableRow
                         key={row.id}
                         row={row}
+                        refetch={fetchUserData}
                         selected={table.selected.includes(row.id)}
                         onSelectRow={() => table.onSelectRow(row.id)}
                         onDeleteRow={() => handleDeleteRow(row.id)}
                         onEditRow={() => handleEditRow(row.id)}
                       />
                     ))}
-
                   <TableEmptyRows
                     height={denseHeight}
                     emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
                   />
-
                   <TableNoData notFound={notFound} />
                 </TableBody>
               </Table>
@@ -352,7 +384,11 @@ function applyFilter({ inputData, comparator, filters }) {
 
   if (name) {
     inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(name.toLowerCase()) !== -1
+      (user) =>
+        user.first_name.toLowerCase().includes(name.toLowerCase()) ||
+        user.last_name.toLowerCase().includes(name.toLowerCase()) ||
+        user.email.toLowerCase().includes(name.toLowerCase()) ||
+        user.commerce.name.toLowerCase().includes(name.toLowerCase())
     );
   }
 
@@ -361,7 +397,7 @@ function applyFilter({ inputData, comparator, filters }) {
   }
 
   if (role.length) {
-    inputData = inputData.filter((user) => role.includes(user.role));
+    inputData = inputData.filter((user) => role.includes(user.role.name));
   }
 
   return inputData;

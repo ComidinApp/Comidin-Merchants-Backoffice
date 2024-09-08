@@ -4,8 +4,6 @@ import { paths } from 'src/routes/paths';
 
 import { useTranslate } from 'src/locales';
 
-import Label from 'src/components/label';
-import Iconify from 'src/components/iconify';
 import SvgColor from 'src/components/svg-color';
 
 // ----------------------------------------------------------------------
@@ -98,24 +96,24 @@ export function useNavData() {
           // USER
           {
             title: t('usuarios'),
-            path: paths.dashboard.user.root,
+            path: paths.dashboard.user.list,
             icon: ICONS.user,
-            children: [
-              /* { title: t('perfil'), path: paths.dashboard.user.root },
-              { title: t('tarjetas'), path: paths.dashboard.user.cards }, */
+            /* children: [
+              { title: t('perfil'), path: paths.dashboard.user.root },
+              { title: t('tarjetas'), path: paths.dashboard.user.cards },
               { title: t('lista'), path: paths.dashboard.user.list },
               { title: t('crear'), path: paths.dashboard.user.new },
               { title: t('editar'), path: paths.dashboard.user.demo.edit },
               { title: t('mi cuenta'), path: paths.dashboard.user.account },
-            ],
+            ], */
           },
 
           // PRODUCT
           {
             title: t('productos'),
             path: paths.dashboard.product.root,
-            icon: ICONS.product,
-            children: [
+            icon: ICONS.menuItem,
+            /* children: [
               { title: t('lista'), path: paths.dashboard.product.root },
               {
                 title: t('detalle'),
@@ -123,14 +121,14 @@ export function useNavData() {
               },
               { title: t('crear'), path: paths.dashboard.product.new },
               { title: t('editar'), path: paths.dashboard.product.demo.edit },
-            ],
+            ], */
           },
           // Publications
           {
             title: t('publicaciones'),
-            path: paths.dashboard.product.root,
-            icon: ICONS.product,
-            children: [
+            path: paths.dashboard.publication.root,
+            icon: ICONS.ecommerce,
+            /* children: [
               { title: t('lista'), path: paths.dashboard.product.root },
               {
                 title: t('detalle'),
@@ -138,7 +136,7 @@ export function useNavData() {
               },
               { title: t('crear'), path: paths.dashboard.product.new },
               { title: t('editar'), path: paths.dashboard.product.demo.edit },
-            ],
+            ], */
           },
 
           // ORDER
@@ -146,10 +144,10 @@ export function useNavData() {
             title: t('pedidos'),
             path: paths.dashboard.order.root,
             icon: ICONS.order,
-            children: [
+            /* children: [
               { title: t('lista'), path: paths.dashboard.order.root },
               { title: t('detalle'), path: paths.dashboard.order.demo.details },
-            ],
+            ], */
           },
 
           // INVOICE
@@ -157,7 +155,7 @@ export function useNavData() {
             title: t('pagos'),
             path: paths.dashboard.invoice.root,
             icon: ICONS.invoice,
-            children: [
+            /* children: [
               { title: t('lista'), path: paths.dashboard.invoice.root },
               {
                 title: t('detalle'),
@@ -165,7 +163,7 @@ export function useNavData() {
               },
               { title: t('crear'), path: paths.dashboard.invoice.new },
               { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
-            ],
+            ], */
           },
 
           /* // BLOG

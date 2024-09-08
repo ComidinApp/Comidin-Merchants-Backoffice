@@ -17,7 +17,6 @@ import TableContainer from '@mui/material/TableContainer';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -229,7 +228,7 @@ export default function InvoiceListView() {
               name: 'List',
             },
           ]}
-          action={
+          /* action={
             <Button
               component={RouterLink}
               href={paths.dashboard.invoice.new}
@@ -238,7 +237,7 @@ export default function InvoiceListView() {
             >
               New Invoice
             </Button>
-          }
+          } */
           sx={{
             mb: { xs: 3, md: 5 },
           }}

@@ -1,25 +1,9 @@
-import { m } from 'framer-motion';
-
-import Badge from '@mui/material/Badge';
-import Avatar from '@mui/material/Avatar';
-import MenuItem from '@mui/material/MenuItem';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import ListItemText from '@mui/material/ListItemText';
-
-import { fToNow } from 'src/utils/format-time';
-
-import { _contacts } from 'src/_mock';
-
-import Iconify from 'src/components/iconify';
-import Scrollbar from 'src/components/scrollbar';
-import { varHover } from 'src/components/animate';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
+/* import { usePopover } from 'src/components/custom-popover'; */
 
 // ----------------------------------------------------------------------
 
 export default function ContactsPopover() {
-  const popover = usePopover();
+  /* const popover = usePopover(); */
 
   return (
     <>

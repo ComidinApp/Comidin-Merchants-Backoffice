@@ -10,7 +10,6 @@ import { paths } from 'src/routes/paths';
 
 import { bgGradient } from 'src/theme/css';
 
-import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
@@ -87,8 +86,8 @@ export default function HomeAdvertisement() {
           y: [-20, 0, -20],
         }}
         transition={{ duration: 4, repeat: Infinity }}
-        alt="rocket"
-        src="/assets/images/home/rocket.webp"
+        alt="papitas"
+        src="/assets/images/home/papitas.webp"
         sx={{ maxWidth: 460 }}
       />
     </Stack>

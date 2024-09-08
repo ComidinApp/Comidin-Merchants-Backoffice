@@ -1,31 +1,25 @@
-import { m } from 'framer-motion';
-import { useCallback } from 'react';
-
-import MenuItem from '@mui/material/MenuItem';
-import IconButton from '@mui/material/IconButton';
+/* import { useCallback } from 'react';
 
 import { useLocales, useTranslate } from 'src/locales';
 
-import Iconify from 'src/components/iconify';
-import { varHover } from 'src/components/animate';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import { usePopover } from 'src/components/custom-popover'; */
 
 // ----------------------------------------------------------------------
 
 export default function LanguagePopover() {
-  const popover = usePopover();
+  /* const popover = usePopover();
 
   const { onChangeLang } = useTranslate();
 
-  const { allLangs, currentLang } = useLocales();
+  const { allLangs, currentLang } = useLocales(); */
 
-  const handleChangeLang = useCallback(
+  /* const handleChangeLang = useCallback(
     (newLang) => {
       onChangeLang(newLang);
       popover.onClose();
     },
     [onChangeLang, popover]
-  );
+  ); */
 
   return (
     <>

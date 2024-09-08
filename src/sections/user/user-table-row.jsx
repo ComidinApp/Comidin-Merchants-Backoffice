@@ -11,6 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -22,13 +23,15 @@ import UserQuickEditForm from './user-quick-edit-form';
 // ----------------------------------------------------------------------
 
 export default function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }) {
-  const { name, avatarUrl, company, role, status, email, phoneNumber } = row;
-
+  const { first_name, avatar_url, last_name, commerce, role, status, email, phone_number } = row;
+  console.log(row);
   const confirm = useBoolean();
 
   const quickEdit = useBoolean();
 
   const popover = usePopover();
+
+  const assets_url = VITE_S3_ASSETS_AVATAR;
 
   return (
     <>
@@ -38,10 +41,10 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
         </TableCell>
 
         <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar alt={name} src={avatarUrl} sx={{ mr: 2 }} />
+          <Avatar alt={first_name} src={`${avatar_url}`} sx={{ mr: 2 }} />
 
           <ListItemText
-            primary={name}
+            primary={`${first_name} ${last_name}`}
             secondary={email}
             primaryTypographyProps={{ typography: 'body2' }}
             secondaryTypographyProps={{
@@ -51,19 +54,19 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
           />
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{phoneNumber}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{phone_number}</TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{company}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{commerce.name}</TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{role}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{role.name}</TableCell>
 
         <TableCell>
           <Label
             variant="soft"
             color={
-              (status === 'active' && 'success') ||
-              (status === 'pending' && 'warning') ||
-              (status === 'banned' && 'error') ||
+              (status.toLowerCase() === 'active' && 'success') ||
+              (status.toLowerCase() === 'pending' && 'warning') ||
+              (status.toLowerCase() === 'banned' && 'error') ||
               'default'
             }
           >

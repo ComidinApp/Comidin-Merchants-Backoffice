@@ -176,8 +176,8 @@ export default function HomeHero() {
             textAlign: 'center',
           }}
         >
-          Start a <br />
-          New Project with
+          Comenza a <br />
+          vender con
         </Typography>
       </m.div>
 
