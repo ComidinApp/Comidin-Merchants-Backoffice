@@ -16,6 +16,7 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -52,6 +53,24 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
+
+  const [price, setPrice] = useState(0);
+  const [discount, setDiscount] = useState(0);
+
+  const handlePriceChange = (event) => {
+    setPrice(event.target.value);
+  };
+
+  const handleDiscountChange = (event) => {
+    setDiscount(event.target.value);
+  };
+
+  const calculateDiscountedPrice = () => {
+    if (discount) {
+      return (price - (price * discount) / 100).toFixed(2);
+    }
+    return price;
+  };
 
   const NewPublicationSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
@@ -219,11 +238,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
       {mdUp && (
         <Grid md={4}>
           <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Properties
+            Propiedades
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Additional functions and attributes...
-          </Typography>
+          </Typography> */}
         </Grid>
       )}
 
@@ -241,19 +260,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <RHFTextField name="code" label="Publication Code" />
-
-              <RHFTextField name="sku" label="Publication SKU" />
-
-              <RHFTextField
-                name="quantity"
-                label="Quantity"
-                placeholder="0"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-              />
-
-              <RHFSelect native name="category" label="Category" InputLabelProps={{ shrink: true }}>
+              <RHFSelect native name="category" label="Producto" InputLabelProps={{ shrink: true }}>
                 {PRODUCT_CATEGORY_GROUP_OPTIONS.map((category) => (
                   <optgroup key={category.group} label={category.group}>
                     {category.classify.map((classify) => (
@@ -265,17 +272,45 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 ))}
               </RHFSelect>
 
-              <RHFMultiSelect
+              <DatePicker
+                label="Fecha de vencimiento"
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+              {/* <RHFTextField name="code" label="Publication Code" /> */}
+
+              {/* <RHFTextField name="sku" label="Publication SKU" /> */}
+
+              <RHFTextField
+                name="quantity"
+                label="Stock"
+                placeholder="0"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+              />
+
+              <RHFSelect native name="category" label="Comercio" InputLabelProps={{ shrink: true }}>
+                {PRODUCT_CATEGORY_GROUP_OPTIONS.map((category) => (
+                  <optgroup key={category.group} label={category.group}>
+                    {category.classify.map((classify) => (
+                      <option key={classify} value={classify}>
+                        {classify}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </RHFSelect>
+
+              {/* <RHFMultiSelect
                 checkbox
                 name="colors"
                 label="Colors"
                 options={PRODUCT_COLOR_NAME_OPTIONS}
-              />
+              /> */}
 
-              <RHFMultiSelect checkbox name="sizes" label="Sizes" options={PRODUCT_SIZE_OPTIONS} />
+              {/* <RHFMultiSelect checkbox name="sizes" label="Sizes" options={PRODUCT_SIZE_OPTIONS} /> */}
             </Box>
 
-            <RHFAutocomplete
+            {/* <RHFAutocomplete
               name="tags"
               label="Tags"
               placeholder="+ Tags"
@@ -300,14 +335,14 @@ export default function PublicationNewEditForm({ currentPublication }) {
                   />
                 ))
               }
-            />
+            /> */}
 
-            <Stack spacing={1}>
+            {/* <Stack spacing={1}>
               <Typography variant="subtitle2">Gender</Typography>
               <RHFMultiCheckbox row name="gender" spacing={2} options={PRODUCT_GENDER_OPTIONS} />
-            </Stack>
+            </Stack> */}
 
-            <Divider sx={{ borderStyle: 'dashed' }} />
+            {/* <Divider sx={{ borderStyle: 'dashed' }} />
 
             <Stack direction="row" alignItems="center" spacing={3}>
               <RHFSwitch name="saleLabel.enabled" label={null} sx={{ m: 0 }} />
@@ -327,7 +362,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 fullWidth
                 disabled={!values.newLabel.enabled}
               />
-            </Stack>
+            </Stack> */}
           </Stack>
         </Card>
       </Grid>
@@ -339,11 +374,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
       {mdUp && (
         <Grid md={4}>
           <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Pricing
+            Precios
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Price related inputs
-          </Typography>
+          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}></Typography> */}
         </Grid>
       )}
 
@@ -354,10 +387,12 @@ export default function PublicationNewEditForm({ currentPublication }) {
           <Stack spacing={3} sx={{ p: 3 }}>
             <RHFTextField
               name="price"
-              label="Regular Price"
+              label="Precio Regular"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
+              value={price}
+              onChange={handlePriceChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -370,11 +405,31 @@ export default function PublicationNewEditForm({ currentPublication }) {
             />
 
             <RHFTextField
+              name="discount"
+              label="Descuento"
+              placeholder="0"
+              type="number"
+              InputLabelProps={{ shrink: true }}
+              value={discount}
+              onChange={handleDiscountChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Box component="span" sx={{ color: 'text.disabled' }}>
+                      %
+                    </Box>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <RHFTextField
               name="priceSale"
-              label="Sale Price"
+              label="Precio con Descuento"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
+              value={calculateDiscountedPrice()}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -383,10 +438,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
                     </Box>
                   </InputAdornment>
                 ),
+                readOnly: true, // Evita que el usuario edite el campo
               }}
             />
 
-            <FormControlLabel
+            {/* <FormControlLabel
               control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
               label="Price includes taxes"
             />
@@ -408,7 +464,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                   ),
                 }}
               />
-            )}
+            )} */}
           </Stack>
         </Card>
       </Grid>
@@ -421,7 +477,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       <Grid xs={12} md={8} sx={{ display: 'flex', alignItems: 'center' }}>
         <FormControlLabel
           control={<Switch defaultChecked />}
-          label="Publish"
+          label="Activo"
           sx={{ flexGrow: 1, pl: 3 }}
         />
 
@@ -435,7 +491,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
-        {renderDetails}
+        {/* {renderDetails} */}
 
         {renderProperties}
 

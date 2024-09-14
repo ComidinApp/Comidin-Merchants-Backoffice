@@ -50,19 +50,20 @@ export function useGetProducts() {
 // ----------------------------------------------------------------------
 
 export function useGetProduct(productId) {
-  const URL = productId ? [endpoints.product.details, { params: { productId } }] : '';
+  const URL = `http://localhost:3000/product/${productId}`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      product: data?.product,
+      product: data || null,
       productLoading: isLoading,
       productError: error,
       productValidating: isValidating,
     }),
-    [data?.product, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating]
   );
+  console.log(memoizedValue);
 
   return memoizedValue;
 }

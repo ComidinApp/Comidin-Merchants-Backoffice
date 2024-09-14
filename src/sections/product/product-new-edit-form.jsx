@@ -94,7 +94,7 @@ export default function ProductNewEditForm({ currentProduct }) {
     () => ({
       name: currentProduct?.name || '',
       description: currentProduct?.description || '',
-      image_url: currentProduct?.image_url || [],
+      image_url: [currentProduct?.image_url] || [],
       product_code: currentProduct?.product_code || '',
       commerce_id: currentProduct?.commerce_id || '',
       product_category_id: currentProduct?.product_category_id || '',
@@ -132,6 +132,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         : 'http://localhost:3000/product';
 
       const method = currentProduct ? 'PUT' : 'POST';
+      data.image_url = currentProduct ? data.image_url[0] : data.image_url;
 
       const response = await fetch(url, {
         method,
