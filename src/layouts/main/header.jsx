@@ -47,14 +47,15 @@ export default function Header() {
             easing: theme.transitions.easing.easeInOut,
             duration: theme.transitions.duration.shorter,
           }),
-          ...(offsetTop && {
-            ...bgBlur({
-              color: theme.palette.background.default,
-            }),
-            height: {
-              md: HEADER.H_DESKTOP_OFFSET,
-            },
-          }),
+         
+          // ...(offsetTop && {
+          //   ...bgBlur({
+          //     color: theme.palette.background.default,
+          //   }),
+          //   height: {
+          //     md: HEADER.H_DESKTOP_OFFSET,
+          //   },
+          // }),
         }}
       >
         <Container sx={{ height: 1, display: 'flex', alignItems: 'center' }}>
@@ -72,11 +73,8 @@ export default function Header() {
                 rel="noopener"
                 underline="none"
                 sx={{ ml: 1 }}
-              >
-                <Label color="info" sx={{ textTransform: 'unset', height: 22, px: 0.5 }}>
-                  V1.0.0
-                </Label>
-              </Link>
+              />
+                
             }
           >
             <Logo />

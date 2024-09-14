@@ -241,6 +241,7 @@ export default function HomeHero() {
         sx={{
           width: 344,
           position: 'relative',
+          marginRight: 2,
         }}
       >
         <Box

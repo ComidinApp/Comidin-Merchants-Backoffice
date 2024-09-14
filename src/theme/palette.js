@@ -18,12 +18,12 @@ export const grey = {
 };
 
 export const primary = {
-  lighter: '#C8FAD6',
-  light: '#5BE49B',
-  main: '#00A76F',
-  dark: '#007867',
-  darker: '#004B50',
-  contrastText: '#FFFFFF',
+  lighter: '#FFE6BB',
+  light: '#F29D4C',
+  main: '#DDA15E',
+  dark: '#D67030',
+  darker: '#C2672D',
+  contrastText: '#FEFAE0',
 };
 
 export const secondary = {
@@ -112,7 +112,7 @@ export function palette(mode) {
     },
     background: {
       paper: '#FFFFFF',
-      default: '#FFFFFF',
+      default: '#FEFAE0',
       neutral: grey[200],
     },
     action: {
