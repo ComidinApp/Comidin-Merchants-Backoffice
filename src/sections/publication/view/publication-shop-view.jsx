@@ -23,13 +23,13 @@ import {
 import EmptyContent from 'src/components/empty-content';
 import { useSettingsContext } from 'src/components/settings';
 
-import ProductList from '../product-list';
-import ProductSort from '../product-sort';
+import PublicationList from '../publication-list';
+import PublicationSort from '../publication-sort';
 import CartIcon from '../common/cart-icon';
-import ProductSearch from '../product-search';
-import ProductFilters from '../product-filters';
+import PublicationSearch from '../publication-search';
+import PublicationFilters from '../publication-filters';
 import { useCheckoutContext } from '../../checkout/context';
-import ProductFiltersResult from '../product-filters-result';
+import PublicationFiltersResult from '../publication-filters-result';
 
 // ----------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ const defaultFilters = {
 
 // ----------------------------------------------------------------------
 
-export default function ProductShopView() {
+export default function PublicationShopView() {
   const settings = useSettingsContext();
 
   const checkout = useCheckoutContext();
@@ -58,7 +58,7 @@ export default function ProductShopView() {
 
   const [filters, setFilters] = useState(defaultFilters);
 
-  const { products, productsLoading, productsEmpty } = useGetProducts();
+  const { publications, publicationsLoading, publicationsEmpty } = useGetProducts();
 
   const { searchResults, searchLoading } = useSearchProducts(debouncedQuery);
 
@@ -74,7 +74,7 @@ export default function ProductShopView() {
   }, []);
 
   const dataFiltered = applyFilter({
-    inputData: products,
+    inputData: publications,
     filters,
     sortBy,
   });
@@ -98,16 +98,16 @@ export default function ProductShopView() {
       alignItems={{ xs: 'flex-end', sm: 'center' }}
       direction={{ xs: 'column', sm: 'row' }}
     >
-      <ProductSearch
+      <PublicationSearch
         query={debouncedQuery}
         results={searchResults}
         onSearch={handleSearch}
         loading={searchLoading}
-        hrefItem={(id) => paths.product.details(id)}
+        hrefItem={(id) => paths.publication.details(id)}
       />
 
       <Stack direction="row" spacing={1} flexShrink={0}>
-        <ProductFilters
+        <PublicationFilters
           open={openFilters.value}
           onOpen={openFilters.onTrue}
           onClose={openFilters.onFalse}
@@ -124,13 +124,13 @@ export default function ProductShopView() {
           categoryOptions={['all', ...PRODUCT_CATEGORY_OPTIONS]}
         />
 
-        <ProductSort sort={sortBy} onSort={handleSortBy} sortOptions={PRODUCT_SORT_OPTIONS} />
+        <PublicationSort sort={sortBy} onSort={handleSortBy} sortOptions={PRODUCT_SORT_OPTIONS} />
       </Stack>
     </Stack>
   );
 
   const renderResults = (
-    <ProductFiltersResult
+    <PublicationFiltersResult
       filters={filters}
       onFilters={handleFilters}
       //
@@ -172,9 +172,9 @@ export default function ProductShopView() {
         {canReset && renderResults}
       </Stack>
 
-      {(notFound || productsEmpty) && renderNotFound}
+      {(notFound || publicationsEmpty) && renderNotFound}
 
-      <ProductList products={dataFiltered} loading={productsLoading} />
+      <PublicationList publications={dataFiltered} loading={publicationsLoading} />
     </Container>
   );
 }
@@ -207,32 +207,34 @@ function applyFilter({ inputData, filters, sortBy }) {
 
   // FILTERS
   if (gender.length) {
-    inputData = inputData.filter((product) => gender.includes(product.gender));
+    inputData = inputData.filter((publication) => gender.includes(publication.gender));
   }
 
   if (category !== 'all') {
-    inputData = inputData.filter((product) => product.category === category);
+    inputData = inputData.filter((publication) => publication.category === category);
   }
 
   if (colors.length) {
-    inputData = inputData.filter((product) =>
-      product.colors.some((color) => colors.includes(color))
+    inputData = inputData.filter((publication) =>
+      publication.colors.some((color) => colors.includes(color))
     );
   }
 
   if (min !== 0 || max !== 200) {
-    inputData = inputData.filter((product) => product.price >= min && product.price <= max);
+    inputData = inputData.filter(
+      (publication) => publication.price >= min && publication.price <= max
+    );
   }
 
   if (rating) {
-    inputData = inputData.filter((product) => {
+    inputData = inputData.filter((publication) => {
       const convertRating = (value) => {
         if (value === 'up4Star') return 4;
         if (value === 'up3Star') return 3;
         if (value === 'up2Star') return 2;
         return 1;
       };
-      return product.totalRatings > convertRating(rating);
+      return publication.totalRatings > convertRating(rating);
     });
   }
 

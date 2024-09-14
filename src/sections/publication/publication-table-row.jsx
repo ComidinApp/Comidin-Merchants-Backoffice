@@ -83,7 +83,7 @@ RenderCellStock.propTypes = {
   }),
 };
 
-export function RenderCellProduct({ params }) {
+export function RenderCellPublication({ params }) {
   return (
     <Stack direction="row" alignItems="center" sx={{ py: 2, width: 1 }}>
       <Avatar
@@ -117,7 +117,7 @@ export function RenderCellProduct({ params }) {
   );
 }
 
-RenderCellProduct.propTypes = {
+RenderCellPublication.propTypes = {
   params: PropTypes.shape({
     row: PropTypes.object,
   }),

@@ -24,6 +24,36 @@ RenderCellPrice.propTypes = {
   }),
 };
 
+export function RenderCellProductCategory({ params }) {
+  return <>{params.row.product_category.name}</>;
+}
+
+RenderCellProductCategory.propTypes = {
+  params: PropTypes.shape({
+    row: PropTypes.object,
+  }),
+};
+
+export function RenderCellCommerce({ params }) {
+  return <>{params.row.commerce.name}</>;
+}
+
+RenderCellCommerce.propTypes = {
+  params: PropTypes.shape({
+    row: PropTypes.object,
+  }),
+};
+
+export function RenderCellCode({ params }) {
+  return <>{params.row.product_code}</>;
+}
+
+RenderCellCode.propTypes = {
+  params: PropTypes.shape({
+    row: PropTypes.object,
+  }),
+};
+
 export function RenderCellPublish({ params }) {
   return (
     <Label variant="soft" color={(params.row.publish === 'published' && 'info') || 'default'}>
@@ -88,7 +118,7 @@ export function RenderCellProduct({ params }) {
     <Stack direction="row" alignItems="center" sx={{ py: 2, width: 1 }}>
       <Avatar
         alt={params.row.name}
-        src={params.row.coverUrl}
+        src={params.row.image_url}
         variant="rounded"
         sx={{ width: 64, height: 64, mr: 2 }}
       />
@@ -108,7 +138,7 @@ export function RenderCellProduct({ params }) {
         }
         secondary={
           <Box component="div" sx={{ typography: 'body2', color: 'text.disabled' }}>
-            {params.row.category}
+            {params.row.description}
           </Box>
         }
         sx={{ display: 'flex', flexDirection: 'column' }}

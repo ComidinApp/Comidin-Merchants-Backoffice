@@ -2,15 +2,15 @@ import PropTypes from 'prop-types';
 
 import Pagination, { paginationClasses } from '@mui/material/Pagination';
 
-import ProductReviewItem from './product-review-item';
+import PublicationReviewItem from './publication-review-item';
 
 // ----------------------------------------------------------------------
 
-export default function ProductReviewList({ reviews }) {
+export default function PublicationReviewList({ reviews }) {
   return (
     <>
       {reviews.map((review) => (
-        <ProductReviewItem key={review.id} review={review} />
+        <PublicationReviewItem key={review.id} review={review} />
       ))}
 
       <Pagination
@@ -28,6 +28,6 @@ export default function ProductReviewList({ reviews }) {
   );
 }
 
-ProductReviewList.propTypes = {
+PublicationReviewList.propTypes = {
   reviews: PropTypes.array,
 };

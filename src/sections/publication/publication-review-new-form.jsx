@@ -19,7 +19,7 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
 
-export default function ProductReviewNewForm({ onClose, ...other }) {
+export default function PublicationReviewNewForm({ onClose, ...other }) {
   const ReviewSchema = Yup.object().shape({
     rating: Yup.number().min(1, 'Rating must be greater than or equal to 1'),
     review: Yup.string().required('Review is required'),
@@ -69,7 +69,7 @@ export default function ProductReviewNewForm({ onClose, ...other }) {
 
         <DialogContent>
           <Stack direction="row" flexWrap="wrap" alignItems="center" spacing={1.5}>
-            <Typography variant="body2">Your review about this product:</Typography>
+            <Typography variant="body2">Your review about this publication:</Typography>
 
             <Controller
               name="rating"
@@ -110,6 +110,6 @@ export default function ProductReviewNewForm({ onClose, ...other }) {
   );
 }
 
-ProductReviewNewForm.propTypes = {
+PublicationReviewNewForm.propTypes = {
   onClose: PropTypes.func,
 };

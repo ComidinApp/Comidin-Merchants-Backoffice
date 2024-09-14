@@ -1,17 +1,17 @@
 import { Helmet } from 'react-helmet-async';
 
-import { ProductCreateView } from 'src/sections/product/view';
+import { PublicationCreateView } from 'src/sections/publication/view';
 
 // ----------------------------------------------------------------------
 
-export default function ProductCreatePage() {
+export default function PublicationCreatePage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Create a new product</title>
+        <title> Dashboard: Create a new publication</title>
       </Helmet>
 
-      <ProductCreateView />
+      <PublicationCreateView />
     </>
   );
 }

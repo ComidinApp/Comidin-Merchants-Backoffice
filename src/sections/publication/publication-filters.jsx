@@ -23,7 +23,7 @@ import { ColorPicker } from 'src/components/color-utils';
 
 // ----------------------------------------------------------------------
 
-export default function ProductFilters({
+export default function PublicationFilters({
   open,
   onOpen,
   onClose,
@@ -276,7 +276,7 @@ export default function ProductFilters({
   );
 }
 
-ProductFilters.propTypes = {
+PublicationFilters.propTypes = {
   open: PropTypes.bool,
   onOpen: PropTypes.func,
   onClose: PropTypes.func,

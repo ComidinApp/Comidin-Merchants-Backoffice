@@ -9,7 +9,7 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
 
-export default function ProductSort({ sort, onSort, sortOptions }) {
+export default function PublicationSort({ sort, onSort, sortOptions }) {
   const popover = usePopover();
 
   const sortLabel = sortOptions.find((option) => option.value === sort)?.label;
@@ -51,7 +51,7 @@ export default function ProductSort({ sort, onSort, sortOptions }) {
   );
 }
 
-ProductSort.propTypes = {
+PublicationSort.propTypes = {
   onSort: PropTypes.func,
   sort: PropTypes.string,
   sortOptions: PropTypes.array,

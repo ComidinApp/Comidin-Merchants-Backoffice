@@ -15,12 +15,12 @@ import { fShortenNumber } from 'src/utils/format-number';
 
 import Iconify from 'src/components/iconify';
 
-import ProductReviewList from './product-review-list';
-import ProductReviewNewForm from './product-review-new-form';
+import PublicationReviewList from './publication-review-list';
+import PublicationReviewNewForm from './publication-review-new-form';
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsReview({ totalRatings, totalReviews, ratings, reviews }) {
+export default function PublicationDetailsReview({ totalRatings, totalReviews, ratings, reviews }) {
   const review = useBoolean();
 
   const total = sumBy(ratings, (star) => star.starCount);
@@ -122,14 +122,14 @@ export default function ProductDetailsReview({ totalRatings, totalReviews, ratin
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 
-      <ProductReviewList reviews={reviews} />
+      <PublicationReviewList reviews={reviews} />
 
-      <ProductReviewNewForm open={review.value} onClose={review.onFalse} />
+      <PublicationReviewNewForm open={review.value} onClose={review.onFalse} />
     </>
   );
 }
 
-ProductDetailsReview.propTypes = {
+PublicationDetailsReview.propTypes = {
   ratings: PropTypes.array,
   reviews: PropTypes.array,
   totalRatings: PropTypes.number,

@@ -23,11 +23,11 @@ import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
 import CartIcon from '../common/cart-icon';
 import { useCheckoutContext } from '../../checkout/context';
-import ProductDetailsReview from '../product-details-review';
-import { ProductDetailsSkeleton } from '../product-skeleton';
-import ProductDetailsSummary from '../product-details-summary';
-import ProductDetailsCarousel from '../product-details-carousel';
-import ProductDetailsDescription from '../product-details-description';
+import PublicationDetailsReview from '../publication-details-review';
+import { PublicationDetailsSkeleton } from '../publication-skeleton';
+import PublicationDetailsSummary from '../publication-details-summary';
+import PublicationDetailsCarousel from '../publication-details-carousel';
+import PublicationDetailsDescription from '../publication-details-description';
 
 // ----------------------------------------------------------------------
 
@@ -51,29 +51,29 @@ const SUMMARY = [
 
 // ----------------------------------------------------------------------
 
-export default function ProductShopDetailsView({ id }) {
+export default function PublicationShopDetailsView({ id }) {
   const settings = useSettingsContext();
 
   const checkout = useCheckoutContext();
 
   const [currentTab, setCurrentTab] = useState('description');
 
-  const { product, productLoading, productError } = useGetProduct(id);
+  const { publication, publicationLoading, publicationError } = useGetProduct(id);
 
   const handleChangeTab = useCallback((event, newValue) => {
     setCurrentTab(newValue);
   }, []);
 
-  const renderSkeleton = <ProductDetailsSkeleton />;
+  const renderSkeleton = <PublicationDetailsSkeleton />;
 
   const renderError = (
     <EmptyContent
       filled
-      title={`${productError?.message}`}
+      title={`${publicationError?.message}`}
       action={
         <Button
           component={RouterLink}
-          href={paths.product.root}
+          href={paths.publication.root}
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={16} />}
           sx={{ mt: 3 }}
         >
@@ -84,28 +84,28 @@ export default function ProductShopDetailsView({ id }) {
     />
   );
 
-  const renderProduct = product && (
+  const renderPublication = publication && (
     <>
       <CustomBreadcrumbs
         links={[
           { name: 'Home', href: '/' },
           {
             name: 'Shop',
-            href: paths.product.root,
+            href: paths.publication.root,
           },
-          { name: product?.name },
+          { name: publication?.name },
         ]}
         sx={{ mb: 5 }}
       />
 
       <Grid container spacing={{ xs: 3, md: 5, lg: 8 }}>
         <Grid xs={12} md={6} lg={7}>
-          <ProductDetailsCarousel product={product} />
+          <PublicationDetailsCarousel publication={publication} />
         </Grid>
 
         <Grid xs={12} md={6} lg={5}>
-          <ProductDetailsSummary
-            product={product}
+          <PublicationDetailsSummary
+            publication={publication}
             items={checkout.items}
             onAddCart={checkout.onAddToCart}
             onGotoStep={checkout.onGotoStep}
@@ -153,7 +153,7 @@ export default function ProductShopDetailsView({ id }) {
             },
             {
               value: 'reviews',
-              label: `Reviews (${product.reviews.length})`,
+              label: `Reviews (${publication.reviews.length})`,
             },
           ].map((tab) => (
             <Tab key={tab.value} value={tab.value} label={tab.label} />
@@ -161,15 +161,15 @@ export default function ProductShopDetailsView({ id }) {
         </Tabs>
 
         {currentTab === 'description' && (
-          <ProductDetailsDescription description={product?.description} />
+          <PublicationDetailsDescription description={publication?.description} />
         )}
 
         {currentTab === 'reviews' && (
-          <ProductDetailsReview
-            ratings={product.ratings}
-            reviews={product.reviews}
-            totalRatings={product.totalRatings}
-            totalReviews={product.totalReviews}
+          <PublicationDetailsReview
+            ratings={publication.ratings}
+            reviews={publication.reviews}
+            totalRatings={publication.totalRatings}
+            totalReviews={publication.totalReviews}
           />
         )}
       </Card>
@@ -186,15 +186,15 @@ export default function ProductShopDetailsView({ id }) {
     >
       <CartIcon totalItems={checkout.totalItems} />
 
-      {productLoading && renderSkeleton}
+      {publicationLoading && renderSkeleton}
 
-      {productError && renderError}
+      {publicationError && renderError}
 
-      {product && renderProduct}
+      {publication && renderPublication}
     </Container>
   );
 }
 
-ProductShopDetailsView.propTypes = {
+PublicationShopDetailsView.propTypes = {
   id: PropTypes.string,
 };

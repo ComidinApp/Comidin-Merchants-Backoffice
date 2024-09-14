@@ -5,18 +5,18 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
-export function useGetProductss() {
+export function useGetPublications() {
   const URL = endpoints.product.list;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      products: data?.products || [],
-      productsLoading: isLoading,
-      productsError: error,
-      productsValidating: isValidating,
-      productsEmpty: !isLoading && !data?.products.length,
+      publications: data?.products || [],
+      publicationsLoading: isLoading,
+      publicationsError: error,
+      publicationsValidating: isValidating,
+      publicationsEmpty: !isLoading && !data?.products.length,
     }),
     [data?.products, error, isLoading, isValidating]
   );
@@ -26,40 +26,17 @@ export function useGetProductss() {
 
 // ----------------------------------------------------------------------
 
-export function useGetProducts() {
-  const URL = 'http://localhost:3000/product';
-
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
-  console.log(data);
-
-  const memoizedValue = useMemo(
-    () => ({
-      products: data || [],
-      productsLoading: isLoading,
-      productsError: error,
-      productsValidating: isValidating,
-      productsEmpty: !isLoading && !data,
-    }),
-    [data, error, isLoading, isValidating]
-  );
-  console.log(memoizedValue);
-
-  return memoizedValue;
-}
-
-// ----------------------------------------------------------------------
-
-export function useGetProduct(productId) {
+export function useGetPublication(productId) {
   const URL = productId ? [endpoints.product.details, { params: { productId } }] : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      product: data?.product,
-      productLoading: isLoading,
-      productError: error,
-      productValidating: isValidating,
+      publication: data?.product,
+      publicationLoading: isLoading,
+      publicationError: error,
+      publicationValidating: isValidating,
     }),
     [data?.product, error, isLoading, isValidating]
   );
@@ -69,7 +46,7 @@ export function useGetProduct(productId) {
 
 // ----------------------------------------------------------------------
 
-export function useSearchProducts(query) {
+export function useSearchPublications(query) {
   const URL = query ? [endpoints.product.search, { params: { query } }] : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {

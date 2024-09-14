@@ -16,7 +16,7 @@ import SearchNotFound from 'src/components/search-not-found';
 
 // ----------------------------------------------------------------------
 
-export default function ProductSearch({ query, results, onSearch, hrefItem, loading }) {
+export default function PublicationSearch({ query, results, onSearch, hrefItem, loading }) {
   const router = useRouter();
 
   const handleClick = (id) => {
@@ -26,7 +26,7 @@ export default function ProductSearch({ query, results, onSearch, hrefItem, load
   const handleKeyUp = (event) => {
     if (query) {
       if (event.key === 'Enter') {
-        const selectItem = results.filter((product) => product.name === query)[0];
+        const selectItem = results.filter((publication) => publication.name === query)[0];
 
         handleClick(selectItem.id);
       }
@@ -80,16 +80,21 @@ export default function ProductSearch({ query, results, onSearch, hrefItem, load
           }}
         />
       )}
-      renderOption={(props, product, { inputValue }) => {
-        const matches = match(product.name, inputValue);
-        const parts = parse(product.name, matches);
+      renderOption={(props, publication, { inputValue }) => {
+        const matches = match(publication.name, inputValue);
+        const parts = parse(publication.name, matches);
 
         return (
-          <Box component="li" {...props} onClick={() => handleClick(product.id)} key={product.id}>
+          <Box
+            component="li"
+            {...props}
+            onClick={() => handleClick(publication.id)}
+            key={publication.id}
+          >
             <Avatar
-              key={product.id}
-              alt={product.name}
-              src={product.coverUrl}
+              key={publication.id}
+              alt={publication.name}
+              src={publication.coverUrl}
               variant="rounded"
               sx={{
                 width: 48,
@@ -122,7 +127,7 @@ export default function ProductSearch({ query, results, onSearch, hrefItem, load
   );
 }
 
-ProductSearch.propTypes = {
+PublicationSearch.propTypes = {
   hrefItem: PropTypes.func,
   loading: PropTypes.bool,
   onSearch: PropTypes.func,

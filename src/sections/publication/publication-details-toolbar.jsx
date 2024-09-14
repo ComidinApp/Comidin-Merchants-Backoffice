@@ -15,7 +15,7 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsToolbar({
+export default function PublicationDetailsToolbar({
   publish,
   backLink,
   editLink,
@@ -100,7 +100,7 @@ export default function ProductDetailsToolbar({
   );
 }
 
-ProductDetailsToolbar.propTypes = {
+PublicationDetailsToolbar.propTypes = {
   backLink: PropTypes.string,
   editLink: PropTypes.string,
   liveLink: PropTypes.string,

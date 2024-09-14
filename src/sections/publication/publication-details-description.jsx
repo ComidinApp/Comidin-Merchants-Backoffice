@@ -4,7 +4,7 @@ import Markdown from 'src/components/markdown';
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsDescription({ description }) {
+export default function PublicationDetailsDescription({ description }) {
   return (
     <Markdown
       children={description}
@@ -29,6 +29,6 @@ export default function ProductDetailsDescription({ description }) {
   );
 }
 
-ProductDetailsDescription.propTypes = {
+PublicationDetailsDescription.propTypes = {
   description: PropTypes.string,
 };

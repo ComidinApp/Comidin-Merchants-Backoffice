@@ -26,9 +26,9 @@ import IncrementerButton from './common/incrementer-button';
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsSummary({
+export default function PublicationDetailsSummary({
   items,
-  product,
+  publication,
   onAddCart,
   onGotoStep,
   disabledActions,
@@ -51,9 +51,9 @@ export default function ProductDetailsSummary({
     totalReviews,
     inventoryType,
     subDescription,
-  } = product;
+  } = publication;
 
-  const existProduct = !!items?.length && items.map((item) => item.id).includes(id);
+  const existPublication = !!items?.length && items.map((item) => item.id).includes(id);
 
   const isMaxQuantity =
     !!items?.length &&
@@ -79,15 +79,15 @@ export default function ProductDetailsSummary({
   const values = watch();
 
   useEffect(() => {
-    if (product) {
+    if (publication) {
       reset(defaultValues);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product]);
+  }, [publication]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      if (!existProduct) {
+      if (!existPublication) {
         onAddCart?.({
           ...data,
           colors: [values.colors],
@@ -95,7 +95,7 @@ export default function ProductDetailsSummary({
         });
       }
       onGotoStep?.(0);
-      router.push(paths.product.checkout);
+      router.push(paths.publication.checkout);
     } catch (error) {
       console.error(error);
     }
@@ -346,10 +346,10 @@ export default function ProductDetailsSummary({
   );
 }
 
-ProductDetailsSummary.propTypes = {
+PublicationDetailsSummary.propTypes = {
   items: PropTypes.array,
   disabledActions: PropTypes.bool,
   onAddCart: PropTypes.func,
   onGotoStep: PropTypes.func,
-  product: PropTypes.object,
+  publication: PropTypes.object,
 };

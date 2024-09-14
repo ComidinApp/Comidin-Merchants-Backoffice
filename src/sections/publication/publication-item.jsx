@@ -21,16 +21,16 @@ import { useCheckoutContext } from '../checkout/context';
 
 // ----------------------------------------------------------------------
 
-export default function ProductItem({ product }) {
+export default function PublicationItem({ publication }) {
   const { onAddToCart } = useCheckoutContext();
 
   const { id, name, coverUrl, price, colors, available, sizes, priceSale, newLabel, saleLabel } =
-    product;
+    publication;
 
-  const linkTo = paths.product.details(id);
+  const linkTo = paths.publication.details(id);
 
   const handleAddCart = async () => {
-    const newProduct = {
+    const newPublication = {
       id,
       name,
       coverUrl,
@@ -41,7 +41,7 @@ export default function ProductItem({ product }) {
       quantity: 1,
     };
     try {
-      onAddToCart(newProduct);
+      onAddToCart(newPublication);
     } catch (error) {
       console.error(error);
     }
@@ -148,6 +148,6 @@ export default function ProductItem({ product }) {
   );
 }
 
-ProductItem.propTypes = {
-  product: PropTypes.object,
+PublicationItem.propTypes = {
+  publication: PropTypes.object,
 };

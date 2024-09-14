@@ -36,6 +36,9 @@ import ProductTableFiltersResult from '../product-table-filters-result';
 import {
   RenderCellStock,
   RenderCellPrice,
+  RenderCellCommerce,
+  RenderCellProductCategory,
+  RenderCellCode,
   RenderCellPublish,
   RenderCellProduct,
   RenderCellCreatedAt,
@@ -151,13 +154,34 @@ export default function ProductListView() {
       hideable: false,
       renderCell: (params) => <RenderCellProduct params={params} />,
     },
-    {
+    /* {
       field: 'createdAt',
       headerName: 'Create at',
       width: 160,
       renderCell: (params) => <RenderCellCreatedAt params={params} />,
+    }, */
+    {
+      field: 'product_code',
+      headerName: 'Codigo',
+      width: 140,
+      editable: true,
+      renderCell: (params) => <RenderCellCode params={params} />,
     },
     {
+      field: 'product_category',
+      headerName: 'Categoria',
+      width: 140,
+      editable: true,
+      renderCell: (params) => <RenderCellProductCategory params={params} />,
+    },
+    {
+      field: 'commerce',
+      headerName: 'Comercio',
+      width: 140,
+      editable: true,
+      renderCell: (params) => <RenderCellCommerce params={params} />,
+    },
+    /* {
       field: 'inventoryType',
       headerName: 'Stock',
       width: 160,
@@ -180,24 +204,24 @@ export default function ProductListView() {
       editable: true,
       valueOptions: PUBLISH_OPTIONS,
       renderCell: (params) => <RenderCellPublish params={params} />,
-    },
+    }, */
     {
       type: 'actions',
       field: 'actions',
       headerName: ' ',
       align: 'right',
       headerAlign: 'right',
-      width: 80,
+      width: 20,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
       getActions: (params) => [
-        <GridActionsCellItem
+        /*        <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:eye-bold" />}
           label="View"
           onClick={() => handleViewRow(params.row.id)}
-        />,
+        />, */
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:pen-bold" />}
@@ -235,12 +259,10 @@ export default function ProductListView() {
         <CustomBreadcrumbs
           heading="List"
           links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
             {
-              name: 'Product',
-              href: paths.dashboard.product.root,
+              name: 'Producto',
             },
-            { name: 'List' },
+            { name: 'Listado' },
           ]}
           action={
             <Button
@@ -249,7 +271,7 @@ export default function ProductListView() {
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New Product
+              Agregar Producto
             </Button>
           }
           sx={{
@@ -290,14 +312,14 @@ export default function ProductListView() {
               toolbar: () => (
                 <>
                   <GridToolbarContainer>
-                    <ProductTableToolbar
+                    {/* <ProductTableToolbar
                       filters={filters}
                       onFilters={handleFilters}
                       stockOptions={PRODUCT_STOCK_OPTIONS}
                       publishOptions={PUBLISH_OPTIONS}
-                    />
+                    /> */}
 
-                    <GridToolbarQuickFilter />
+                    <GridToolbarQuickFilter style={{ width: '700px', height: '50px' }} />
 
                     <Stack
                       spacing={1}
@@ -313,7 +335,7 @@ export default function ProductListView() {
                           startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
                           onClick={confirmRows.onTrue}
                         >
-                          Delete ({selectedRowIds.length})
+                          Borrar ({selectedRowIds.length})
                         </Button>
                       )}
 
@@ -364,7 +386,7 @@ export default function ProductListView() {
               confirmRows.onFalse();
             }}
           >
-            Delete
+            Borrar
           </Button>
         }
       />

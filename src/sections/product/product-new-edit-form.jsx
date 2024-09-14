@@ -53,45 +53,51 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
+  const [commerces, setCommerces] = useState([]);
+  useEffect(() => {
+    const fetchCommerces = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/commerce');
+        const data = await response.json();
+        setCommerces(data || []);
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+      }
+    };
+    fetchCommerces();
+  }, []);
+
+  const [product_categories, setProductCategories] = useState([]);
+  useEffect(() => {
+    const fetchProductCategories = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/productCategory');
+        const data = await response.json();
+        setProductCategories(data || []);
+      } catch (error) {
+        console.error('Error fetching roles:', error);
+      }
+    };
+    fetchProductCategories();
+  }, []);
+
   const NewProductSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
-    images: Yup.array().min(1, 'Images is required'),
-    tags: Yup.array().min(2, 'Must have at least 2 tags'),
-    category: Yup.string().required('Category is required'),
-    price: Yup.number().moreThan(0, 'Price should not be $0.00'),
     description: Yup.string().required('Description is required'),
-    // not required
-    taxes: Yup.number(),
-    newLabel: Yup.object().shape({
-      enabled: Yup.boolean(),
-      content: Yup.string(),
-    }),
-    saleLabel: Yup.object().shape({
-      enabled: Yup.boolean(),
-      content: Yup.string(),
-    }),
+    image_url: Yup.array().min(1, 'Images is required'),
+    product_category_id: Yup.number().required('Product category is required'),
+    commerce_id: Yup.number().required('Commerce is required'),
+    product_code: Yup.string().required('Product Code is required'),
   });
 
   const defaultValues = useMemo(
     () => ({
       name: currentProduct?.name || '',
       description: currentProduct?.description || '',
-      subDescription: currentProduct?.subDescription || '',
-      images: currentProduct?.images || [],
-      //
-      code: currentProduct?.code || '',
-      sku: currentProduct?.sku || '',
-      price: currentProduct?.price || 0,
-      quantity: currentProduct?.quantity || 0,
-      priceSale: currentProduct?.priceSale || 0,
-      tags: currentProduct?.tags || [],
-      taxes: currentProduct?.taxes || 0,
-      gender: currentProduct?.gender || '',
-      category: currentProduct?.category || '',
-      colors: currentProduct?.colors || [],
-      sizes: currentProduct?.sizes || [],
-      newLabel: currentProduct?.newLabel || { enabled: false, content: '' },
-      saleLabel: currentProduct?.saleLabel || { enabled: false, content: '' },
+      image_url: currentProduct?.image_url || [],
+      product_code: currentProduct?.product_code || '',
+      commerce_id: currentProduct?.commerce_id || '',
+      product_category_id: currentProduct?.product_category_id || '',
     }),
     [currentProduct]
   );
@@ -117,17 +123,31 @@ export default function ProductNewEditForm({ currentProduct }) {
     }
   }, [currentProduct, defaultValues, reset]);
 
-  useEffect(() => {
-    if (includeTaxes) {
-      setValue('taxes', 0);
-    } else {
-      setValue('taxes', currentProduct?.taxes || 0);
-    }
-  }, [currentProduct?.taxes, includeTaxes, setValue]);
-
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const url = currentProduct
+        ? `http://localhost:3000/product/${currentProduct.id}`
+        : 'http://localhost:3000/product';
+
+      const method = currentProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al enviar los datos');
+      }
+
+      const responseData = await response.json();
+      console.log('Respuesta del servidor:', responseData);
+
       reset();
       enqueueSnackbar(currentProduct ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.product.root);
@@ -137,31 +157,52 @@ export default function ProductNewEditForm({ currentProduct }) {
     }
   });
 
+  async function handleFiles(acceptedFiles) {
+    const newFiles = await Promise.all(
+      acceptedFiles.slice(0, 1).map(
+        (file) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file); // Leer el archivo como base64
+            reader.onload = () =>
+              resolve({
+                ...file,
+                preview: reader.result, // Guardar base64 en la propiedad 'preview'
+              });
+            reader.onerror = (error) => reject(error);
+          })
+      )
+    );
+
+    return newFiles;
+  }
+
   const handleDrop = useCallback(
-    (acceptedFiles) => {
+    async (acceptedFiles) => {
       const files = values.images || [];
 
-      const newFiles = acceptedFiles.map((file) =>
-        Object.assign(file, {
-          preview: URL.createObjectURL(file),
-        })
-      );
+      if (files.length >= 1) {
+        enqueueSnackbar('Solo se permite una imagen', { variant: 'warning' });
+        return;
+      }
 
-      setValue('images', [...files, ...newFiles], { shouldValidate: true });
+      const newFiles = await handleFiles(acceptedFiles); // Espera la resolución de la promesa
+
+      setValue('image_url', [...files, ...newFiles], { shouldValidate: true });
     },
-    [setValue, values.images]
+    [setValue, values.images, enqueueSnackbar]
   );
 
   const handleRemoveFile = useCallback(
     (inputFile) => {
-      const filtered = values.images && values.images?.filter((file) => file !== inputFile);
-      setValue('images', filtered);
+      const filtered = values.image_url && values.image_url?.filter((file) => file !== inputFile);
+      setValue('image_url', filtered);
     },
-    [setValue, values.images]
+    [setValue, values.image_url]
   );
 
   const handleRemoveAllFiles = useCallback(() => {
-    setValue('images', []);
+    setValue('image_url', []);
   }, [setValue]);
 
   const handleChangeIncludeTaxes = useCallback((event) => {
@@ -173,11 +214,11 @@ export default function ProductNewEditForm({ currentProduct }) {
       {mdUp && (
         <Grid md={4}>
           <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Details
+            Detalles
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Title, short description, image...
-          </Typography>
+          </Typography> */}
         </Grid>
       )}
 
@@ -186,21 +227,21 @@ export default function ProductNewEditForm({ currentProduct }) {
           {!mdUp && <CardHeader title="Details" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label="Product Name" />
+            <RHFTextField name="name" label="Nombre del Producto" />
 
-            <RHFTextField name="subDescription" label="Sub Description" multiline rows={4} />
+            <RHFTextField name="description" label="Descripcion" multiline rows={4} />
 
-            <Stack spacing={1.5}>
+            {/* <Stack spacing={1.5}>
               <Typography variant="subtitle2">Content</Typography>
               <RHFEditor simple name="description" />
-            </Stack>
+            </Stack> */}
 
             <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Images</Typography>
+              <Typography variant="subtitle2">Imagen</Typography>
               <RHFUpload
                 multiple
                 thumbnail
-                name="images"
+                name="image_url"
                 maxSize={3145728}
                 onDrop={handleDrop}
                 onRemove={handleRemoveFile}
@@ -219,11 +260,11 @@ export default function ProductNewEditForm({ currentProduct }) {
       {mdUp && (
         <Grid md={4}>
           <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Properties
+            Propiedades
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Additional functions and attributes...
-          </Typography>
+          </Typography> */}
         </Grid>
       )}
 
@@ -241,9 +282,35 @@ export default function ProductNewEditForm({ currentProduct }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <RHFTextField name="code" label="Product Code" />
+              <RHFTextField name="product_code" label="Codigo de Producto" />
 
-              <RHFTextField name="sku" label="Product SKU" />
+              <RHFAutocomplete
+                name="commerce_id"
+                label="Comercio"
+                fullWidth
+                options={commerces}
+                getOptionLabel={(option) => option.name}
+                onChange={(_, value) => setValue('commerce_id', value?.id || '')}
+                value={commerces.find((commerce) => commerce.id === watch('commerce_id')) || null}
+                isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
+              />
+
+              <RHFAutocomplete
+                name="product_category_id"
+                label="Categoria del producto"
+                fullWidth
+                options={product_categories}
+                getOptionLabel={(option) => option.name}
+                onChange={(_, value) => setValue('product_category_id', value?.id || '')}
+                value={
+                  product_categories.find(
+                    (commerce) => commerce.id === watch('product_category_id')
+                  ) || null
+                }
+                isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
+              />
+
+              {/* <RHFTextField name="sku" label="Product SKU" />
 
               <RHFTextField
                 name="quantity"
@@ -251,9 +318,9 @@ export default function ProductNewEditForm({ currentProduct }) {
                 placeholder="0"
                 type="number"
                 InputLabelProps={{ shrink: true }}
-              />
+              /> */}
 
-              <RHFSelect native name="category" label="Category" InputLabelProps={{ shrink: true }}>
+              {/* <RHFSelect native name="category" label="Category" InputLabelProps={{ shrink: true }}>
                 {PRODUCT_CATEGORY_GROUP_OPTIONS.map((category) => (
                   <optgroup key={category.group} label={category.group}>
                     {category.classify.map((classify) => (
@@ -270,12 +337,12 @@ export default function ProductNewEditForm({ currentProduct }) {
                 name="colors"
                 label="Colors"
                 options={PRODUCT_COLOR_NAME_OPTIONS}
-              />
+              /> */}
 
-              <RHFMultiSelect checkbox name="sizes" label="Sizes" options={PRODUCT_SIZE_OPTIONS} />
+              {/* <RHFMultiSelect checkbox name="sizes" label="Sizes" options={PRODUCT_SIZE_OPTIONS} /> */}
             </Box>
 
-            <RHFAutocomplete
+            {/* <RHFAutocomplete
               name="tags"
               label="Tags"
               placeholder="+ Tags"
@@ -300,14 +367,14 @@ export default function ProductNewEditForm({ currentProduct }) {
                   />
                 ))
               }
-            />
+            /> */}
 
-            <Stack spacing={1}>
+            {/* <Stack spacing={1}>
               <Typography variant="subtitle2">Gender</Typography>
               <RHFMultiCheckbox row name="gender" spacing={2} options={PRODUCT_GENDER_OPTIONS} />
-            </Stack>
+            </Stack> */}
 
-            <Divider sx={{ borderStyle: 'dashed' }} />
+            {/* <Divider sx={{ borderStyle: 'dashed' }} />
 
             <Stack direction="row" alignItems="center" spacing={3}>
               <RHFSwitch name="saleLabel.enabled" label={null} sx={{ m: 0 }} />
@@ -327,7 +394,7 @@ export default function ProductNewEditForm({ currentProduct }) {
                 fullWidth
                 disabled={!values.newLabel.enabled}
               />
-            </Stack>
+            </Stack> */}
           </Stack>
         </Card>
       </Grid>
@@ -419,13 +486,9 @@ export default function ProductNewEditForm({ currentProduct }) {
     <>
       {mdUp && <Grid md={4} />}
       <Grid xs={12} md={8} sx={{ display: 'flex', alignItems: 'center' }}>
-        <FormControlLabel
-          control={<Switch defaultChecked />}
-          label="Publish"
-          sx={{ flexGrow: 1, pl: 3 }}
-        />
+        {/* <FormControlLabel control={<Switch defaultChecked />} sx={{ flexGrow: 1, pl: 3 }} /> */}
 
-        <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
+        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
           {!currentProduct ? 'Create Product' : 'Save Changes'}
         </LoadingButton>
       </Grid>
@@ -439,7 +502,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
         {renderProperties}
 
-        {renderPricing}
+        {/* {renderPricing} */}
 
         {renderActions}
       </Grid>

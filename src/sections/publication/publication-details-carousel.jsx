@@ -61,10 +61,10 @@ const StyledThumbnailsContainer = styled('div')(({ length, theme }) => ({
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsCarousel({ product }) {
+export default function PublicationDetailsCarousel({ publication }) {
   const theme = useTheme();
 
-  const slides = product.images.map((img) => ({
+  const slides = publication.images.map((img) => ({
     src: img,
   }));
 
@@ -186,6 +186,6 @@ export default function ProductDetailsCarousel({ product }) {
   );
 }
 
-ProductDetailsCarousel.propTypes = {
-  product: PropTypes.object,
+PublicationDetailsCarousel.propTypes = {
+  publication: PropTypes.object,
 };

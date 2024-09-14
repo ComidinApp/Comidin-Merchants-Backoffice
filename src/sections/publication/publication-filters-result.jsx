@@ -11,7 +11,7 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function ProductFiltersResult({
+export default function PublicationFiltersResult({
   filters,
   onFilters,
   //
@@ -126,7 +126,7 @@ export default function ProductFiltersResult({
   );
 }
 
-ProductFiltersResult.propTypes = {
+PublicationFiltersResult.propTypes = {
   canReset: PropTypes.bool,
   filters: PropTypes.object,
   onFilters: PropTypes.func,

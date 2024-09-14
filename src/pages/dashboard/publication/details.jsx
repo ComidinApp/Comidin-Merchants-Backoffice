@@ -2,11 +2,11 @@ import { Helmet } from 'react-helmet-async';
 
 import { useParams } from 'src/routes/hooks';
 
-import { ProductDetailsView } from 'src/sections/product/view';
+import { PublicationDetailsView } from 'src/sections/publication/view';
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsPage() {
+export default function PublicationDetailsPage() {
   const params = useParams();
 
   const { id } = params;
@@ -14,10 +14,10 @@ export default function ProductDetailsPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Product Details</title>
+        <title> Dashboard: Publication Details</title>
       </Helmet>
 
-      <ProductDetailsView id={`${id}`} />
+      <PublicationDetailsView id={`${id}`} />
     </>
   );
 }

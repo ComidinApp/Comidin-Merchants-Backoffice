@@ -4,19 +4,19 @@ import Container from '@mui/material/Container';
 
 import { paths } from 'src/routes/paths';
 
-import { useGetProduct } from 'src/api/product';
+import { useGetPublication } from 'src/api/publications';
 
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
-import ProductNewEditForm from '../product-new-edit-form';
+import PublicationNewEditForm from '../publication-new-edit-form';
 
 // ----------------------------------------------------------------------
 
-export default function ProductEditView({ id }) {
+export default function PublicationEditView({ id }) {
   const settings = useSettingsContext();
 
-  const { product: currentProduct } = useGetProduct(id);
+  const { publication: currentPublication } = useGetPublication(id);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
@@ -25,21 +25,21 @@ export default function ProductEditView({ id }) {
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
           {
-            name: 'Product',
-            href: paths.dashboard.product.root,
+            name: 'Publication',
+            href: paths.dashboard.publication.root,
           },
-          { name: currentProduct?.name },
+          { name: currentPublication?.name },
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
         }}
       />
 
-      <ProductNewEditForm currentProduct={currentProduct} />
+      <PublicationNewEditForm currentPublication={currentPublication} />
     </Container>
   );
 }
 
-ProductEditView.propTypes = {
+PublicationEditView.propTypes = {
   id: PropTypes.string,
 };

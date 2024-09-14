@@ -3,24 +3,24 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Pagination, { paginationClasses } from '@mui/material/Pagination';
 
-import ProductItem from './product-item';
-import { ProductItemSkeleton } from './product-skeleton';
+import PublicationItem from './publication-item';
+import { PublicationItemSkeleton } from './publication-skeleton';
 
 // ----------------------------------------------------------------------
 
-export default function ProductList({ products, loading, ...other }) {
+export default function PublicationList({ publications, loading, ...other }) {
   const renderSkeleton = (
     <>
       {[...Array(16)].map((_, index) => (
-        <ProductItemSkeleton key={index} />
+        <PublicationItemSkeleton key={index} />
       ))}
     </>
   );
 
   const renderList = (
     <>
-      {products.map((product) => (
-        <ProductItem key={product.id} product={product} />
+      {publications.map((publication) => (
+        <PublicationItem key={publication.id} publication={publication} />
       ))}
     </>
   );
@@ -41,7 +41,7 @@ export default function ProductList({ products, loading, ...other }) {
         {loading ? renderSkeleton : renderList}
       </Box>
 
-      {products.length > 8 && (
+      {publications.length > 8 && (
         <Pagination
           count={8}
           sx={{
@@ -56,7 +56,7 @@ export default function ProductList({ products, loading, ...other }) {
   );
 }
 
-ProductList.propTypes = {
+PublicationList.propTypes = {
   loading: PropTypes.bool,
-  products: PropTypes.array,
+  publications: PropTypes.array,
 };

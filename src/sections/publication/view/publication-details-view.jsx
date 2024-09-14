@@ -14,19 +14,19 @@ import Typography from '@mui/material/Typography';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { useGetProduct } from 'src/api/product';
+import { useGetPublication } from 'src/api/publications';
 import { PRODUCT_PUBLISH_OPTIONS } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
 import EmptyContent from 'src/components/empty-content';
 import { useSettingsContext } from 'src/components/settings';
 
-import { ProductDetailsSkeleton } from '../product-skeleton';
-import ProductDetailsReview from '../product-details-review';
-import ProductDetailsSummary from '../product-details-summary';
-import ProductDetailsToolbar from '../product-details-toolbar';
-import ProductDetailsCarousel from '../product-details-carousel';
-import ProductDetailsDescription from '../product-details-description';
+import { PublicationDetailsSkeleton } from '../publication-skeleton';
+import PublicationDetailsReview from '../publication-details-review';
+import PublicationDetailsSummary from '../publication-details-summary';
+import PublicationDetailsToolbar from '../publication-details-toolbar';
+import PublicationDetailsCarousel from '../publication-details-carousel';
+import PublicationDetailsDescription from '../publication-details-description';
 
 // ----------------------------------------------------------------------
 
@@ -50,8 +50,8 @@ const SUMMARY = [
 
 // ----------------------------------------------------------------------
 
-export default function ProductDetailsView({ id }) {
-  const { product, productLoading, productError } = useGetProduct(id);
+export default function PublicationDetailsView({ id }) {
+  const { publication, publicationLoading, publicationError } = useGetPublication(id);
 
   const settings = useSettingsContext();
 
@@ -60,10 +60,10 @@ export default function ProductDetailsView({ id }) {
   const [publish, setPublish] = useState('');
 
   useEffect(() => {
-    if (product) {
-      setPublish(product?.publish);
+    if (publication) {
+      setPublish(publication?.publish);
     }
-  }, [product]);
+  }, [publication]);
 
   const handleChangePublish = useCallback((newValue) => {
     setPublish(newValue);
@@ -73,16 +73,16 @@ export default function ProductDetailsView({ id }) {
     setCurrentTab(newValue);
   }, []);
 
-  const renderSkeleton = <ProductDetailsSkeleton />;
+  const renderSkeleton = <PublicationDetailsSkeleton />;
 
   const renderError = (
     <EmptyContent
       filled
-      title={`${productError?.message}`}
+      title={`${publicationError?.message}`}
       action={
         <Button
           component={RouterLink}
-          href={paths.dashboard.product.root}
+          href={paths.dashboard.publication.root}
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" width={16} />}
           sx={{ mt: 3 }}
         >
@@ -93,12 +93,12 @@ export default function ProductDetailsView({ id }) {
     />
   );
 
-  const renderProduct = product && (
+  const renderPublication = publication && (
     <>
-      <ProductDetailsToolbar
-        backLink={paths.dashboard.product.root}
-        editLink={paths.dashboard.product.edit(`${product?.id}`)}
-        liveLink={paths.product.details(`${product?.id}`)}
+      <PublicationDetailsToolbar
+        backLink={paths.dashboard.publication.root}
+        editLink={paths.dashboard.publication.edit(`${publication?.id}`)}
+        /* liveLink={paths.publication.details(`${publication?.id}`)} */
         publish={publish || ''}
         onChangePublish={handleChangePublish}
         publishOptions={PRODUCT_PUBLISH_OPTIONS}
@@ -106,11 +106,11 @@ export default function ProductDetailsView({ id }) {
 
       <Grid container spacing={{ xs: 3, md: 5, lg: 8 }}>
         <Grid xs={12} md={6} lg={7}>
-          <ProductDetailsCarousel product={product} />
+          <PublicationDetailsCarousel publication={publication} />
         </Grid>
 
         <Grid xs={12} md={6} lg={5}>
-          <ProductDetailsSummary disabledActions product={product} />
+          <PublicationDetailsSummary disabledActions publication={publication} />
         </Grid>
       </Grid>
 
@@ -154,7 +154,7 @@ export default function ProductDetailsView({ id }) {
             },
             {
               value: 'reviews',
-              label: `Reviews (${product.reviews.length})`,
+              label: `Reviews (${publication.reviews.length})`,
             },
           ].map((tab) => (
             <Tab key={tab.value} value={tab.value} label={tab.label} />
@@ -162,15 +162,15 @@ export default function ProductDetailsView({ id }) {
         </Tabs>
 
         {currentTab === 'description' && (
-          <ProductDetailsDescription description={product?.description} />
+          <PublicationDetailsDescription description={publication?.description} />
         )}
 
         {currentTab === 'reviews' && (
-          <ProductDetailsReview
-            ratings={product.ratings}
-            reviews={product.reviews}
-            totalRatings={product.totalRatings}
-            totalReviews={product.totalReviews}
+          <PublicationDetailsReview
+            ratings={publication.ratings}
+            reviews={publication.reviews}
+            totalRatings={publication.totalRatings}
+            totalReviews={publication.totalReviews}
           />
         )}
       </Card>
@@ -179,15 +179,15 @@ export default function ProductDetailsView({ id }) {
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
-      {productLoading && renderSkeleton}
+      {publicationLoading && renderSkeleton}
 
-      {productError && renderError}
+      {publicationError && renderError}
 
-      {product && renderProduct}
+      {publication && renderPublication}
     </Container>
   );
 }
 
-ProductDetailsView.propTypes = {
+PublicationDetailsView.propTypes = {
   id: PropTypes.string,
 };

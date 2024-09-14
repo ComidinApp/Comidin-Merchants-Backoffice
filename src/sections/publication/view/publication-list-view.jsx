@@ -21,7 +21,7 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { useGetProducts } from 'src/api/product';
+import { useGetPublications } from 'src/api/publications';
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
@@ -31,15 +31,15 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
-import ProductTableToolbar from '../product-table-toolbar';
-import ProductTableFiltersResult from '../product-table-filters-result';
+import PublicationTableToolbar from '../publication-table-toolbar';
+import PublicationTableFiltersResult from '../publication-table-filters-result';
 import {
   RenderCellStock,
   RenderCellPrice,
   RenderCellPublish,
-  RenderCellProduct,
+  RenderCellPublication,
   RenderCellCreatedAt,
-} from '../product-table-row';
+} from '../publication-table-row';
 
 // ----------------------------------------------------------------------
 
@@ -61,7 +61,7 @@ const HIDE_COLUMNS_TOGGLABLE = ['category', 'actions'];
 
 // ----------------------------------------------------------------------
 
-export default function ProductListView() {
+export default function PublicationListView() {
   const { enqueueSnackbar } = useSnackbar();
 
   const confirmRows = useBoolean();
@@ -70,7 +70,7 @@ export default function ProductListView() {
 
   const settings = useSettingsContext();
 
-  const { products, productsLoading } = useGetProducts();
+  const { publications, publicationsLoading } = useGetPublications();
 
   const [tableData, setTableData] = useState([]);
 
@@ -81,10 +81,10 @@ export default function ProductListView() {
   const [columnVisibilityModel, setColumnVisibilityModel] = useState(HIDE_COLUMNS);
 
   useEffect(() => {
-    if (products.length) {
-      setTableData(products);
+    if (Array.isArray(publications) && publications.length) {
+      setTableData(publications);
     }
-  }, [products]);
+  }, [publications]);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -125,14 +125,14 @@ export default function ProductListView() {
 
   const handleEditRow = useCallback(
     (id) => {
-      router.push(paths.dashboard.product.edit(id));
+      router.push(paths.dashboard.publication.edit(id));
     },
     [router]
   );
 
   const handleViewRow = useCallback(
     (id) => {
-      router.push(paths.dashboard.product.details(id));
+      router.push(paths.dashboard.publication.details(id));
     },
     [router]
   );
@@ -145,11 +145,11 @@ export default function ProductListView() {
     },
     {
       field: 'name',
-      headerName: 'Product',
+      headerName: 'Publication',
       flex: 1,
       minWidth: 360,
       hideable: false,
-      renderCell: (params) => <RenderCellProduct params={params} />,
+      renderCell: (params) => <RenderCellPublication params={params} />,
     },
     {
       field: 'createdAt',
@@ -237,19 +237,19 @@ export default function ProductListView() {
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
             {
-              name: 'Product',
-              href: paths.dashboard.product.root,
+              name: 'Publication',
+              href: paths.dashboard.publication.root,
             },
             { name: 'List' },
           ]}
           action={
             <Button
               component={RouterLink}
-              href={paths.dashboard.product.new}
+              href={paths.dashboard.publication.new}
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New Product
+              New Publication
             </Button>
           }
           sx={{
@@ -273,7 +273,7 @@ export default function ProductListView() {
             disableRowSelectionOnClick
             rows={dataFiltered}
             columns={columns}
-            loading={productsLoading}
+            loading={publicationsLoading}
             getRowHeight={() => 'auto'}
             pageSizeOptions={[5, 10, 25]}
             initialState={{
@@ -290,7 +290,7 @@ export default function ProductListView() {
               toolbar: () => (
                 <>
                   <GridToolbarContainer>
-                    <ProductTableToolbar
+                    <PublicationTableToolbar
                       filters={filters}
                       onFilters={handleFilters}
                       stockOptions={PRODUCT_STOCK_OPTIONS}
@@ -324,7 +324,7 @@ export default function ProductListView() {
                   </GridToolbarContainer>
 
                   {canReset && (
-                    <ProductTableFiltersResult
+                    <PublicationTableFiltersResult
                       filters={filters}
                       onFilters={handleFilters}
                       onResetFilters={handleResetFilters}
@@ -378,11 +378,11 @@ function applyFilter({ inputData, filters }) {
   const { stock, publish } = filters;
 
   if (stock.length) {
-    inputData = inputData.filter((product) => stock.includes(product.inventoryType));
+    inputData = inputData.filter((publication) => stock.includes(publication.inventoryType));
   }
 
   if (publish.length) {
-    inputData = inputData.filter((product) => publish.includes(product.publish));
+    inputData = inputData.filter((publication) => publish.includes(publication.publish));
   }
 
   return inputData;

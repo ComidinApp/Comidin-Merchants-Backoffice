@@ -50,9 +50,9 @@ export default function Upload({
     <Stack spacing={3} alignItems="center" justifyContent="center" flexWrap="wrap">
       <UploadIllustration sx={{ width: 1, maxWidth: 200 }} />
       <Stack spacing={1} sx={{ textAlign: 'center' }}>
-        <Typography variant="h6">Drop or Select file</Typography>
+        <Typography variant="h6">Soltar o seleccionar archivo</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Drop files here or click
+          Suelte archivos aquí o haga clic en
           <Box
             component="span"
             sx={{
@@ -61,9 +61,9 @@ export default function Upload({
               textDecoration: 'underline',
             }}
           >
-            browse
+            explorar
           </Box>
-          thorough your machine
+          en su máquina
         </Typography>
       </Stack>
     </Stack>
@@ -99,7 +99,7 @@ export default function Upload({
         <MultiFilePreview files={files} thumbnail={thumbnail} onRemove={onRemove} />
       </Box>
 
-      <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
+      {/* <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
         {onRemoveAll && (
           <Button color="inherit" variant="outlined" size="small" onClick={onRemoveAll}>
             Remove All
@@ -116,7 +116,7 @@ export default function Upload({
             Upload
           </Button>
         )}
-      </Stack>
+      </Stack> */}
     </>
   );
 

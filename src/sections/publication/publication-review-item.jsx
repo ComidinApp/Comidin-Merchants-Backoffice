@@ -13,7 +13,7 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-export default function ProductReviewItem({ review }) {
+export default function PublicationReviewItem({ review }) {
   const { name, rating, comment, postedAt, avatarUrl, attachments, isPurchased } = review;
 
   const renderInfo = (
@@ -118,6 +118,6 @@ export default function ProductReviewItem({ review }) {
   );
 }
 
-ProductReviewItem.propTypes = {
+PublicationReviewItem.propTypes = {
   review: PropTypes.object,
 };

@@ -44,7 +44,7 @@ import FormProvider, {
 
 // ----------------------------------------------------------------------
 
-export default function ProductNewEditForm({ currentProduct }) {
+export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
 
   const mdUp = useResponsive('up', 'md');
@@ -53,7 +53,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
-  const NewProductSchema = Yup.object().shape({
+  const NewPublicationSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
     images: Yup.array().min(1, 'Images is required'),
     tags: Yup.array().min(2, 'Must have at least 2 tags'),
@@ -74,30 +74,30 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const defaultValues = useMemo(
     () => ({
-      name: currentProduct?.name || '',
-      description: currentProduct?.description || '',
-      subDescription: currentProduct?.subDescription || '',
-      images: currentProduct?.images || [],
+      name: currentPublication?.name || '',
+      description: currentPublication?.description || '',
+      subDescription: currentPublication?.subDescription || '',
+      images: currentPublication?.images || [],
       //
-      code: currentProduct?.code || '',
-      sku: currentProduct?.sku || '',
-      price: currentProduct?.price || 0,
-      quantity: currentProduct?.quantity || 0,
-      priceSale: currentProduct?.priceSale || 0,
-      tags: currentProduct?.tags || [],
-      taxes: currentProduct?.taxes || 0,
-      gender: currentProduct?.gender || '',
-      category: currentProduct?.category || '',
-      colors: currentProduct?.colors || [],
-      sizes: currentProduct?.sizes || [],
-      newLabel: currentProduct?.newLabel || { enabled: false, content: '' },
-      saleLabel: currentProduct?.saleLabel || { enabled: false, content: '' },
+      code: currentPublication?.code || '',
+      sku: currentPublication?.sku || '',
+      price: currentPublication?.price || 0,
+      quantity: currentPublication?.quantity || 0,
+      priceSale: currentPublication?.priceSale || 0,
+      tags: currentPublication?.tags || [],
+      taxes: currentPublication?.taxes || 0,
+      gender: currentPublication?.gender || '',
+      category: currentPublication?.category || '',
+      colors: currentPublication?.colors || [],
+      sizes: currentPublication?.sizes || [],
+      newLabel: currentPublication?.newLabel || { enabled: false, content: '' },
+      saleLabel: currentPublication?.saleLabel || { enabled: false, content: '' },
     }),
-    [currentProduct]
+    [currentPublication]
   );
 
   const methods = useForm({
-    resolver: yupResolver(NewProductSchema),
+    resolver: yupResolver(NewPublicationSchema),
     defaultValues,
   });
 
@@ -112,25 +112,25 @@ export default function ProductNewEditForm({ currentProduct }) {
   const values = watch();
 
   useEffect(() => {
-    if (currentProduct) {
+    if (currentPublication) {
       reset(defaultValues);
     }
-  }, [currentProduct, defaultValues, reset]);
+  }, [currentPublication, defaultValues, reset]);
 
   useEffect(() => {
     if (includeTaxes) {
       setValue('taxes', 0);
     } else {
-      setValue('taxes', currentProduct?.taxes || 0);
+      setValue('taxes', currentPublication?.taxes || 0);
     }
-  }, [currentProduct?.taxes, includeTaxes, setValue]);
+  }, [currentPublication?.taxes, includeTaxes, setValue]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
-      enqueueSnackbar(currentProduct ? 'Update success!' : 'Create success!');
-      router.push(paths.dashboard.product.root);
+      enqueueSnackbar(currentPublication ? 'Update success!' : 'Create success!');
+      router.push(paths.dashboard.publication.root);
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
@@ -186,7 +186,7 @@ export default function ProductNewEditForm({ currentProduct }) {
           {!mdUp && <CardHeader title="Details" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label="Product Name" />
+            <RHFTextField name="name" label="Publication Name" />
 
             <RHFTextField name="subDescription" label="Sub Description" multiline rows={4} />
 
@@ -241,9 +241,9 @@ export default function ProductNewEditForm({ currentProduct }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <RHFTextField name="code" label="Product Code" />
+              <RHFTextField name="code" label="Publication Code" />
 
-              <RHFTextField name="sku" label="Product SKU" />
+              <RHFTextField name="sku" label="Publication SKU" />
 
               <RHFTextField
                 name="quantity"
@@ -426,7 +426,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         />
 
         <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
-          {!currentProduct ? 'Create Product' : 'Save Changes'}
+          {!currentPublication ? 'Create Publication' : 'Save Changes'}
         </LoadingButton>
       </Grid>
     </>
@@ -447,6 +447,6 @@ export default function ProductNewEditForm({ currentProduct }) {
   );
 }
 
-ProductNewEditForm.propTypes = {
-  currentProduct: PropTypes.object,
+PublicationNewEditForm.propTypes = {
+  currentPublication: PropTypes.object,
 };

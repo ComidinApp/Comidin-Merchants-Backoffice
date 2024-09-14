@@ -5,34 +5,34 @@ import { paths } from 'src/routes/paths';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
-import ProductNewEditForm from '../product-new-edit-form';
+import PublicationNewEditForm from '../publication-new-edit-form';
 
 // ----------------------------------------------------------------------
 
-export default function ProductCreateView() {
+export default function PublicationCreateView() {
   const settings = useSettingsContext();
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Create a new product"
+        heading="Create a new publication"
         links={[
           {
             name: 'Dashboard',
             href: paths.dashboard.root,
           },
           {
-            name: 'Product',
-            href: paths.dashboard.product.root,
+            name: 'Publication',
+            href: paths.dashboard.publication.root,
           },
-          { name: 'New product' },
+          { name: 'New publication' },
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
         }}
       />
 
-      <ProductNewEditForm />
+      <PublicationNewEditForm />
     </Container>
   );
 }
