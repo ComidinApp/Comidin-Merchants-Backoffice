@@ -79,7 +79,7 @@ const StyledNavItem = styled(ListItemButton, {
     position: 'absolute',
     backgroundColor: 'currentColor',
     ...(active && {
-      color: theme.palette.primary.main,
+      color: theme.palette.primary.orange,
     }),
   };
 

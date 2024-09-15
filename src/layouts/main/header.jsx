@@ -47,15 +47,7 @@ export default function Header() {
             easing: theme.transitions.easing.easeInOut,
             duration: theme.transitions.duration.shorter,
           }),
-         
-          // ...(offsetTop && {
-          //   ...bgBlur({
-          //     color: theme.palette.background.default,
-          //   }),
-          //   height: {
-          //     md: HEADER.H_DESKTOP_OFFSET,
-          //   },
-          // }),
+          backgroundColor: theme.palette.background.orange,
         }}
       >
         <Container sx={{ height: 1, display: 'flex', alignItems: 'center' }}>
@@ -74,7 +66,7 @@ export default function Header() {
                 underline="none"
                 sx={{ ml: 1 }}
               />
-                
+
             }
           >
             <Logo />
@@ -90,11 +82,26 @@ export default function Header() {
               target="_blank"
               rel="noopener"
               href={paths.authDemo.classic.register}
+              sx={{
+                backgroundColor: theme.palette.primary.darker,
+                color: theme.palette.primary.contrastText,
+                ":hover": {
+                  backgroundColor: theme.palette.primary.dark,
+                }
+              }}
             >
               Registra tu Comercio
             </Button>
 
-            {mdUp && <LoginButton />}
+            {mdUp && <LoginButton
+              sx={{
+                backgroundColor: theme.palette.primary.contrastText,
+                color: theme.palette.primary.darker,
+                ":hover": {
+                  backgroundColor: theme.palette.primary.lighter,
+                }
+              }}
+            />}
 
             {/* <SettingsButton
               sx={{

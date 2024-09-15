@@ -58,6 +58,9 @@ export default function NavList({ data }) {
         externalLink={data.path.includes('http')}
         //
         active={active}
+        sx={{
+          color: theme.palette.primary.contrastText,
+        }}
       />
 
       {!!data.children && openMenu && (
