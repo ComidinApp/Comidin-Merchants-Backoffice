@@ -10,7 +10,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 export default function TablePaginationCustom({
   dense,
   onChangeDense,
-  rowsPerPageOptions = [5, 10, 25],
+  rowsPerPageOptions = [5, 10, 25, 50, 100],
   sx,
   ...other
 }) {
@@ -27,7 +27,7 @@ export default function TablePaginationCustom({
 
       {onChangeDense && (
         <FormControlLabel
-          label="Dense"
+          label="Reducir"
           control={<Switch checked={dense} onChange={onChangeDense} />}
           sx={{
             pl: 2,

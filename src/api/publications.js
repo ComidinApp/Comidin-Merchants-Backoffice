@@ -6,20 +6,22 @@ import { fetcher, endpoints } from 'src/utils/axios';
 // ----------------------------------------------------------------------
 
 export function useGetPublications() {
-  const URL = endpoints.product.list;
+  const URL = 'http://localhost:3000/publication';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
+  console.log(data);
 
   const memoizedValue = useMemo(
     () => ({
-      publications: data?.products || [],
+      publications: data || [],
       publicationsLoading: isLoading,
       publicationsError: error,
       publicationsValidating: isValidating,
-      publicationsEmpty: !isLoading && !data?.products.length,
+      publicationsEmpty: !isLoading && !data,
     }),
-    [data?.products, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating]
   );
+  console.log(memoizedValue);
 
   return memoizedValue;
 }

@@ -36,6 +36,8 @@ import PublicationTableFiltersResult from '../publication-table-filters-result';
 import {
   RenderCellStock,
   RenderCellPrice,
+  RenderCellDiscountedPrice,
+  RenderCellDiscount,
   RenderCellPublish,
   RenderCellPublication,
   RenderCellCreatedAt,
@@ -44,8 +46,8 @@ import {
 // ----------------------------------------------------------------------
 
 const PUBLISH_OPTIONS = [
-  { value: 'published', label: 'Published' },
-  { value: 'draft', label: 'Draft' },
+  { value: 'active', label: 'Activo' },
+  { value: 'inactive', label: 'Inactivo' },
 ];
 
 const defaultFilters = {
@@ -145,20 +147,20 @@ export default function PublicationListView() {
     },
     {
       field: 'name',
-      headerName: 'Publication',
+      headerName: 'Publicacion',
       flex: 1,
       minWidth: 360,
       hideable: false,
       renderCell: (params) => <RenderCellPublication params={params} />,
     },
     {
-      field: 'createdAt',
-      headerName: 'Create at',
+      field: 'expiration_date',
+      headerName: 'Fecha Expiracion',
       width: 160,
       renderCell: (params) => <RenderCellCreatedAt params={params} />,
     },
     {
-      field: 'inventoryType',
+      field: 'stock',
       headerName: 'Stock',
       width: 160,
       type: 'singleSelect',
@@ -167,14 +169,28 @@ export default function PublicationListView() {
     },
     {
       field: 'price',
-      headerName: 'Price',
+      headerName: 'Precio',
       width: 140,
       editable: true,
       renderCell: (params) => <RenderCellPrice params={params} />,
     },
     {
-      field: 'publish',
-      headerName: 'Publish',
+      field: 'discount_percentaje',
+      headerName: 'Descuento',
+      width: 140,
+      editable: true,
+      renderCell: (params) => <RenderCellDiscount params={params} />,
+    },
+    {
+      field: 'discounted_price',
+      headerName: 'Precio con descuento',
+      width: 140,
+      editable: true,
+      renderCell: (params) => <RenderCellDiscountedPrice params={params} />,
+    },
+    {
+      field: 'is_active',
+      headerName: 'Activo',
       width: 110,
       type: 'singleSelect',
       editable: true,
@@ -233,15 +249,8 @@ export default function PublicationListView() {
         }}
       >
         <CustomBreadcrumbs
-          heading="List"
-          links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
-            {
-              name: 'Publication',
-              href: paths.dashboard.publication.root,
-            },
-            { name: 'List' },
-          ]}
+          heading="Listado de Publicaciones"
+          links={[{ name: '' }]}
           action={
             <Button
               component={RouterLink}
@@ -249,7 +258,7 @@ export default function PublicationListView() {
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New Publication
+              Agregar Publicación
             </Button>
           }
           sx={{

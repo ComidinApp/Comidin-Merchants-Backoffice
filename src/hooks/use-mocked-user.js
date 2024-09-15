@@ -15,10 +15,10 @@ import { _mock } from 'src/_mock';
 export function useMockedUser() {
   const user = {
     id: '8864c717-587d-472a-929a-8e5f298024da-0',
-    displayName: 'Lionel Messi',
-    email: 'demo@minimals.cc',
+    displayName: 'Juan Donalisio',
+    email: 'jpdona@hotmail.com',
     password: 'demo1234',
-    photoURL: _mock.image.avatar(24),
+    photoURL: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/icecream.png',
     phoneNumber: '+40 777666555',
     country: 'United States',
     address: '90210 Broadway Blvd',

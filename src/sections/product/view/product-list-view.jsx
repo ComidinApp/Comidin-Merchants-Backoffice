@@ -257,12 +257,11 @@ export default function ProductListView() {
         }}
       >
         <CustomBreadcrumbs
-          heading="List"
+          heading="Listado de Productos"
           links={[
             {
-              name: 'Producto',
+              name: '',
             },
-            { name: 'Listado' },
           ]}
           action={
             <Button

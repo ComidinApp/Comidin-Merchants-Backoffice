@@ -46,14 +46,14 @@ import UserTableFiltersResult from '../user-table-filters-result';
 
 // ----------------------------------------------------------------------
 
-const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...USER_STATUS_OPTIONS];
+const STATUS_OPTIONS = [{ value: 'all', label: 'Todos' }, ...USER_STATUS_OPTIONS];
 
 const TABLE_HEAD = [
-  { id: 'name', label: 'Name' },
-  { id: 'phoneNumber', label: 'Phone Number', width: 180 },
-  { id: 'company', label: 'Company', width: 220 },
-  { id: 'role', label: 'Role', width: 180 },
-  { id: 'status', label: 'Status', width: 100 },
+  { id: 'name', label: 'Nombre' },
+  { id: 'phoneNumber', label: 'Telefono', width: 180 },
+  { id: 'company', label: 'Comercio', width: 220 },
+  { id: 'role', label: 'Rol', width: 180 },
+  { id: 'status', label: 'Estado', width: 100 },
   { id: '', width: 88 },
 ];
 
@@ -193,12 +193,8 @@ export default function UserListView() {
     <>
       <Container maxWidth={settings.themeStretch ? false : 'lg'}>
         <CustomBreadcrumbs
-          heading="List"
-          links={[
-            { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'User', href: paths.dashboard.user.root },
-            { name: 'List' },
-          ]}
+          heading="Lista de Usuarios"
+          links={[{ name: '' }]}
           action={
             <Button
               component={RouterLink}
@@ -206,7 +202,7 @@ export default function UserListView() {
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              New User
+              Agregar Usuario
             </Button>
           }
           sx={{

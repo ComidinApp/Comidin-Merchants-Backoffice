@@ -18,9 +18,8 @@ export default function ProductCreateView() {
         heading="Agregar nuevo producto"
         links={[
           {
-            name: 'Producto',
+            name: '',
           },
-          { name: 'Crear' },
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
