@@ -41,11 +41,11 @@ export default function OverviewAnalyticsView() {
             title={`Bienvenido de vuelta 👋 \n ${user?.displayName}`}
             description="Gracias por tu increible contribución, tu trabajo ha dejado una huella imborrale al mundo!"
             img={<SeoIllustration />}
-            action={
+            /* action={
               <Button variant="contained" color="primary">
                 Go Now
               </Button>
-            }
+            } */
           />
         </Grid>
         <Grid xs={12} md={4}>

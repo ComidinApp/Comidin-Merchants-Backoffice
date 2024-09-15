@@ -42,13 +42,13 @@ export default function SettingsDrawer() {
         Settings
       </Typography>
 
-      <Tooltip title="Reset">
+      {/* <Tooltip title="Reset">
         <IconButton onClick={settings.onReset}>
           <Badge color="error" variant="dot" invisible={!settings.canReset}>
             <Iconify icon="solar:restart-bold" />
           </Badge>
         </IconButton>
-      </Tooltip>
+      </Tooltip> */}
 
       <IconButton onClick={settings.onClose}>
         <Iconify icon="mingcute:close-line" />
@@ -59,7 +59,7 @@ export default function SettingsDrawer() {
   const renderMode = (
     <div>
       <Typography variant="caption" component="div" sx={{ ...labelStyles }}>
-        Mode
+        Modo
       </Typography>
 
       <BaseOptions
@@ -74,7 +74,7 @@ export default function SettingsDrawer() {
   const renderContrast = (
     <div>
       <Typography variant="caption" component="div" sx={{ ...labelStyles }}>
-        Contrast
+        Contraste
       </Typography>
 
       <BaseOptions
@@ -177,9 +177,9 @@ export default function SettingsDrawer() {
 
           {renderContrast}
 
-          {renderDirection}
+          {/* {renderDirection} */}
 
-          {renderLayout}
+          {/* {renderLayout} */}
 
           {renderStretch}
 

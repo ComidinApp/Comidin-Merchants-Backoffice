@@ -33,7 +33,7 @@ const TABS = [
   },
   {
     value: 'notifications',
-    label: 'Notifications',
+    label: 'Notificaciones',
     icon: <Iconify icon="solar:bell-bing-bold" width={24} />,
   },
   {

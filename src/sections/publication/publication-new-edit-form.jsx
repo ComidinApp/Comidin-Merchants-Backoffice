@@ -7,9 +7,13 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
+import Avatar from '@mui/material/Avatar';
+import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
@@ -17,11 +21,18 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemButton from '@mui/material/ListItemButton';
+import DialogContent from '@mui/material/DialogContent';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useResponsive } from 'src/hooks/use-responsive';
+import { useBoolean } from 'src/hooks/use-boolean';
+import { useGetProducts } from 'src/api/product';
+
+import Iconify from 'src/components/iconify';
 
 import {
   _tags,
@@ -48,14 +59,28 @@ import FormProvider, {
 export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
 
+  const dialog = useBoolean();
+
   const mdUp = useResponsive('up', 'md');
 
   const { enqueueSnackbar } = useSnackbar();
+
+  const { products, productsLoading } = useGetProducts();
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
   const [price, setPrice] = useState(0);
   const [discount, setDiscount] = useState(0);
+
+  const [selectedValue, setSelectedValue] = useState();
+
+  const handleClose = useCallback(
+    (value) => {
+      dialog.onFalse();
+      setSelectedValue(value);
+    },
+    [dialog]
+  );
 
   const handlePriceChange = (event) => {
     setPrice(event.target.value);
@@ -260,17 +285,58 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <RHFSelect native name="category" label="Producto" InputLabelProps={{ shrink: true }}>
-                {PRODUCT_CATEGORY_GROUP_OPTIONS.map((category) => (
-                  <optgroup key={category.group} label={category.group}>
-                    {category.classify.map((classify) => (
-                      <option key={classify} value={classify}>
-                        {classify}
-                      </option>
+              <Button variant="outlined" onClick={dialog.onTrue}>
+                {selectedValue ? (
+                  <>
+                    <Avatar alt={selectedValue.name} src={selectedValue.image_url} sx={{ mr: 2 }} />
+                    {selectedValue.name}
+                  </>
+                ) : (
+                  'Seleccionar Producto'
+                )}
+              </Button>
+
+              <Dialog
+                open={dialog.value}
+                onClose={() => handleClose(selectedValue)}
+                maxWidth="sm"
+                fullWidth
+              >
+                <DialogTitle>Productos</DialogTitle>
+
+                <DialogContent sx={{ p: 0 }}>
+                  <List
+                    sx={{
+                      maxHeight: '400px', // Altura máxima del diálogo
+                      overflow: 'auto', // Agregar scroll si se excede la altura
+                    }}
+                  >
+                    {products.map((product) => (
+                      <ListItemButton
+                        sx={{
+                          px: 2.5,
+                          py: 1.5,
+                          typography: 'subtitle1',
+                        }}
+                        onClick={() => handleClose(product)}
+                        key={product.id} // Se recomienda usar una propiedad única como 'id'
+                      >
+                        <Avatar alt={product.name} src={product.image_url} sx={{ mr: 2 }}>
+                          <Iconify icon="solar:user-rounded-bold" />
+                        </Avatar>
+                        <ListItemText primary={product.name} />
+                      </ListItemButton>
                     ))}
-                  </optgroup>
-                ))}
-              </RHFSelect>
+
+                    <ListItemButton autoFocus href={paths.dashboard.product.new}>
+                      <Avatar sx={{ mr: 2 }}>
+                        <Iconify icon="mingcute:add-line" />
+                      </Avatar>
+                      <ListItemText primary="Agregar Producto" />
+                    </ListItemButton>
+                  </List>
+                </DialogContent>
+              </Dialog>
 
               <DatePicker
                 label="Fecha de vencimiento"
@@ -287,18 +353,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 type="number"
                 InputLabelProps={{ shrink: true }}
               />
-
-              <RHFSelect native name="category" label="Comercio" InputLabelProps={{ shrink: true }}>
-                {PRODUCT_CATEGORY_GROUP_OPTIONS.map((category) => (
-                  <optgroup key={category.group} label={category.group}>
-                    {category.classify.map((classify) => (
-                      <option key={classify} value={classify}>
-                        {classify}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </RHFSelect>
 
               {/* <RHFMultiSelect
                 checkbox
