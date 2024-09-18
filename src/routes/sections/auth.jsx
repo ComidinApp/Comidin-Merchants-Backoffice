@@ -16,6 +16,13 @@ const AmplifyVerifyPage = lazy(() => import('src/pages/auth/amplify/verify'));
 const AmplifyNewPasswordPage = lazy(() => import('src/pages/auth/amplify/new-password'));
 const AmplifyForgotPasswordPage = lazy(() => import('src/pages/auth/amplify/forgot-password'));
 
+// COGNITO
+const CognitoLoginPage = lazy(() => import('src/pages/auth/cognito/login'));
+const CognitoRegisterPage = lazy(() => import('src/pages/auth/cognito/register'));
+const CognitoVerifyPage = lazy(() => import('src/pages/auth/cognito/verify'));
+const CognitoNewPasswordPage = lazy(() => import('src/pages/auth/cognito/new-password'));
+const CognitoForgotPasswordPage = lazy(() => import('src/pages/auth/cognito/forgot-password'));
+
 // JWT
 const JwtLoginPage = lazy(() => import('src/pages/auth/jwt/login'));
 const JwtRegisterPage = lazy(() => import('src/pages/auth/jwt/register'));
@@ -77,6 +84,49 @@ const authAmplify = {
         { path: 'verify', element: <AmplifyVerifyPage /> },
         { path: 'new-password', element: <AmplifyNewPasswordPage /> },
         { path: 'forgot-password', element: <AmplifyForgotPasswordPage /> },
+      ],
+    },
+  ],
+};
+
+const authCognito = {
+  path: 'cognito',
+  element: (
+    <Suspense fallback={<SplashScreen />}>
+      <Outlet />
+    </Suspense>
+  ),
+  children: [
+    {
+      path: 'login',
+      element: (
+        <GuestGuard>
+          <AuthClassicLayout>
+            <CognitoLoginPage />
+          </AuthClassicLayout>
+        </GuestGuard>
+      ),
+    },
+    {
+      path: 'register',
+      element: (
+        <GuestGuard>
+          <AuthClassicLayout title="Manage the job more effectively with Minimal">
+            <CognitoRegisterPage />
+          </AuthClassicLayout>
+        </GuestGuard>
+      ),
+    },
+    {
+      element: (
+        <CompactLayout>
+          <Outlet />
+        </CompactLayout>
+      ),
+      children: [
+        { path: 'verify', element: <CognitoVerifyPage /> },
+        { path: 'new-password', element: <CognitoNewPasswordPage /> },
+        { path: 'forgot-password', element: <CognitoForgotPasswordPage /> },
       ],
     },
   ],
@@ -233,6 +283,6 @@ const authSupabase = {
 export const authRoutes = [
   {
     path: 'auth',
-    children: [authAmplify, authJwt, authFirebase, authAuth0, authSupabase],
+    children: [authAmplify, authJwt, authFirebase, authAuth0, authSupabase, authCognito],
   },
 ];

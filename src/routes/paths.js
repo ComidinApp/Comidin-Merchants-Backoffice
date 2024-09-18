@@ -59,6 +59,13 @@ export const paths = {
       newPassword: `${ROOTS.AUTH}/amplify/new-password`,
       forgotPassword: `${ROOTS.AUTH}/amplify/forgot-password`,
     },
+    cognito: {
+      login: `${ROOTS.AUTH}/cognito/login`,
+      verify: `${ROOTS.AUTH}/cognito/verify`,
+      register: `${ROOTS.AUTH}/cognito/register`,
+      newPassword: `${ROOTS.AUTH}/cognito/new-password`,
+      forgotPassword: `${ROOTS.AUTH}/cognito/forgot-password`,
+    },
     jwt: {
       login: `${ROOTS.AUTH}/jwt/login`,
       register: `${ROOTS.AUTH}/jwt/register`,

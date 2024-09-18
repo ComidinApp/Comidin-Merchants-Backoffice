@@ -14,6 +14,7 @@ import {
 } from 'src/_mock';
 
 import { useSettingsContext } from 'src/components/settings';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import AppWelcome from '../app-welcome';
 import AppFeatured from '../app-featured';
@@ -30,6 +31,7 @@ import AnalyticsConversionRates from '../analytics-conversion-rates';
 // ----------------------------------------------------------------------
 
 export default function OverviewAnalyticsView() {
+  console.log(useAuthContext());
   const { user } = useMockedUser();
   const settings = useSettingsContext();
 

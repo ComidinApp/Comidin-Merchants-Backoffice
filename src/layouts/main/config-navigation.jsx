@@ -57,7 +57,7 @@ export const navConfig = [
       {
         subheader: 'Auth Demo',
         items: [
-          { title: 'Login', path: paths.authDemo.classic.login },
+          { title: 'Login', path: paths.auth.cognito.login },
           { title: 'Register', path: paths.authDemo.classic.register },
           {
             title: 'Forgot password',
@@ -65,7 +65,7 @@ export const navConfig = [
           },
           { title: 'New password', path: paths.authDemo.classic.newPassword },
           { title: 'Verify', path: paths.authDemo.classic.verify },
-          { title: 'Login (modern)', path: paths.authDemo.modern.login },
+          { title: 'Login (modern)', path: paths.auth.cognito.login },
           { title: 'Register (modern)', path: paths.authDemo.modern.register },
           {
             title: 'Forgot password (modern)',

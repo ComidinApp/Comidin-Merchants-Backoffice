@@ -21,11 +21,12 @@ import { SettingsDrawer, SettingsProvider } from 'src/components/settings';
 
 import { CheckoutProvider } from 'src/sections/checkout/context';
 
-import { AuthProvider } from 'src/auth/context/jwt';
+// import { AuthProvider } from 'src/auth/context/jwt';
 // import { AuthProvider } from 'src/auth/context/auth0';
 // import { AuthProvider } from 'src/auth/context/amplify';
 // import { AuthProvider } from 'src/auth/context/firebase';
 // import { AuthProvider } from 'src/auth/context/supabase';
+import { AuthProvider } from 'src/auth/context/cognito';
 
 // ----------------------------------------------------------------------
 
