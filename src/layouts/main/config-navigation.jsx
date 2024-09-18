@@ -15,14 +15,14 @@ export const navConfig = [
   {
     title: 'Acerca de Nosotros',
     icon: <Iconify icon="solar:atom-bold-duotone" />,
-    path: paths.components,
+    path: paths.about,
   },
   {
     title: 'Preguntas Frecuentes',
     icon: <Iconify icon="solar:atom-bold-duotone" />,
-    path: paths.components,
+    path: paths.faqs,
   },
-  {
+  /* {
     title: 'Components',
     icon: <Iconify icon="solar:atom-bold-duotone" />,
     path: paths.components,
@@ -91,7 +91,7 @@ export const navConfig = [
         items: [{ title: 'Dashboard', path: PATH_AFTER_LOGIN }],
       },
     ],
-  },
+  }, */
   /*   {
     title: 'Docs',
     icon: <Iconify icon="solar:notebook-bold-duotone" />,

@@ -166,6 +166,38 @@ export function useNavData() {
             ], */
           },
 
+          // SUBCRIPCIONES
+          {
+            title: t('subcripciones'),
+            path: paths.dashboard.pricing,
+            icon: ICONS.label,
+            /* children: [
+              { title: t('lista'), path: paths.dashboard.invoice.root },
+              {
+                title: t('detalle'),
+                path: paths.dashboard.invoice.demo.details,
+              },
+              { title: t('crear'), path: paths.dashboard.invoice.new },
+              { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
+            ], */
+          },
+
+          // COMMERCES
+          {
+            title: t('comercios'),
+            path: paths.about,
+            icon: ICONS.banking,
+            /* children: [
+              { title: t('lista'), path: paths.dashboard.invoice.root },
+              {
+                title: t('detalle'),
+                path: paths.dashboard.invoice.demo.details,
+              },
+              { title: t('crear'), path: paths.dashboard.invoice.new },
+              { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
+            ], */
+          },
+
           /* // BLOG
           {
             title: t('blog'),

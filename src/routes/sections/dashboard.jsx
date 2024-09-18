@@ -7,7 +7,8 @@ import DashboardLayout from 'src/layouts/dashboard';
 import { LoadingScreen } from 'src/components/loading-screen';
 
 // ----------------------------------------------------------------------
-
+// PRICING
+const PricingPage = lazy(() => import('src/pages/pricing'));
 // OVERVIEW
 const IndexPage = lazy(() => import('src/pages/dashboard/app'));
 const OverviewEcommercePage = lazy(() => import('src/pages/dashboard/ecommerce'));
@@ -168,6 +169,7 @@ export const dashboardRoutes = [
           { path: ':id/edit', element: <TourEditPage /> },
         ],
       },
+      { path: 'pricing', element: <PricingPage /> },
       { path: 'file-manager', element: <FileManagerPage /> },
       { path: 'mail', element: <MailPage /> },
       { path: 'chat', element: <ChatPage /> },

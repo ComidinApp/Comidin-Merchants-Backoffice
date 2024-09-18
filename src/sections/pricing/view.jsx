@@ -35,17 +35,17 @@ export default function PricingView() {
       }}
     >
       <Typography variant="h3" align="center" sx={{ mb: 2 }}>
-        Flexible plans for your
-        <br /> {`community's size and needs`}
+        Planes flexibles para el
+        <br /> tamaño y necesdadesde tu comercio
       </Typography>
 
       <Typography align="center" sx={{ color: 'text.secondary' }}>
-        Choose your plan and make modern online conversation magic
+        Elegi tu plan y maximiza el alcance de tu negocio!
       </Typography>
 
       <Box sx={{ mt: 9, mb: 5, position: 'relative' }}>
         <Stack direction="row" alignItems="center" justifyContent="center">
-          <Typography variant="overline">MONTHLY</Typography>
+          <Typography variant="overline">MENSUAL</Typography>
 
           <Switch sx={{ mx: 1 }} />
 
@@ -60,11 +60,11 @@ export default function PricingView() {
                   typography: 'overline',
                 }}
               >
-                save 10%
+                Ahorra 10%
               </Box>
             </Stack>
 
-            <Typography variant="overline">YEARLY</Typography>
+            <Typography variant="overline">Anual</Typography>
           </Box>
         </Stack>
       </Box>

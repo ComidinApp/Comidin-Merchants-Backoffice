@@ -18,11 +18,11 @@ import Iconify from 'src/components/iconify';
 export default function PricingCard({ card, sx, ...other }) {
   const { subscription, price, caption, lists, labelAction } = card;
 
-  const basic = subscription === 'basic';
+  const basic = subscription === 'Básica';
 
-  const starter = subscription === 'starter';
+  const starter = subscription === 'Estándar';
 
-  const premium = subscription === 'premium';
+  const premium = subscription === 'Premium';
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -46,7 +46,7 @@ export default function PricingCard({ card, sx, ...other }) {
   );
 
   const renderPrice = basic ? (
-    <Typography variant="h2">Free</Typography>
+    <Typography variant="h2">Gratis</Typography>
   ) : (
     <Stack direction="row">
       <Typography variant="h4">$</Typography>
@@ -62,7 +62,7 @@ export default function PricingCard({ card, sx, ...other }) {
           typography: 'body2',
         }}
       >
-        / mo
+        / mes
       </Typography>
     </Stack>
   );
@@ -71,11 +71,11 @@ export default function PricingCard({ card, sx, ...other }) {
     <Stack spacing={2}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Box component="span" sx={{ typography: 'overline' }}>
-          Features
+          Características
         </Box>
-        <Link variant="body2" color="inherit" underline="always">
+        {/* <Link variant="body2" color="inherit" underline="always">
           All
-        </Link>
+        </Link> */}
       </Stack>
 
       {lists.map((item) => (

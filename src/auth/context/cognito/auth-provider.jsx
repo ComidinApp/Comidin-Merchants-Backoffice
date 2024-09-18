@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import axios, { endpoints } from 'src/utils/axios';
 import {
   sendEmployeeVerificationCode,
-  useGetEmployee,
+  getEmployee,
   changeEmployeePassword,
 } from 'src/api/employee';
 import { CognitoUserPool, CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
@@ -22,14 +22,6 @@ const poolData = {
   ClientId: client_id,
 };
 const userPool = new CognitoUserPool(poolData);
-
-const setSession = (serviceToken) => {
-  if (serviceToken) {
-    localStorage.setItem('serviceToken', serviceToken);
-  } else {
-    localStorage.removeItem('serviceToken');
-  }
-};
 
 // ----------------------------------------------------------------------
 
@@ -130,8 +122,10 @@ export function AuthProvider({ children }) {
       const authDetails = new AuthenticationDetails({ Username: email, Password: password });
 
       user.authenticateUser(authDetails, {
-        onSuccess: (session) => {
+        onSuccess: async (session) => {
           const accessToken = session.getIdToken().getJwtToken();
+          const my_employee = await getEmployee(email);
+          const info = my_employee.data;
           user.getUserAttributes((err, attributes) => {
             if (err) {
               console.error(err);
@@ -144,7 +138,7 @@ export function AuthProvider({ children }) {
 
             dispatch({
               type: 'LOGIN',
-              payload: { user: { ...userData, accessToken } },
+              payload: { user: { ...userData, accessToken, ...info } },
             });
           });
         },

@@ -5,23 +5,17 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
-export function useGetEmployee(email) {
-  const URL = `http://localhost:3000/employee/email/${email}`;
+export async function getEmployee(email) {
+  try {
+    const URL = `http://localhost:3000/employee/email/${email}`;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
-
-  const memoizedValue = useMemo(
-    () => ({
-      employee: data || null,
-      employeeLoading: isLoading,
-      employeeError: error,
-      employeeValidating: isValidating,
-    }),
-    [data, error, isLoading, isValidating]
-  );
-  console.log(memoizedValue);
-
-  return memoizedValue;
+    const response = await axios.get(URL);
+    console.log('test', response);
+    return response;
+  } catch (error) {
+    console.error('Error fetching employee:', error);
+    throw error;
+  }
 }
 
 export async function sendEmployeeVerificationCode(email) {

@@ -66,7 +66,6 @@ export default function Header() {
                 underline="none"
                 sx={{ ml: 1 }}
               />
-
             }
           >
             <Logo />
@@ -79,29 +78,30 @@ export default function Header() {
           <Stack alignItems="center" direction={{ xs: 'row', md: 'row-reverse' }}>
             <Button
               variant="contained"
-              target="_blank"
               rel="noopener"
-              href={paths.authDemo.classic.register}
+              href={paths.auth.cognito.register}
               sx={{
                 backgroundColor: theme.palette.primary.darker,
                 color: theme.palette.primary.contrastText,
-                ":hover": {
+                ':hover': {
                   backgroundColor: theme.palette.primary.dark,
-                }
+                },
               }}
             >
               Registra tu Comercio
             </Button>
 
-            {mdUp && <LoginButton
-              sx={{
-                backgroundColor: theme.palette.primary.contrastText,
-                color: theme.palette.primary.darker,
-                ":hover": {
-                  backgroundColor: theme.palette.primary.lighter,
-                }
-              }}
-            />}
+            {mdUp && (
+              <LoginButton
+                sx={{
+                  backgroundColor: theme.palette.primary.contrastText,
+                  color: theme.palette.primary.darker,
+                  ':hover': {
+                    backgroundColor: theme.palette.primary.lighter,
+                  },
+                }}
+              />
+            )}
 
             {/* <SettingsButton
               sx={{
