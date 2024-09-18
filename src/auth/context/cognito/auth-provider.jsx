@@ -117,16 +117,8 @@ export function AuthProvider({ children }) {
   // FORGOT PASSWORD
   const forgotPassword = useCallback(
     (email) => {
-      const user = new CognitoUser({ Username: email, Pool: userPool });
-      user.forgotPassword({
-        onSuccess: (data) => {
-          console.log('Código enviado: ', data);
-          navigate(paths.auth.cognito.newPassword);
-        },
-        onFailure: (err) => {
-          console.error(err);
-        },
-      });
+      sendEmployeeVerificationCode(email);
+      navigate(paths.auth.cognito.newPassword);
     },
     [navigate]
   );
@@ -194,8 +186,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   // CONFIRM NEW PASSWORD
-  const confirmPassword = useCallback((email, code, newPassword) => {
-    changeEmployeePassword(email, code, newPassword);
+  const confirmPassword = useCallback(async (email, code, newPassword) => {
+    await changeEmployeePassword(email, code, newPassword);
   }, []);
 
   // RESEND CONFIRMATION CODE
