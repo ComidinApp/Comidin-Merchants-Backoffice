@@ -49,7 +49,7 @@ export default function AboutTeam() {
 
       <m.div variants={varFade().inUp}>
         <Typography variant="h2" sx={{ my: 3 }}>
-          Great team is the key
+          Un gran equipo es la clave
         </Typography>
       </m.div>
 
@@ -61,8 +61,8 @@ export default function AboutTeam() {
             color: 'text.secondary',
           }}
         >
-          Minimal will provide you support if you have any problems, our support team will reply
-          within a day and we also have detailed documentation.
+          Comidin te brindará soporte si tienes algún problema, nuestro equipo de soporte te
+          responderá en cuanto antes.
         </Typography>
       </m.div>
 
@@ -103,7 +103,7 @@ export default function AboutTeam() {
         </CarouselArrows>
       </Box>
 
-      <Button
+      {/* <Button
         size="large"
         color="inherit"
         variant="outlined"
@@ -111,7 +111,7 @@ export default function AboutTeam() {
         sx={{ mx: 'auto' }}
       >
         All Members
-      </Button>
+      </Button> */}
     </Container>
   );
 }

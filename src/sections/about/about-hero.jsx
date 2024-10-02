@@ -21,7 +21,7 @@ export default function AboutHero() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundImage:
-          'url(/assets/background/overlay_1.svg), url(/assets/images/about/hero.jpg)',
+          'url(/assets/background/overlay_1.svg), url(/assets/images/about/hero_comidin.webp)',
       }}
     >
       <Container component={MotionContainer}>
@@ -35,13 +35,13 @@ export default function AboutHero() {
             },
           }}
         >
-          <TextAnimate text="Who" variants={varFade().inRight} sx={{ color: 'primary.main' }} />
+          <TextAnimate text="Quienes" variants={varFade().inRight} sx={{ color: 'primary.main' }} />
 
           <br />
 
           <Stack spacing={2} display="inline-flex" direction="row" sx={{ color: 'common.white' }}>
-            <TextAnimate text="we" />
-            <TextAnimate text="are?" />
+            <TextAnimate text="somos" />
+            <TextAnimate text="nosotros?" />
           </Stack>
 
           <m.div variants={varFade().inRight}>
@@ -53,8 +53,8 @@ export default function AboutHero() {
                 fontWeight: 'fontWeightSemiBold',
               }}
             >
-              Let&apos;s work together and
-              <br /> make awesome site easily
+              Trabajemos juntos para un planeta
+              <br /> más verde y próspero
             </Typography>
           </m.div>
         </Box>

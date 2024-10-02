@@ -48,7 +48,7 @@ export default function Upload({
 
   const renderPlaceholder = (
     <Stack spacing={3} alignItems="center" justifyContent="center" flexWrap="wrap">
-      <UploadIllustration sx={{ width: 1, maxWidth: 200 }} />
+      <UploadIllustration sx={{ width: 1, maxWidth: 130 }} />
       <Stack spacing={1} sx={{ textAlign: 'center' }}>
         <Typography variant="h6">Soltar o seleccionar archivo</Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>

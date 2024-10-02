@@ -43,7 +43,7 @@ export default function PricingView() {
         Elegi tu plan y maximiza el alcance de tu negocio!
       </Typography>
 
-      <Box sx={{ mt: 9, mb: 5, position: 'relative' }}>
+      {/* <Box sx={{ mt: 9, mb: 5, position: 'relative' }}>
         <Stack direction="row" alignItems="center" justifyContent="center">
           <Typography variant="overline">MENSUAL</Typography>
 
@@ -67,7 +67,7 @@ export default function PricingView() {
             <Typography variant="overline">Anual</Typography>
           </Box>
         </Stack>
-      </Box>
+      </Box> */}
 
       <Box
         gap={{ xs: 3, md: 0 }}

@@ -251,7 +251,7 @@ export default function HomeHero() {
           src={
             lightMode
               ? `/assets/images/home/hero/home_light.webp`
-              : `/assets/images/home/hero/dark_1.webp`
+              : `/assets/images/home/hero/home_light.webp`
           }
           sx={{ position: 'absolute', mt: -5 }}
         />
@@ -263,7 +263,7 @@ export default function HomeHero() {
           src={
             lightMode
               ? `/assets/images/home/hero/home_light.webp`
-              : `/assets/images/home/hero/dark_1.webp`
+              : `/assets/images/home/hero/home_light.webp`
           }
           sx={{ position: 'absolute' }}
         />
@@ -272,7 +272,11 @@ export default function HomeHero() {
       <Stack
         component={m.div}
         variants={varFade().in}
-        sx={{ width: 720, position: 'relative', ml: -5 }}
+        sx={{
+          width: 700,
+          position: 'relative',
+          marginRight: 2,
+        }}
       >
         <Box
           component={m.img}
@@ -282,7 +286,7 @@ export default function HomeHero() {
           src={
             lightMode
               ? `/assets/images/home/hero/light_2.webp`
-              : `/assets/images/home/hero/dark_2.webp`
+              : `/assets/images/home/hero/light_2.webp`
           }
           sx={{ position: 'absolute', mt: -5 }}
         />
@@ -294,7 +298,7 @@ export default function HomeHero() {
           src={
             lightMode
               ? `/assets/images/home/hero/light_2.webp`
-              : `/assets/images/home/hero/dark_2.webp`
+              : `/assets/images/home/hero/light_2.webp`
           }
           sx={{ position: 'absolute' }}
         />

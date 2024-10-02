@@ -6,10 +6,12 @@ import SimpleLayout from 'src/layouts/simple';
 import CompactLayout from 'src/layouts/compact';
 
 import { SplashScreen } from 'src/components/loading-screen';
+import { UnauthorizedCommerce } from 'src/sections/error';
 
 // ----------------------------------------------------------------------
 
 export const HomePage = lazy(() => import('src/pages/home'));
+const CommerceInactive = lazy(() => import('src/pages/commerce-unauthorized'));
 const Page500 = lazy(() => import('src/pages/500'));
 const Page403 = lazy(() => import('src/pages/403'));
 const Page404 = lazy(() => import('src/pages/404'));
@@ -84,6 +86,7 @@ export const mainRoutes = [
       </CompactLayout>
     ),
     children: [
+      { path: 'unauthorized-commerce', element: <UnauthorizedCommerce /> },
       { path: 'coming-soon', element: <ComingSoonPage /> },
       { path: 'maintenance', element: <MaintenancePage /> },
       { path: '500', element: <Page500 /> },

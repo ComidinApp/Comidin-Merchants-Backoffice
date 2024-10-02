@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useMemo, useEffect, useReducer, useCallback } from 'react';
 import { paths } from 'src/routes/paths';
 import { useNavigate } from 'react-router-dom';
+import { useSnackbar } from 'src/components/snackbar';
 
 import axios, { endpoints } from 'src/utils/axios';
 import {
@@ -64,6 +65,8 @@ export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const navigate = useNavigate();
 
+  const { enqueueSnackbar } = useSnackbar();
+
   const initialize = useCallback(() => {
     const cognitoUser = userPool.getCurrentUser();
     if (cognitoUser) {
@@ -117,7 +120,7 @@ export function AuthProvider({ children }) {
 
   // LOGIN
   const login = useCallback(
-    (email, password) => {
+    async (email, password) => {
       const user = new CognitoUser({ Username: email, Pool: userPool });
       const authDetails = new AuthenticationDetails({ Username: email, Password: password });
 
@@ -125,6 +128,10 @@ export function AuthProvider({ children }) {
         onSuccess: async (session) => {
           const accessToken = session.getIdToken().getJwtToken();
           const my_employee = await getEmployee(email);
+          if (my_employee.data.commerce.status !== 'active') {
+            user.signOut();
+            navigate(paths.unauthorizedCommerce);
+          }
           const info = my_employee.data;
           user.getUserAttributes((err, attributes) => {
             if (err) {
@@ -145,10 +152,16 @@ export function AuthProvider({ children }) {
         onFailure: (err) => {
           console.error(err);
         },
-        newPasswordRequired: (session) => {
+        newPasswordRequired: async (session) => {
           console.log('Se requiere una nueva contraseña.');
-          sendEmployeeVerificationCode(email);
-          navigate(paths.auth.cognito.newPassword);
+          const my_employee = await getEmployee(email);
+          if (my_employee.data.commerce.status !== 'active') {
+            user.signOut();
+            navigate(paths.unauthorizedCommerce);
+          } else {
+            sendEmployeeVerificationCode(email);
+            navigate(paths.auth.cognito.newPassword);
+          }
         },
       });
     },
@@ -156,28 +169,38 @@ export function AuthProvider({ children }) {
   );
 
   // REGISTER
-  const register = useCallback((email, password, firstName, lastName) => {
-    userPool.signUp(
-      email,
-      password,
-      [
-        { Name: 'given_name', Value: firstName },
-        { Name: 'family_name', Value: lastName },
-      ],
-      null,
-      (err, result) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        const cognitoUser = result.user;
-        dispatch({
-          type: 'REGISTER',
-          payload: { user: { email: cognitoUser.getUsername() } },
+  const register = useCallback(
+    async (commerce) => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        const url = 'http://localhost:3000/employee';
+        const method = 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(commerce),
         });
+
+        if (!response.ok) {
+          throw new Error('Error al enviar los datos');
+        }
+
+        const responseData = await response.json();
+        console.log('Respuesta del servidor:', responseData);
+
+        enqueueSnackbar('Create success!');
+        navigate(paths.unauthorizedCommerce);
+        console.info('DATA', commerce);
+      } catch (error) {
+        console.error(error);
       }
-    );
-  }, []);
+    },
+    [navigate, enqueueSnackbar]
+  );
 
   // CONFIRM NEW PASSWORD
   const confirmPassword = useCallback(async (email, code, newPassword) => {

@@ -17,7 +17,7 @@ export default function AboutView() {
 
       <AboutTeam />
 
-      <AboutTestimonials />
+      {/* <AboutTestimonials /> */}
     </>
   );
 }

@@ -10,7 +10,6 @@ export async function getEmployee(email) {
     const URL = `http://localhost:3000/employee/email/${email}`;
 
     const response = await axios.get(URL);
-    console.log('test', response);
     return response;
   } catch (error) {
     console.error('Error fetching employee:', error);

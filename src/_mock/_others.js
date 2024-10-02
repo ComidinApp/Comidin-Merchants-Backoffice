@@ -2,12 +2,12 @@ import { _mock } from './_mock';
 
 // ----------------------------------------------------------------------
 
-export const _carouselsMembers = [...Array(6)].map((_, index) => ({
-  id: _mock.id(index),
-  name: _mock.fullName(index),
-  role: _mock.role(index),
-  avatarUrl: _mock.image.portrait(index),
-}));
+export const _carouselsMembers = [
+  { id: 1, name: 'Lautaro Clever Cargnelutti', role: 'Front-End Developer', avatarUrl: '' },
+  { id: 2, name: 'Florencia Farace', role: 'UX/UI & Front-End Developer', avatarUrl: '' },
+  { id: 3, name: 'Francisco Somoza', role: 'QA & Back-End Developer', avatarUrl: '' },
+  { id: 4, name: 'Juan Pablo Donalisio', role: 'Back-End Developer', avatarUrl: '' },
+];
 
 // ----------------------------------------------------------------------
 

@@ -76,7 +76,7 @@ export default function AboutWhat() {
         <Grid xs={12} md={6} lg={5}>
           <m.div variants={varFade().inRight}>
             <Typography variant="h2" sx={{ mb: 3 }}>
-              What is Minimal?
+              Que es Comidin?
             </Typography>
           </m.div>
 
@@ -86,14 +86,16 @@ export default function AboutWhat() {
                 color: theme.palette.mode === 'light' ? 'text.secondary' : 'common.white',
               }}
             >
-              Our theme is the most advanced and user-friendly theme you will find on the market, we
-              have documentation and video to help set your site really easily, pre-installed demos
-              you can import in one click and everything from the theme options to page content can
-              be edited from the front-end. This is the theme you are looking for.
+              Comidín es una plataforma web y móvil que conecta a consumidores con comercios para
+              ofrecer productos alimenticios de calidad a precios accesibles. A través de una
+              interfaz intuitiva, los usuarios pueden buscar comercios cercanos, consultar productos
+              y hacer pedidos fácilmente. Además de ayudar a los comercios a gestionar su
+              inventario, Comidín contribuye a reducir el desperdicio de alimentos, promoviendo un
+              consumo más responsable y sostenible.
             </Typography>
           </m.div>
 
-          <Stack spacing={3} sx={{ my: 5 }}>
+          {/* <Stack spacing={3} sx={{ my: 5 }}>
             {SKILLS.map((progress, index) => (
               <Box component={m.div} key={progress.label} variants={varFade().inRight}>
                 <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
@@ -113,17 +115,17 @@ export default function AboutWhat() {
                 />
               </Box>
             ))}
-          </Stack>
+          </Stack> */}
 
           <m.div variants={varFade().inRight}>
-            <Button
+            {/* <Button
               variant="outlined"
               color="inherit"
               size="large"
               endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
             >
               Our Work
-            </Button>
+            </Button> */}
           </m.div>
         </Grid>
       </Grid>

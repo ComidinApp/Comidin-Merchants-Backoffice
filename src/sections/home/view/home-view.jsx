@@ -56,12 +56,10 @@ export default function HomeView() {
         {/* <HomeHugePackElements /> */}
 
         <Box sx={{ position: 'relative' }}>
-          <StyledPolygon />
           <HomeForDesigner />
-          <StyledPolygon anchor="bottom" />
         </Box>
 
-        <HomeDarkMode />
+        {/* <HomeDarkMode /> */}
 
         {/* <HomeColorPresets /> */}
 
