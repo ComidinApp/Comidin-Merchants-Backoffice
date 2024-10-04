@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import FormControlLabel from '@mui/material/FormControlLabel';
-
+import { Upload } from 'src/components/upload';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
@@ -48,6 +48,8 @@ export default function ProductNewEditForm({ currentProduct }) {
   const router = useRouter();
 
   const mdUp = useResponsive('up', 'md');
+
+  const [file, setFile] = useState(null);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -84,7 +86,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   const NewProductSchema = Yup.object().shape({
     name: Yup.string().required('Name is required'),
     description: Yup.string().required('Description is required'),
-    image_url: Yup.array().min(1, 'Images is required'),
+    image_url: Yup.string().required('Images is required'),
     product_category_id: Yup.number().required('Product category is required'),
     commerce_id: Yup.number().required('Commerce is required'),
     product_code: Yup.string().required('Product Code is required'),
@@ -94,7 +96,7 @@ export default function ProductNewEditForm({ currentProduct }) {
     () => ({
       name: currentProduct?.name || '',
       description: currentProduct?.description || '',
-      image_url: [currentProduct?.image_url] || [],
+      image_url: currentProduct?.image_url || '',
       product_code: currentProduct?.product_code || '',
       commerce_id: currentProduct?.commerce_id || '',
       product_category_id: currentProduct?.product_category_id || '',
@@ -132,7 +134,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         : 'http://localhost:3000/product';
 
       const method = currentProduct ? 'PUT' : 'POST';
-      data.image_url = currentProduct ? data.image_url[0] : data.image_url;
+      data.image_url = currentProduct ? data.image_url : data.image_url;
 
       const response = await fetch(url, {
         method,
@@ -158,7 +160,7 @@ export default function ProductNewEditForm({ currentProduct }) {
     }
   });
 
-  async function handleFiles(acceptedFiles) {
+  /* async function handleFiles(acceptedFiles) {
     const newFiles = await Promise.all(
       acceptedFiles.slice(0, 1).map(
         (file) =>
@@ -192,9 +194,36 @@ export default function ProductNewEditForm({ currentProduct }) {
       setValue('image_url', [...files, ...newFiles], { shouldValidate: true });
     },
     [setValue, values.images, enqueueSnackbar]
+  ); */
+
+  const handleDropSingleFile = useCallback(
+    (acceptedFiles) => {
+      const newFile = acceptedFiles[0];
+
+      if (newFile) {
+        const preview = URL.createObjectURL(newFile);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result;
+
+          setFile({
+            ...newFile,
+            preview,
+            base64: base64String,
+          });
+
+          methods.setValue('image_url', base64String);
+          methods.setValue('image_name', newFile.name);
+        };
+
+        reader.readAsDataURL(newFile);
+      }
+    },
+    [methods]
   );
 
-  const handleRemoveFile = useCallback(
+  /* const handleRemoveFile = useCallback(
     (inputFile) => {
       const filtered = values.image_url && values.image_url?.filter((file) => file !== inputFile);
       setValue('image_url', filtered);
@@ -204,7 +233,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const handleRemoveAllFiles = useCallback(() => {
     setValue('image_url', []);
-  }, [setValue]);
+  }, [setValue]); */
 
   const handleChangeIncludeTaxes = useCallback((event) => {
     setIncludeTaxes(event.target.checked);
@@ -239,16 +268,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">Imagen</Typography>
-              <RHFUpload
-                multiple
-                thumbnail
-                name="image_url"
-                maxSize={3145728}
-                onDrop={handleDrop}
-                onRemove={handleRemoveFile}
-                onRemoveAll={handleRemoveAllFiles}
-                onUpload={() => console.info('ON UPLOAD')}
-              />
+              <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
             </Stack>
           </Stack>
         </Card>
