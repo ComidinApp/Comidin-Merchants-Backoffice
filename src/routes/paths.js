@@ -145,6 +145,15 @@ export const paths = {
         edit: `${ROOTS.DASHBOARD}/product/${MOCK_ID}/edit`,
       },
     },
+    commerce: {
+      root: `${ROOTS.DASHBOARD}/commerce`,
+      details: (id) => `${ROOTS.DASHBOARD}/commerce/${id}`,
+      edit: (id) => `${ROOTS.DASHBOARD}/commerce/${id}/edit`,
+      demo: {
+        details: `${ROOTS.DASHBOARD}/commerce/${MOCK_ID}`,
+        edit: `${ROOTS.DASHBOARD}/commerce/${MOCK_ID}/edit`,
+      },
+    },
     publication: {
       root: `${ROOTS.DASHBOARD}/publication`,
       new: `${ROOTS.DASHBOARD}/publication/new`,

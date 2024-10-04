@@ -21,6 +21,11 @@ const ProductDetailsPage = lazy(() => import('src/pages/dashboard/product/detail
 const ProductListPage = lazy(() => import('src/pages/dashboard/product/list'));
 const ProductCreatePage = lazy(() => import('src/pages/dashboard/product/new'));
 const ProductEditPage = lazy(() => import('src/pages/dashboard/product/edit'));
+// COMMERCE
+const CommerceDetailsPage = lazy(() => import('src/pages/dashboard/commerce/details'));
+const CommerceListPage = lazy(() => import('src/pages/dashboard/commerce/list'));
+const CommerceCreatePage = lazy(() => import('src/pages/dashboard/commerce/new'));
+const CommerceEditPage = lazy(() => import('src/pages/dashboard/commerce/edit'));
 // PUBLICATION
 const PublicationDetailsPage = lazy(() => import('src/pages/dashboard/publication/details'));
 const PublicationListPage = lazy(() => import('src/pages/dashboard/publication/list'));
@@ -109,6 +114,16 @@ export const dashboardRoutes = [
           { path: ':id', element: <ProductDetailsPage /> },
           { path: 'new', element: <ProductCreatePage /> },
           { path: ':id/edit', element: <ProductEditPage /> },
+        ],
+      },
+      {
+        path: 'commerce',
+        children: [
+          { element: <CommerceListPage />, index: true },
+          { path: 'list', element: <CommerceListPage /> },
+          { path: ':id', element: <CommerceDetailsPage /> },
+          { path: 'new', element: <CommerceCreatePage /> },
+          { path: ':id/edit', element: <CommerceEditPage /> },
         ],
       },
       {

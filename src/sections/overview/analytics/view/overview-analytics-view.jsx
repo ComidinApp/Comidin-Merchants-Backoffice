@@ -40,7 +40,7 @@ export default function OverviewAnalyticsView() {
       <Grid container spacing={3}>
         <Grid xs={12} md={8}>
           <AppWelcome
-            title={`Bienvenido de vuelta 👋 \n ${user?.displayName}`}
+            title={`Te damos la bienvenida 👋 \n ${user?.displayName}`}
             description="Gracias por tu increible contribución, tu trabajo ha dejado una huella imborrale al mundo!"
             img={<SeoIllustration />}
             /* action={

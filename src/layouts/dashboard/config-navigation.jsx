@@ -185,7 +185,7 @@ export function useNavData() {
           // COMMERCES
           {
             title: t('comercios'),
-            path: paths.about,
+            path: paths.dashboard.commerce.root,
             icon: ICONS.banking,
             /* children: [
               { title: t('lista'), path: paths.dashboard.invoice.root },

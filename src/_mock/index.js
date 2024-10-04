@@ -12,5 +12,6 @@ export * from './_order';
 export * from './_others';
 export * from './_invoice';
 export * from './_product';
+export * from './_commerce';
 export * from './_overview';
 export * from './_calendar';
