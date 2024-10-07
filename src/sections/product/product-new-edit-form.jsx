@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -46,6 +47,8 @@ import FormProvider, {
 
 export default function ProductNewEditForm({ currentProduct }) {
   const router = useRouter();
+
+  const authUser = useAuthContext();
 
   const mdUp = useResponsive('up', 'md');
 
@@ -122,6 +125,15 @@ export default function ProductNewEditForm({ currentProduct }) {
   useEffect(() => {
     if (currentProduct) {
       reset(defaultValues);
+
+      // Establecer el preview de la imagen si hay una URL
+      if (currentProduct.image_url) {
+        setFile({
+          preview: currentProduct.image_url,
+          base64: currentProduct.image_url,
+          name: 'Current Product Image',
+        });
+      }
     }
   }, [currentProduct, defaultValues, reset]);
 
@@ -239,6 +251,14 @@ export default function ProductNewEditForm({ currentProduct }) {
     setIncludeTaxes(event.target.checked);
   }, []);
 
+  useEffect(() => {
+    if (authUser.user.role_id !== 1) {
+      setValue('commerce_id', authUser.user.commerce.id);
+    } else if (currentProduct?.commerce_id) {
+      setValue('commerce_id', currentProduct.commerce_id);
+    }
+  }, [authUser, currentProduct, setValue]);
+
   const renderDetails = (
     <>
       {mdUp && (
@@ -305,16 +325,18 @@ export default function ProductNewEditForm({ currentProduct }) {
             >
               <RHFTextField name="product_code" label="Codigo de Producto" />
 
-              <RHFAutocomplete
-                name="commerce_id"
-                label="Comercio"
-                fullWidth
-                options={commerces}
-                getOptionLabel={(option) => option.name}
-                onChange={(_, value) => setValue('commerce_id', value?.id || '')}
-                value={commerces.find((commerce) => commerce.id === watch('commerce_id')) || null}
-                isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
-              />
+              {authUser.user.role_id === 1 && (
+                <RHFAutocomplete
+                  name="commerce_id"
+                  label="Comercio"
+                  fullWidth
+                  options={commerces}
+                  getOptionLabel={(option) => option.name}
+                  onChange={(_, value) => setValue('commerce_id', value?.id || '')}
+                  value={commerces.find((commerce) => commerce.id === watch('commerce_id')) || null}
+                  isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
+                />
+              )}
 
               <RHFAutocomplete
                 name="product_category_id"

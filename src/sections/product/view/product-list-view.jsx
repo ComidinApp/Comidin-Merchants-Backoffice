@@ -1,5 +1,6 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -66,6 +67,8 @@ const HIDE_COLUMNS_TOGGLABLE = ['category', 'actions'];
 
 export default function ProductListView() {
   const { enqueueSnackbar } = useSnackbar();
+
+  const authUser = useAuthContext();
 
   const confirmRows = useBoolean();
 
@@ -174,13 +177,17 @@ export default function ProductListView() {
       editable: false,
       renderCell: (params) => <RenderCellProductCategory params={params} />,
     },
-    {
-      field: 'commerce',
-      headerName: 'Comercio',
-      width: 140,
-      editable: false,
-      renderCell: (params) => <RenderCellCommerce params={params} />,
-    },
+    ...(authUser.user.role_id === 1
+      ? [
+          {
+            field: 'commerce',
+            headerName: 'Comercio',
+            width: 140,
+            editable: false,
+            renderCell: (params) => <RenderCellCommerce params={params} />,
+          },
+        ]
+      : []),
     /* {
       field: 'inventoryType',
       headerName: 'Stock',
