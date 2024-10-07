@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
@@ -26,6 +27,8 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
   const { first_name, avatar_url, last_name, commerce, role, status, email, phone_number } = row;
   console.log(row);
   const confirm = useBoolean();
+
+  const authUser = useAuthContext();
 
   const quickEdit = useBoolean();
 
@@ -56,7 +59,9 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
 
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{phone_number}</TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{commerce.name}</TableCell>
+        {authUser.user.role_id === 1 && (
+          <TableCell sx={{ whiteSpace: 'nowrap' }}>{commerce.name}</TableCell>
+        )}
 
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{role.name}</TableCell>
 

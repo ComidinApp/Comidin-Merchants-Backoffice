@@ -1,5 +1,6 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useCallback, useEffect } from 'react';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -48,15 +49,6 @@ import UserTableFiltersResult from '../user-table-filters-result';
 
 const STATUS_OPTIONS = [{ value: 'all', label: 'Todos' }, ...USER_STATUS_OPTIONS];
 
-const TABLE_HEAD = [
-  { id: 'name', label: 'Nombre' },
-  { id: 'phoneNumber', label: 'Telefono', width: 180 },
-  { id: 'company', label: 'Comercio', width: 220 },
-  { id: 'role', label: 'Rol', width: 180 },
-  { id: 'status', label: 'Estado', width: 100 },
-  { id: '', width: 88 },
-];
-
 const defaultFilters = {
   name: '',
   role: [],
@@ -67,6 +59,17 @@ const defaultFilters = {
 
 export default function UserListView() {
   const { enqueueSnackbar } = useSnackbar();
+
+  const authUser = useAuthContext();
+
+  const TABLE_HEAD = [
+    { id: 'name', label: 'Nombre' },
+    { id: 'phoneNumber', label: 'Telefono', width: 180 },
+    ...(authUser.user.role_id === 1 ? [{ id: 'company', label: 'Comercio', width: 220 }] : []),
+    { id: 'role', label: 'Rol', width: 180 },
+    { id: 'status', label: 'Estado', width: 100 },
+    { id: '', width: 88 },
+  ];
 
   const table = useTable();
 
@@ -128,7 +131,7 @@ export default function UserListView() {
 
   const roleNames = roles.map((role) => role.name);
 
-  const fetchUserData = useCallback(async () => {
+  /* const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:3000/employee');
@@ -139,7 +142,29 @@ export default function UserListView() {
       console.error('Error fetching user data:', error);
       enqueueSnackbar('Error fetching user data', { variant: 'error' });
     }
-  }, [enqueueSnackbar, setLoading]);
+  }, [enqueueSnackbar, setLoading]); */
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      let url = 'http://localhost:3000/employee';
+
+      if (authUser.user.role_id !== 6) {
+        url = `http://localhost:3000/employee/commerce/${authUser.user.commerce.id}`;
+      }
+
+      const response = await axios.get(url);
+      console.log(response);
+      setTableData(Array.isArray(response?.data) ? response.data : []);
+
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error('Error fetching user data:', error);
+      enqueueSnackbar('Error fetching user data', { variant: 'error' });
+    }
+  }, [authUser, enqueueSnackbar, setLoading]);
 
   const handleResetFilters = useCallback(() => {
     setFilters(defaultFilters);

@@ -74,7 +74,7 @@ export function AuthProvider({ children }) {
         if (sessionError || !session.isValid()) {
           dispatch({ type: 'INITIAL', payload: { user: null } });
         } else {
-          cognitoUser.getUserAttributes((attributesError, attributes) => {
+          cognitoUser.getUserAttributes(async (attributesError, attributes) => {
             if (attributesError) {
               console.error(attributesError);
               dispatch({ type: 'INITIAL', payload: { user: null } });
@@ -83,9 +83,13 @@ export function AuthProvider({ children }) {
                 acc[attribute.getName()] = attribute.getValue();
                 return acc;
               }, {});
+              const my_employee = await getEmployee(user.email);
+              const info = my_employee.data;
               dispatch({
                 type: 'INITIAL',
-                payload: { user: { ...user, accessToken: session.getIdToken().getJwtToken() } },
+                payload: {
+                  user: { ...user, accessToken: session.getIdToken().getJwtToken(), ...info },
+                },
               });
             }
           });
@@ -128,7 +132,7 @@ export function AuthProvider({ children }) {
         onSuccess: async (session) => {
           const accessToken = session.getIdToken().getJwtToken();
           const my_employee = await getEmployee(email);
-          if (my_employee.data.commerce.status !== 'active') {
+          if (my_employee.data.commerce.status !== 'admitted') {
             user.signOut();
             navigate(paths.unauthorizedCommerce);
           }
@@ -155,7 +159,7 @@ export function AuthProvider({ children }) {
         newPasswordRequired: async (session) => {
           console.log('Se requiere una nueva contraseña.');
           const my_employee = await getEmployee(email);
-          if (my_employee.data.commerce.status !== 'active') {
+          if (my_employee.data.commerce.status !== 'admitted') {
             user.signOut();
             navigate(paths.unauthorizedCommerce);
           } else {

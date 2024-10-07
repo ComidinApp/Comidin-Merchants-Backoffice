@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -32,6 +33,8 @@ import FormProvider, {
 
 export default function UserNewEditForm({ currentUser }) {
   const router = useRouter();
+
+  const authUser = useAuthContext();
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -191,6 +194,12 @@ export default function UserNewEditForm({ currentUser }) {
     [setValue]
   );
 
+  useEffect(() => {
+    if (authUser.user.role_id !== 1) {
+      setValue('commerce_id', authUser.user.commerce.id);
+    }
+  }, [authUser.user.role_id, authUser.user.commerce.id, setValue]);
+
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
@@ -320,20 +329,22 @@ export default function UserNewEditForm({ currentUser }) {
               <RHFTextField name="city" label="Ciudad" />
               <RHFTextField name="address" label="Direccion" />
               <RHFTextField name="postal_code" label="Codigo Postal" />
-              <RHFAutocomplete
-                name="commerce_id"
-                label="Comercio"
-                fullWidth
-                options={commerces}
-                getOptionLabel={(option) => option.name}
-                onChange={(_, value) => setValue('commerce_id', value?.id || '')}
-                value={
-                  commerces.find((commerce) => commerce.id === watch('commerce_id')) ||
-                  commerces.find((commerce) => commerce.id === currentUser?.commerce_id) ||
-                  null
-                }
-                isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
-              />
+              {authUser.user.role_id === 1 ? (
+                <RHFAutocomplete
+                  name="commerce_id"
+                  label="Comercio"
+                  fullWidth
+                  options={commerces}
+                  getOptionLabel={(option) => option.name}
+                  onChange={(_, value) => setValue('commerce_id', value?.id || '')}
+                  value={
+                    commerces.find((commerce) => commerce.id === watch('commerce_id')) ||
+                    commerces.find((commerce) => commerce.id === currentUser?.commerce_id) ||
+                    null
+                  }
+                  isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
+                />
+              ) : null}
 
               <RHFAutocomplete
                 name="role_id"

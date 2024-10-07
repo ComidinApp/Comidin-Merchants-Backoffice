@@ -180,7 +180,7 @@ export default function CognitoRegisterView() {
       console.log(data);
 
       const commerce = await createCommerce(data);
-      data.role_id = 1;
+      data.role_id = 6;
       data.commerce_id = commerce.id;
       data.avatar_url = `${assets_url}coffe.png`;
       await register?.(data);

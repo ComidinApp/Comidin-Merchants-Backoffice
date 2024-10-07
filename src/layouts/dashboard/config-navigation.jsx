@@ -5,6 +5,7 @@ import { paths } from 'src/routes/paths';
 import { useTranslate } from 'src/locales';
 
 import SvgColor from 'src/components/svg-color';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 // ----------------------------------------------------------------------
 
@@ -47,6 +48,8 @@ const ICONS = {
 
 export function useNavData() {
   const { t } = useTranslate();
+  const user = useAuthContext();
+  console.log(user);
 
   const data = useMemo(
     () => [
@@ -183,19 +186,10 @@ export function useNavData() {
           },
 
           // COMMERCES
-          {
+          user?.user?.role_id === 1 && {
             title: t('comercios'),
             path: paths.dashboard.commerce.root,
             icon: ICONS.banking,
-            /* children: [
-              { title: t('lista'), path: paths.dashboard.invoice.root },
-              {
-                title: t('detalle'),
-                path: paths.dashboard.invoice.demo.details,
-              },
-              { title: t('crear'), path: paths.dashboard.invoice.new },
-              { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
-            ], */
           },
 
           /* // BLOG
@@ -272,7 +266,7 @@ export function useNavData() {
             path: paths.dashboard.kanban,
             icon: ICONS.kanban,
           }, */
-        ],
+        ].filter(Boolean),
       },
 
       // DEMO MENU STATES
@@ -362,7 +356,7 @@ export function useNavData() {
         ],
       }, */
     ],
-    [t]
+    [t, user]
   );
 
   return data;
