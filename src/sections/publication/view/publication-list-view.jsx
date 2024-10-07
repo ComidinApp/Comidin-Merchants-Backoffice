@@ -1,5 +1,6 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -36,6 +37,7 @@ import PublicationTableFiltersResult from '../publication-table-filters-result';
 import {
   RenderCellStock,
   RenderCellPrice,
+  RenderCellCommerce,
   RenderCellDiscountedPrice,
   RenderCellDiscount,
   RenderCellPublish,
@@ -66,13 +68,16 @@ const HIDE_COLUMNS_TOGGLABLE = ['category', 'actions'];
 export default function PublicationListView() {
   const { enqueueSnackbar } = useSnackbar();
 
+  const authUser = useAuthContext();
+
   const confirmRows = useBoolean();
 
   const router = useRouter();
 
   const settings = useSettingsContext();
 
-  const { publications, publicationsLoading } = useGetPublications();
+  const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
+  const { publications, publicationsLoading } = useGetPublications(commerceId);
 
   const [tableData, setTableData] = useState([]);
 
@@ -153,6 +158,17 @@ export default function PublicationListView() {
       hideable: false,
       renderCell: (params) => <RenderCellPublication params={params} />,
     },
+    ...(authUser.user.role_id === 1
+      ? [
+          {
+            field: 'commerce',
+            headerName: 'Comercio',
+            width: 140,
+            editable: false,
+            renderCell: (params) => <RenderCellCommerce params={params} />,
+          },
+        ]
+      : []),
     {
       field: 'expiration_date',
       headerName: 'Fecha Expiracion',

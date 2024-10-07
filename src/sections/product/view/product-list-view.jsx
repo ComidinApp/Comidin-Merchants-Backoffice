@@ -76,7 +76,8 @@ export default function ProductListView() {
 
   const settings = useSettingsContext();
 
-  const { products, productsLoading } = useGetProducts();
+  const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
+  const { products, productsLoading } = useGetProducts(commerceId);
 
   const [tableData, setTableData] = useState([]);
 

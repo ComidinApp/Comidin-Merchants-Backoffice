@@ -26,8 +26,10 @@ export function useGetProductss() {
 
 // ----------------------------------------------------------------------
 
-export function useGetProducts() {
-  const URL = 'http://localhost:3000/product';
+export function useGetProducts(commerceId) {
+  const URL = commerceId
+    ? `http://localhost:3000/product/commerce/${commerceId}`
+    : 'http://localhost:3000/product';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -46,7 +48,6 @@ export function useGetProducts() {
 
   return memoizedValue;
 }
-
 // ----------------------------------------------------------------------
 
 export function useGetProduct(productId) {

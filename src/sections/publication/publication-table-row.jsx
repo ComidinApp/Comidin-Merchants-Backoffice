@@ -24,6 +24,16 @@ RenderCellPrice.propTypes = {
   }),
 };
 
+export function RenderCellCommerce({ params }) {
+  return <>{params.row.commerce.name}</>;
+}
+
+RenderCellCommerce.propTypes = {
+  params: PropTypes.shape({
+    row: PropTypes.object,
+  }),
+};
+
 export function RenderCellDiscountedPrice({ params }) {
   return <>{fCurrency(params.row.discounted_price)}</>;
 }
