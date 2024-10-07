@@ -150,7 +150,7 @@ export default function UserListView() {
 
       let url = 'http://localhost:3000/employee';
 
-      if (authUser.user.role_id !== 6) {
+      if (authUser.user.role_id !== 1) {
         url = `http://localhost:3000/employee/commerce/${authUser.user.commerce.id}`;
       }
 
