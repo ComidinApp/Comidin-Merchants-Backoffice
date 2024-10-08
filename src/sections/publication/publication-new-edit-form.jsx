@@ -78,68 +78,28 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const [selectedValue, setSelectedValue] = useState();
 
-  const handleClose = useCallback(
-    (value) => {
-      dialog.onFalse();
-      setSelectedValue(value);
-    },
-    [dialog]
-  );
-
-  const handlePriceChange = (event) => {
-    setPrice(event.target.value);
-  };
-
-  const handleDiscountChange = (event) => {
-    setDiscount(event.target.value);
-  };
-
-  const calculateDiscountedPrice = () => {
-    if (discount) {
-      return (price - (price * discount) / 100).toFixed(2);
-    }
-    return price;
-  };
-
   const NewPublicationSchema = Yup.object().shape({
-    name: Yup.string().required('Name is required'),
-    images: Yup.array().min(1, 'Images is required'),
-    tags: Yup.array().min(2, 'Must have at least 2 tags'),
-    category: Yup.string().required('Category is required'),
-    price: Yup.number().moreThan(0, 'Price should not be $0.00'),
-    description: Yup.string().required('Description is required'),
-    // not required
-    taxes: Yup.number(),
-    newLabel: Yup.object().shape({
-      enabled: Yup.boolean(),
-      content: Yup.string(),
-    }),
-    saleLabel: Yup.object().shape({
-      enabled: Yup.boolean(),
-      content: Yup.string(),
-    }),
+    commerce_id: Yup.number().required('Commerce is required'),
+    product_id: Yup.number().required('Product is required'),
+    price: Yup.number().moreThan(0, 'Price should be greater than 0'),
+    discount_percentaje: Yup.number().min(0).max(100, 'Discount should be between 0 and 100'),
+    discounted_price: Yup.number(),
+    available_stock: Yup.number().required('Stock is required'),
+    is_active: Yup.boolean().required('Status is required'),
+    expiration_date: Yup.date().required('Expiration date is required'),
   });
 
   const defaultValues = useMemo(
     () => ({
-      name: currentPublication?.name || '',
-      description: currentPublication?.description || '',
-      subDescription: currentPublication?.subDescription || '',
-      images: currentPublication?.images || [],
-      //
-      code: currentPublication?.code || '',
-      sku: currentPublication?.sku || '',
+      commerce_id: currentPublication?.commerce_id || '',
+      product_id: currentPublication?.product_id || '',
       price: currentPublication?.price || 0,
-      quantity: currentPublication?.quantity || 0,
-      priceSale: currentPublication?.priceSale || 0,
-      tags: currentPublication?.tags || [],
-      taxes: currentPublication?.taxes || 0,
-      gender: currentPublication?.gender || '',
-      category: currentPublication?.category || '',
-      colors: currentPublication?.colors || [],
-      sizes: currentPublication?.sizes || [],
-      newLabel: currentPublication?.newLabel || { enabled: false, content: '' },
-      saleLabel: currentPublication?.saleLabel || { enabled: false, content: '' },
+      discount_percentaje: currentPublication?.discount_percentaje || 0,
+      discounted_price: currentPublication?.discounted_price || 0,
+      available_stock: currentPublication?.available_stock || 0,
+      expiration_date:
+        currentPublication?.expiration_date || new Date().toISOString().split('T')[0],
+      is_active: currentPublication?.is_active || true,
     }),
     [currentPublication]
   );
@@ -159,23 +119,76 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const values = watch();
 
+  const handleClose = useCallback(
+    (value) => {
+      dialog.onFalse();
+      setSelectedValue(value);
+
+      setValue('commerce_id', value.commerce_id);
+      setValue('product_id', value.id);
+    },
+    [dialog, setValue]
+  );
+
+  const handlePriceChange = (event) => {
+    setPrice(event.target.value);
+    setValue('price', event.target.value, { shouldValidate: true });
+  };
+
+  const handleDiscountChange = (event) => {
+    const newDiscount = parseFloat(event.target.value);
+    setDiscount(newDiscount);
+
+    const calculatedDiscountedPrice = price - (price * newDiscount) / 100;
+    setValue('discount_percentaje', newDiscount, { shouldValidate: true });
+    setValue('discounted_price', calculatedDiscountedPrice.toFixed(2), { shouldValidate: true });
+  };
+
+  const handleDiscountPriceChange = (event) => {
+    setValue('discounted_price', event.target.value, { shouldValidate: true });
+  };
+
+  const calculateDiscountedPrice = () => {
+    if (discount) {
+      return (price - (price * discount) / 100).toFixed(2);
+    }
+    return price;
+  };
+
   useEffect(() => {
     if (currentPublication) {
       reset(defaultValues);
     }
   }, [currentPublication, defaultValues, reset]);
 
-  useEffect(() => {
-    if (includeTaxes) {
-      setValue('taxes', 0);
-    } else {
-      setValue('taxes', currentPublication?.taxes || 0);
-    }
-  }, [currentPublication?.taxes, includeTaxes, setValue]);
-
   const onSubmit = handleSubmit(async (data) => {
     try {
+      console.log(data);
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const url = currentPublication
+        ? `http://localhost:3000/publication/${currentPublication.id}`
+        : 'http://localhost:3000/publication';
+
+      const method = currentPublication ? 'PUT' : 'POST';
+      data.is_active = data.is_active === 1 ? 'active' : 'inactive';
+      data.expiration_date = data.expiration_date.toISOString().split('T')[0];
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al enviar los datos');
+      }
+
+      const responseData = await response.json();
+      console.log('Respuesta del servidor:', responseData);
+
       reset();
       enqueueSnackbar(currentPublication ? 'Update success!' : 'Create success!');
       router.push(paths.dashboard.publication.root);
@@ -344,6 +357,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
               <DatePicker
                 label="Fecha de vencimiento"
+                name="expiration_date"
                 slotProps={{ textField: { fullWidth: true } }}
               />
               {/* <RHFTextField name="code" label="Publication Code" /> */}
@@ -351,7 +365,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
               {/* <RHFTextField name="sku" label="Publication SKU" /> */}
 
               <RHFTextField
-                name="quantity"
+                name="available_stock"
                 label="Stock"
                 placeholder="0"
                 type="number"
@@ -463,7 +477,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
             />
 
             <RHFTextField
-              name="discount"
+              name="discount_percentaje"
               label="Descuento"
               placeholder="0"
               type="number"
@@ -482,12 +496,13 @@ export default function PublicationNewEditForm({ currentPublication }) {
             />
 
             <RHFTextField
-              name="priceSale"
+              name="discounted_price"
               label="Precio con Descuento"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
               value={calculateDiscountedPrice()}
+              onChange={handleDiscountPriceChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -536,6 +551,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
         <FormControlLabel
           control={<Switch defaultChecked />}
           label="Activo"
+          name="is_active"
           sx={{ flexGrow: 1, pl: 3 }}
         />
 
