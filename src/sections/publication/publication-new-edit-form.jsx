@@ -65,7 +65,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const { products, productsLoading } = useGetProducts();
+  const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
+  const { products, productsLoading } = useGetProducts(commerceId);
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
