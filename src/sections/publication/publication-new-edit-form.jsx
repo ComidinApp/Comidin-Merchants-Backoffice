@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -58,6 +59,8 @@ import FormProvider, {
 
 export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
+
+  const authUser = useAuthContext();
 
   const dialog = useBoolean();
 
