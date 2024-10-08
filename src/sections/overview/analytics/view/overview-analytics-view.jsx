@@ -31,7 +31,7 @@ import AnalyticsConversionRates from '../analytics-conversion-rates';
 // ----------------------------------------------------------------------
 
 export default function OverviewAnalyticsView() {
-  console.log(useAuthContext());
+  const authUser = useAuthContext();
   const { user } = useMockedUser();
   const settings = useSettingsContext();
 
@@ -40,7 +40,7 @@ export default function OverviewAnalyticsView() {
       <Grid container spacing={3}>
         <Grid xs={12} md={8}>
           <AppWelcome
-            title={`Te damos la bienvenida 👋 \n ${user?.displayName}`}
+            title={`Te damos la bienvenida 👋 \n ${authUser.user?.first_name} ${authUser.user?.last_name}`}
             description="Gracias por tu increible contribución, tu trabajo ha dejado una huella imborrale al mundo!"
             img={<SeoIllustration />}
             /* action={

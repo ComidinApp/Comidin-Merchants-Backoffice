@@ -20,6 +20,8 @@ export default function NavUpgrade() {
 
   const { user } = useMockedUser();
 
+  const authUser = useAuthContext();
+
   const { logout } = useAuthContext();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -69,11 +71,11 @@ export default function NavUpgrade() {
 
         <Stack spacing={0.5} sx={{ mb: 2, mt: 1.5, width: 1 }}>
           <Typography variant="subtitle2" noWrap>
-            {user?.displayName}
+            {`${authUser.user?.first_name} ${authUser.user?.last_name}`}
           </Typography>
 
           <Typography variant="body2" noWrap sx={{ color: 'text.disabled' }}>
-            {user?.email}
+            {authUser.user?.email}
           </Typography>
         </Stack>
 

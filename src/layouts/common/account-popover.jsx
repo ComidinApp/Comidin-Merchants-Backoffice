@@ -27,20 +27,22 @@ const OPTIONS = [
     label: 'Home',
     linkTo: '/',
   },
-  {
+  /* {
     label: 'Profile',
     linkTo: paths.dashboard.user.profile,
   },
   {
     label: 'Settings',
     linkTo: paths.dashboard.user.account,
-  },
+  }, */
 ];
 
 // ----------------------------------------------------------------------
 
 export default function AccountPopover() {
   const router = useRouter();
+
+  const authUser = useAuthContext();
 
   const { user } = useMockedUser();
 
@@ -85,26 +87,28 @@ export default function AccountPopover() {
         }}
       >
         <Avatar
-          src={user?.photoURL}
-          alt={user?.displayName}
+          src={authUser.user?.avatar_url}
+          alt={`${authUser.user?.first_name} ${authUser.user?.last_name}`}
           sx={{
             width: 36,
             height: 36,
             border: (theme) => `solid 2px ${theme.palette.background.default}`,
           }}
         >
-          {user?.displayName?.charAt(0).toUpperCase()}
+          {`${authUser.user?.first_name.charAt(0).toUpperCase()} ${authUser.user?.last_name
+            .charAt(0)
+            .toUpperCase()}`}
         </Avatar>
       </IconButton>
 
       <CustomPopover open={popover.open} onClose={popover.onClose} sx={{ width: 200, p: 0 }}>
         <Box sx={{ p: 2, pb: 1.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {user?.displayName}
+            {`${authUser.user?.first_name} ${authUser.user?.last_name}`}
           </Typography>
 
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {user?.email}
+            {authUser.user?.email}
           </Typography>
         </Box>
 
