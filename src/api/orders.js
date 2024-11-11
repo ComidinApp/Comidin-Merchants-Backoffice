@@ -5,21 +5,21 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
-export function useGetPublications(commerceId) {
+export function useGetOrders(commerceId) {
   const URL = commerceId
-    ? `http://localhost:3000/publication/commerce/${commerceId}`
-    : 'http://localhost:3000/publication';
+    ? `http://localhost:3000/order/commerce/${commerceId}`
+    : 'http://localhost:3000/order';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
 
   const memoizedValue = useMemo(
     () => ({
-      publications: data || [],
-      publicationsLoading: isLoading,
-      publicationsError: error,
-      publicationsValidating: isValidating,
-      publicationsEmpty: !isLoading && !data,
+      orders: data || [],
+      ordersLoading: isLoading,
+      ordersError: error,
+      ordersValidating: isValidating,
+      ordersEmpty: !isLoading && !data,
     }),
     [data, error, isLoading, isValidating]
   );
@@ -28,24 +28,22 @@ export function useGetPublications(commerceId) {
   return memoizedValue;
 }
 
-// ----------------------------------------------------------------------
+// ---------------------------------------------------------------------- CAMBIAR
 
-export function useGetPublication(publicationId) {
-  const URL = publicationId ? `http://localhost:3000/publication/${publicationId}` : '';
+export function useGetPublication(productId) {
+  const URL = productId ? [endpoints.product.details, { params: { productId } }] : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      publication: data,
+      publication: data?.product,
       publicationLoading: isLoading,
       publicationError: error,
       publicationValidating: isValidating,
     }),
-    [data, error, isLoading, isValidating]
+    [data?.product, error, isLoading, isValidating]
   );
-
-  console.log(memoizedValue);
 
   return memoizedValue;
 }

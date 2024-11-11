@@ -171,24 +171,43 @@ export default function UserListView() {
   }, []);
 
   const handleDeleteRow = useCallback(
-    (id) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
+    async (id) => {
+      try {
+        // Realiza la eliminación en el backend
+        await axios.delete(`http://localhost:3000/employee/${id}`);
 
-      enqueueSnackbar('Delete success!');
+        // Actualiza el estado de los datos después de la eliminación
+        const deleteRow = tableData.filter((row) => row.id !== id);
+        setTableData(deleteRow);
 
-      setTableData(deleteRow);
+        enqueueSnackbar('Usuario eliminado con éxito');
+      } catch (error) {
+        console.error('Error al eliminar el usuario:', error);
+        enqueueSnackbar('Error al eliminar el usuario', { variant: 'error' });
+      }
 
       table.onUpdatePageDeleteRow(dataInPage.length);
     },
     [dataInPage.length, enqueueSnackbar, table, tableData]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+  const handleDeleteRows = useCallback(async () => {
+    try {
+      // Elimina los usuarios seleccionados
+      const selectedIds = table.selected;
+      await Promise.all(
+        selectedIds.map((id) => axios.delete(`http://localhost:3000/employee/${id}`))
+      );
 
-    enqueueSnackbar('Delete success!');
+      // Actualiza el estado después de la eliminación
+      const deleteRows = tableData.filter((row) => !selectedIds.includes(row.id));
+      setTableData(deleteRows);
 
-    setTableData(deleteRows);
+      enqueueSnackbar('Usuarios eliminados con éxito');
+    } catch (error) {
+      console.error('Error al eliminar los usuarios:', error);
+      enqueueSnackbar('Error al eliminar los usuarios', { variant: 'error' });
+    }
 
     table.onUpdatePageDeleteRows({
       totalRowsInPage: dataInPage.length,

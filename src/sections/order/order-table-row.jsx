@@ -22,17 +22,20 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import { _mock } from '../../_mock';
 
 // ----------------------------------------------------------------------
 
 export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, onDeleteRow }) {
-  const { items, status, orderNumber, createdAt, customer, totalQuantity, subTotal } = row;
+  const { order_details, status, id, created_at, user, items_quantity, total_amount } = row;
 
   const confirm = useBoolean();
 
   const collapse = useBoolean();
 
   const popover = usePopover();
+
+  const randomAvatar = _mock.image.avatar(Math.floor(Math.random() * 24) + 1);
 
   const renderPrimary = (
     <TableRow hover selected={selected}>
@@ -50,16 +53,16 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             },
           }}
         >
-          {orderNumber}
+          {id.toString().padStart(4, '0')}
         </Box>
       </TableCell>
 
       <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-        <Avatar alt={customer.name} src={customer.avatarUrl} sx={{ mr: 2 }} />
+        <Avatar alt={user.first_name} src={randomAvatar} sx={{ mr: 2 }} />
 
         <ListItemText
-          primary={customer.name}
-          secondary={customer.email}
+          primary={`${user.first_name} ${user.last_name}`}
+          secondary={user.email}
           primaryTypographyProps={{ typography: 'body2' }}
           secondaryTypographyProps={{
             component: 'span',
@@ -70,8 +73,8 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
 
       <TableCell>
         <ListItemText
-          primary={fDate(createdAt)}
-          secondary={fTime(createdAt)}
+          primary={fDate(created_at)}
+          secondary={fTime(created_at)}
           primaryTypographyProps={{ typography: 'body2', noWrap: true }}
           secondaryTypographyProps={{
             mt: 0.5,
@@ -81,9 +84,9 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
         />
       </TableCell>
 
-      <TableCell align="center"> {totalQuantity} </TableCell>
+      <TableCell align="center"> {items_quantity} </TableCell>
 
-      <TableCell> {fCurrency(subTotal)} </TableCell>
+      <TableCell> {fCurrency(total_amount)} </TableCell>
 
       <TableCell>
         <Label
@@ -112,9 +115,16 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           <Iconify icon="eva:arrow-ios-downward-fill" />
         </IconButton>
 
-        <IconButton color={popover.open ? 'inherit' : 'default'} onClick={popover.onOpen}>
-          <Iconify icon="eva:more-vertical-fill" />
-        </IconButton>
+        <Button
+          onClick={() => {
+            onViewRow();
+            popover.onClose();
+          }}
+          startIcon={<Iconify icon="solar:eye-bold" />}
+          sx={{ minWidth: 0, padding: '8px 16px' }} // Ajusta el estilo según lo necesites
+        >
+          {/* Detalle */}
+        </Button>
       </TableCell>
     </TableRow>
   );
@@ -129,7 +139,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           sx={{ bgcolor: 'background.neutral' }}
         >
           <Stack component={Paper} sx={{ m: 1.5 }}>
-            {items.map((item) => (
+            {order_details.map((item) => (
               <Stack
                 key={item.id}
                 direction="row"
@@ -142,14 +152,14 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
                 }}
               >
                 <Avatar
-                  src={item.coverUrl}
+                  src={item.publication.product.image_url}
                   variant="rounded"
                   sx={{ width: 48, height: 48, mr: 2 }}
                 />
 
                 <ListItemText
-                  primary={item.name}
-                  secondary={item.sku}
+                  primary={item.publication.product.name}
+                  secondary={`$${item.publication.price}`}
                   primaryTypographyProps={{
                     typography: 'body2',
                   }}
@@ -183,7 +193,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
         arrow="right-top"
         sx={{ width: 140 }}
       >
-        <MenuItem
+        {/* <MenuItem
           onClick={() => {
             confirm.onTrue();
             popover.onClose();
@@ -192,7 +202,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
           Delete
-        </MenuItem>
+        </MenuItem> */}
 
         <MenuItem
           onClick={() => {
@@ -201,7 +211,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           }}
         >
           <Iconify icon="solar:eye-bold" />
-          View
+          Detalles
         </MenuItem>
       </CustomPopover>
 
