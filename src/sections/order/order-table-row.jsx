@@ -12,6 +12,7 @@ import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
@@ -27,7 +28,10 @@ import { _mock } from '../../_mock';
 // ----------------------------------------------------------------------
 
 export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, onDeleteRow }) {
-  const { order_details, status, id, created_at, user, items_quantity, total_amount } = row;
+  const { order_details, status, id, commerce, created_at, user, items_quantity, total_amount } =
+    row;
+
+  const authUser = useAuthContext();
 
   const confirm = useBoolean();
 
@@ -65,6 +69,10 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           {id.toString().padStart(4, '0')}
         </Box>
       </TableCell>
+
+      {authUser.user.role_id === 1 && (
+        <TableCell>{commerce.name ? commerce.name : 'N/A'}</TableCell>
+      )}
 
       <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
         <Avatar alt={user.first_name} src={randomAvatar} sx={{ mr: 2 }} />
@@ -107,7 +115,13 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             'default'
           }
         >
-          {status}
+          {(() => {
+            if (status === 'pending') return 'Pendiente';
+            if (status === 'completed') return 'Completado';
+            if (status === 'refunded') return 'Devuelto';
+            if (status === 'cancelled') return 'Cancelado';
+            return status;
+          })()}
         </Label>
       </TableCell>
 

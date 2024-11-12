@@ -49,16 +49,6 @@ import OrderTableFiltersResult from '../order-table-filters-result';
 
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
 
-const TABLE_HEAD = [
-  { id: 'order_id', label: 'Nro Pedido', width: 150 },
-  { id: 'name', label: 'Usuario' },
-  { id: 'createdAt', label: 'Fecha', width: 140 },
-  { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
-  { id: 'totalAmount', label: 'Precio', width: 140 },
-  { id: 'status', label: 'Estado', width: 110 },
-  { id: '', width: 88 },
-];
-
 const defaultFilters = {
   name: '',
   status: 'all',
@@ -69,9 +59,20 @@ const defaultFilters = {
 // ----------------------------------------------------------------------
 
 export default function OrderListView() {
-  const { enqueueSnackbar } = useSnackbar();
-
   const authUser = useAuthContext();
+
+  const TABLE_HEAD = [
+    { id: 'order_id', label: 'Nro Pedido', width: 150 },
+    ...(authUser.user.role_id === 1 ? [{ id: 'company', label: 'Comercio', width: 220 }] : []),
+    { id: 'name', label: 'Usuario' },
+    { id: 'createdAt', label: 'Fecha', width: 140 },
+    { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
+    { id: 'totalAmount', label: 'Precio', width: 140 },
+    { id: 'status', label: 'Estado', width: 110 },
+    { id: '', width: 88 },
+  ];
+
+  const { enqueueSnackbar } = useSnackbar();
 
   const table = useTable({ defaultOrderBy: 'order_id', defaultOrder: 'desc' });
 

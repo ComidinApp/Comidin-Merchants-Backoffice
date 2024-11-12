@@ -10,40 +10,51 @@ import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
-
 import Iconify from 'src/components/iconify';
 
+import { _mock } from '../../_mock';
 // ----------------------------------------------------------------------
 
 export default function OrderDetailsInfo({ customer, delivery, payment, shippingAddress }) {
+  function stringToNumber(input) {
+    let sum = 0;
+    for (let i = 0; i < input.length; i += 1) {
+      sum += input.charCodeAt(i);
+    }
+
+    return (sum % 24) + 1;
+  }
+
+  const randomAvatar = _mock.image.avatar(stringToNumber(customer.email));
+
   const renderCustomer = (
     <>
       <CardHeader
         title="Informacion del Cliente"
-        action={
+        /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
           </IconButton>
-        }
+        } */
       />
       <Stack direction="row" sx={{ p: 3 }}>
         <Avatar
-          alt={customer.name}
-          src={customer.avatarUrl}
+          alt={customer.first_name}
+          src={randomAvatar}
           sx={{ width: 48, height: 48, mr: 2 }}
         />
 
         <Stack spacing={0.5} alignItems="flex-start" sx={{ typography: 'body2' }}>
-          <Typography variant="subtitle2">{customer.name}</Typography>
+          <Typography variant="subtitle2">{customer.first_name}</Typography>
 
           <Box sx={{ color: 'text.secondary' }}>{customer.email}</Box>
 
-          <Box>
+          {/* <Box>
             IP Address:
             <Box component="span" sx={{ color: 'text.secondary', ml: 0.25 }}>
               {customer.ipAddress}
             </Box>
-          </Box>
+          </Box> */}
 
           <Button
             size="small"
@@ -62,11 +73,11 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
     <>
       <CardHeader
         title="Delivery"
-        action={
+        /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
           </IconButton>
-        }
+        } */
       />
       <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
         <Stack direction="row" alignItems="center">
@@ -97,25 +108,25 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
     <>
       <CardHeader
         title="Entrega"
-        action={
+        /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
           </IconButton>
-        }
+        } */
       />
       <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
         <Stack direction="row">
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
             Direccion
           </Box>
-          {shippingAddress.fullAddress}
+          {shippingAddress.street_name}
         </Stack>
 
         <Stack direction="row">
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
             Numero de telefono
           </Box>
-          {shippingAddress.phoneNumber}
+          {customer.phone_number}
         </Stack>
       </Stack>
     </>
@@ -125,11 +136,11 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
     <>
       <CardHeader
         title="Pago"
-        action={
+        /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
           </IconButton>
-        }
+        } */
       />
       <Stack direction="row" alignItems="center" sx={{ p: 3, typography: 'body2' }}>
         <Box component="span" sx={{ color: 'text.secondary', flexGrow: 1 }}>

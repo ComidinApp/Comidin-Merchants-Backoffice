@@ -16,13 +16,14 @@ import Scrollbar from 'src/components/scrollbar';
 // ----------------------------------------------------------------------
 
 export default function OrderDetailsItems({
-  items,
-  taxes,
-  shipping,
-  discount,
-  subTotal,
-  totalAmount,
+  items = [],
+  taxes = 0,
+  shipping = 0,
+  discount = 0,
+  subTotal = 0,
+  totalAmount = 0,
 }) {
+  console.log(items);
   const renderTotal = (
     <Stack
       spacing={2}
@@ -35,7 +36,7 @@ export default function OrderDetailsItems({
       </Stack>
 
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Shipping</Box>
+        <Box sx={{ color: 'text.secondary' }}>Envio</Box>
         <Box
           sx={{
             width: 160,
@@ -47,7 +48,7 @@ export default function OrderDetailsItems({
       </Stack>
 
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Discount</Box>
+        <Box sx={{ color: 'text.secondary' }}>Descuento</Box>
         <Box
           sx={{
             width: 160,
@@ -73,12 +74,12 @@ export default function OrderDetailsItems({
   return (
     <Card>
       <CardHeader
-        title="Details"
-        action={
+        title="Detalle"
+        /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
           </IconButton>
-        }
+        } */
       />
 
       <Stack
@@ -98,11 +99,15 @@ export default function OrderDetailsItems({
                 borderBottom: (theme) => `dashed 2px ${theme.palette.background.neutral}`,
               }}
             >
-              <Avatar src={item.coverUrl} variant="rounded" sx={{ width: 48, height: 48, mr: 2 }} />
+              <Avatar
+                src={item.publication.product.image_url}
+                variant="rounded"
+                sx={{ width: 48, height: 48, mr: 2 }}
+              />
 
               <ListItemText
-                primary={item.name}
-                secondary={item.sku}
+                primary={item.publication.product.name}
+                /* secondary={item.sku} */
                 primaryTypographyProps={{
                   typography: 'body2',
                 }}
@@ -116,7 +121,7 @@ export default function OrderDetailsItems({
               <Box sx={{ typography: 'body2' }}>x{item.quantity}</Box>
 
               <Box sx={{ width: 110, textAlign: 'right', typography: 'subtitle2' }}>
-                {fCurrency(item.price)}
+                {fCurrency(item.amount)}
               </Box>
             </Stack>
           ))}

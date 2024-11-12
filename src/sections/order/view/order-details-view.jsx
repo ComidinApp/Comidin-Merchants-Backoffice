@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
@@ -21,23 +21,32 @@ import OrderDetailsHistory from '../order-details-history';
 
 export default function OrderDetailsView({ id }) {
   const settings = useSettingsContext();
-
-  const test = useGetOrder(id);
+  const { order, orderLoading } = useGetOrder(id);
 
   const currentOrder = _orders[0];
 
-  const [status, setStatus] = useState(currentOrder.status);
+  const [status, setStatus] = useState('');
+
+  useEffect(() => {
+    if (order) {
+      setStatus(order.status);
+    }
+  }, [order]);
 
   const handleChangeStatus = useCallback((newValue) => {
     setStatus(newValue);
   }, []);
 
+  if (orderLoading) return <div>Loading...</div>;
+
+  if (!order) return <div>No se encontró la orden.</div>;
+
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <OrderDetailsToolbar
         backLink={paths.dashboard.order.root}
-        orderNumber={currentOrder.orderNumber}
-        createdAt={currentOrder.createdAt}
+        orderNumber={String(order.id)}
+        createdAt={new Date(order.created_at)}
         status={status}
         onChangeStatus={handleChangeStatus}
         statusOptions={ORDER_STATUS_OPTIONS}
@@ -47,12 +56,12 @@ export default function OrderDetailsView({ id }) {
         <Grid xs={12} md={8}>
           <Stack spacing={3} direction={{ xs: 'column-reverse', md: 'column' }}>
             <OrderDetailsItems
-              items={currentOrder.items}
-              taxes={currentOrder.taxes}
+              items={order.order_details}
+              /* taxes={currentOrder.taxes}
               shipping={currentOrder.shipping}
               discount={currentOrder.discount}
-              subTotal={currentOrder.subTotal}
-              totalAmount={currentOrder.totalAmount}
+              subTotal={currentOrder.subTotal} */
+              totalAmount={Number(order.total_amount)}
             />
 
             <OrderDetailsHistory history={currentOrder.history} />
@@ -61,10 +70,10 @@ export default function OrderDetailsView({ id }) {
 
         <Grid xs={12} md={4}>
           <OrderDetailsInfo
-            customer={currentOrder.customer}
+            customer={order.user}
             delivery={currentOrder.delivery}
             payment={currentOrder.payment}
-            shippingAddress={currentOrder.shippingAddress}
+            shippingAddress={order.address}
           />
         </Grid>
       </Grid>

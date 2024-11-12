@@ -16,7 +16,7 @@ import Iconify from 'src/components/iconify';
 // ----------------------------------------------------------------------
 
 export default function PricingCard({ card, sx, ...other }) {
-  const { subscription, price, caption, lists, labelAction } = card;
+  const { subscription, price, caption, lists, not_lists, labelAction } = card;
 
   const basic = subscription === 'Básica';
 
@@ -89,6 +89,20 @@ export default function PricingCard({ card, sx, ...other }) {
           }}
         >
           <Iconify icon="eva:checkmark-fill" width={16} sx={{ mr: 1 }} />
+          {item}
+        </Stack>
+      ))}
+      {not_lists.map((item) => (
+        <Stack
+          key={item}
+          spacing={1}
+          direction="row"
+          alignItems="center"
+          sx={{
+            typography: 'body2',
+          }}
+        >
+          <Iconify icon="eva:close-fill" width={16} sx={{ mr: 1 }} />
           {item}
         </Stack>
       ))}
