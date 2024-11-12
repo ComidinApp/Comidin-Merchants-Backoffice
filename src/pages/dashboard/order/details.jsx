@@ -14,7 +14,7 @@ export default function OrderDetailsPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Order Details</title>
+        <title> Comidin: Detalle pedido</title>
       </Helmet>
 
       <OrderDetailsView id={`${id}`} />

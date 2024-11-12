@@ -19,11 +19,13 @@ export default function OrderDetailsItems({
   items = [],
   taxes = 0,
   shipping = 0,
-  discount = 0,
-  subTotal = 0,
   totalAmount = 0,
 }) {
-  console.log(items);
+  const subTotal = items.reduce((sum, item) => sum + item.publication.price * item.quantity, 0);
+  const discount =
+    subTotal -
+    items.reduce((sum, item) => sum + item.publication.discounted_price * item.quantity, 0);
+
   const renderTotal = (
     <Stack
       spacing={2}
@@ -33,18 +35,6 @@ export default function OrderDetailsItems({
       <Stack direction="row">
         <Box sx={{ color: 'text.secondary' }}>Subtotal</Box>
         <Box sx={{ width: 160, typography: 'subtitle2' }}>{fCurrency(subTotal) || '-'}</Box>
-      </Stack>
-
-      <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Envio</Box>
-        <Box
-          sx={{
-            width: 160,
-            ...(shipping && { color: 'error.main' }),
-          }}
-        >
-          {shipping ? `- ${fCurrency(shipping)}` : '-'}
-        </Box>
       </Stack>
 
       <Stack direction="row">
@@ -60,7 +50,19 @@ export default function OrderDetailsItems({
       </Stack>
 
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Taxes</Box>
+        <Box sx={{ color: 'text.secondary' }}>Envio</Box>
+        <Box
+          sx={{
+            width: 160,
+            ...(shipping && { color: 'error.main' }),
+          }}
+        >
+          {shipping ? `- ${fCurrency(shipping)}` : '-'}
+        </Box>
+      </Stack>
+
+      <Stack direction="row">
+        <Box sx={{ color: 'text.secondary' }}>Servicio</Box>
         <Box sx={{ width: 160 }}>{taxes ? fCurrency(taxes) : '-'}</Box>
       </Stack>
 
@@ -134,10 +136,8 @@ export default function OrderDetailsItems({
 }
 
 OrderDetailsItems.propTypes = {
-  discount: PropTypes.number,
   items: PropTypes.array,
   shipping: PropTypes.number,
-  subTotal: PropTypes.number,
   taxes: PropTypes.number,
   totalAmount: PropTypes.number,
 };

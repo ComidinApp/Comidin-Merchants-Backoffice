@@ -111,6 +111,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           color={
             (status === 'completed' && 'success') ||
             (status === 'pending' && 'warning') ||
+            (status === 'confirmed' && 'info') ||
             (status === 'cancelled' && 'error') ||
             'default'
           }
@@ -118,6 +119,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           {(() => {
             if (status === 'pending') return 'Pendiente';
             if (status === 'completed') return 'Completado';
+            if (status === 'confirmed') return 'Confirmado';
             if (status === 'refunded') return 'Devuelto';
             if (status === 'cancelled') return 'Cancelado';
             return status;

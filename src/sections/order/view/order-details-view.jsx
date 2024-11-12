@@ -71,8 +71,9 @@ export default function OrderDetailsView({ id }) {
         <Grid xs={12} md={4}>
           <OrderDetailsInfo
             customer={order.user}
-            delivery={currentOrder.delivery}
-            payment={currentOrder.payment}
+            delivery={order.delivery_type}
+            commerce={order.commerce}
+            payment={order.payment_method}
             shippingAddress={order.address}
           />
         </Grid>

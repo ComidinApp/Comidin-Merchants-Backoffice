@@ -210,11 +210,14 @@ export default function OrderListView() {
                     color={
                       (tab.value === 'completed' && 'success') ||
                       (tab.value === 'pending' && 'warning') ||
+                      (tab.value === 'confirmed' && 'info') ||
                       (tab.value === 'cancelled' && 'error') ||
                       'default'
                     }
                   >
-                    {['completed', 'pending', 'cancelled', 'refunded'].includes(tab.value)
+                    {['completed', 'pending', 'cancelled', 'refunded', 'confirmed'].includes(
+                      tab.value
+                    )
                       ? tableData.filter((user) => user.status === tab.value).length
                       : tableData.length}
                   </Label>

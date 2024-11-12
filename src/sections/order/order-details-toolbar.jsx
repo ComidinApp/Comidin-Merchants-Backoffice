@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import axios from 'axios';
 
 import { RouterLink } from 'src/routes/components';
 
@@ -15,6 +16,13 @@ import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
+const statusTranslations = {
+  pending: 'Pendiente',
+  completed: 'Completado',
+  confirmed: 'Confirmado',
+  refunded: 'Devuelto',
+  cancelled: 'Cancelado',
+};
 
 export default function OrderDetailsToolbar({
   status,
@@ -25,6 +33,23 @@ export default function OrderDetailsToolbar({
   onChangeStatus,
 }) {
   const popover = usePopover();
+
+  const handleChangeStatus = async (newStatus) => {
+    try {
+      const response = await axios.put(`http://localhost:3000/order/status/${orderNumber}`, {
+        status: newStatus,
+      });
+
+      if (response.status === 200) {
+        onChangeStatus(newStatus);
+        popover.onClose();
+      } else {
+        console.error('Error al actualizar el estado');
+      }
+    } catch (error) {
+      console.error('Error al realizar la solicitud', error);
+    }
+  };
 
   return (
     <>
@@ -42,17 +67,22 @@ export default function OrderDetailsToolbar({
 
           <Stack spacing={0.5}>
             <Stack spacing={1} direction="row" alignItems="center">
-              <Typography variant="h4"> Order {orderNumber} </Typography>
+              <Typography variant="h4">
+                {' '}
+                Pedido {orderNumber.toString().padStart(4, '0')}{' '}
+              </Typography>
+
               <Label
                 variant="soft"
                 color={
                   (status === 'completed' && 'success') ||
                   (status === 'pending' && 'warning') ||
+                  (status === 'confirmed' && 'info') ||
                   (status === 'cancelled' && 'error') ||
                   'default'
                 }
               >
-                {status}
+                {statusTranslations[status] || status}
               </Label>
             </Stack>
 
@@ -76,7 +106,7 @@ export default function OrderDetailsToolbar({
             onClick={popover.onOpen}
             sx={{ textTransform: 'capitalize' }}
           >
-            {status}
+            {statusTranslations[status] || status}
           </Button>
 
           <Button
@@ -84,12 +114,12 @@ export default function OrderDetailsToolbar({
             variant="outlined"
             startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
           >
-            Print
+            Imprimir
           </Button>
 
-          <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
+          {/* <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
             Edit
-          </Button>
+          </Button> */}
         </Stack>
       </Stack>
 
@@ -103,10 +133,7 @@ export default function OrderDetailsToolbar({
           <MenuItem
             key={option.value}
             selected={option.value === status}
-            onClick={() => {
-              popover.onClose();
-              onChangeStatus(option.value);
-            }}
+            onClick={() => handleChangeStatus(option.value)}
           >
             {option.label}
           </MenuItem>
