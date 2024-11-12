@@ -36,12 +36,12 @@ export default function OverviewAppView() {
       <Grid container spacing={3}>
         <Grid xs={12} md={8}>
           <AppWelcome
-            title={`Welcome back 👋 \n ${user?.displayName}`}
-            description="If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything."
+            title={`Bienvenido 👋 \n ${user?.displayName}`}
+            description="¿Qué vas a vender hoy? Hay muchos clientes esperando por tus productos."
             img={<SeoIllustration />}
             action={
               <Button variant="contained" color="primary">
-                Go Now
+                Ir
               </Button>
             }
           />
