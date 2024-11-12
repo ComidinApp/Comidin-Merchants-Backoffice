@@ -178,7 +178,7 @@ export function AuthProvider({ children }) {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        const url = 'ttp://localhost:3000/employee';
+        const url = 'http://localhost:3000/employee';
         const method = 'POST';
 
         const response = await fetch(url, {

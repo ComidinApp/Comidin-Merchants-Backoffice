@@ -7,7 +7,7 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 export async function getCommerceById(id) {
   try {
-    const URL = `ttp://localhost:3000/commerce/${id}`;
+    const URL = `http://localhost:3000/commerce/${id}`;
 
     const response = await axios.get(URL);
     return response;
@@ -18,7 +18,7 @@ export async function getCommerceById(id) {
 }
 
 export async function createCommerce(commerce) {
-  const URL = `ttp://localhost:3000/commerce`;
+  const URL = `http://localhost:3000/commerce`;
 
   try {
     const response = await axios.post(URL, commerce);
@@ -31,7 +31,7 @@ export async function createCommerce(commerce) {
 
 export async function changeCommerceStatus(id, status) {
   console.log(status);
-  const URL = `ttp://localhost:3000/commerce/status/${id}`;
+  const URL = `http://localhost:3000/commerce/status/${id}`;
 
   try {
     const response = await axios.put(URL, { status });
@@ -43,7 +43,7 @@ export async function changeCommerceStatus(id, status) {
 }
 
 export async function activateCommerce(id) {
-  const URL = `ttp://localhost:3000/commerce/activate/${id}`;
+  const URL = `http://localhost:3000/commerce/activate/${id}`;
 
   try {
     const response = await axios.put(URL);
@@ -78,7 +78,7 @@ export function useGetCommercess() {
 // ----------------------------------------------------------------------
 
 export function useGetCommerces() {
-  const URL = 'ttp://localhost:3000/commerce';
+  const URL = 'http://localhost:3000/commerce';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -101,7 +101,7 @@ export function useGetCommerces() {
 // ----------------------------------------------------------------------
 
 export function useGetCommerce(commerceId) {
-  const URL = `ttp://localhost:3000/prodcommerceuct/${commerceId}`;
+  const URL = `http://localhost:3000/prodcommerceuct/${commerceId}`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 

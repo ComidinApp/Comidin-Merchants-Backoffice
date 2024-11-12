@@ -167,8 +167,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentPublication
-        ? `ttp://localhost:3000/publication/${currentPublication.id}`
-        : 'ttp://localhost:3000/publication';
+        ? `http://localhost:3000/publication/${currentPublication.id}`
+        : 'http://localhost:3000/publication';
 
       const method = currentPublication ? 'PUT' : 'POST';
       data.is_active = data.is_active === 1 ? 'active' : 'inactive';

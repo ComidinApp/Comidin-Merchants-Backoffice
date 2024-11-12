@@ -16,7 +16,7 @@ export default function UserEditView({ id }) {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const response = await fetch(`ttp://localhost:3000/employee/${id}`);
+        const response = await fetch(`http://localhost:3000/employee/${id}`);
         const data = await response.json();
         console.log(data);
         setEmployee(data || null);

@@ -62,7 +62,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('ttp://localhost:3000/commerce');
+        const response = await fetch('http://localhost:3000/commerce');
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -76,7 +76,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   useEffect(() => {
     const fetchProductCategories = async () => {
       try {
-        const response = await fetch('ttp://localhost:3000/productCategory');
+        const response = await fetch('http://localhost:3000/productCategory');
         const data = await response.json();
         setProductCategories(data || []);
       } catch (error) {
@@ -142,8 +142,8 @@ export default function ProductNewEditForm({ currentProduct }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentProduct
-        ? `ttp://localhost:3000/product/${currentProduct.id}`
-        : 'ttp://localhost:3000/product';
+        ? `http://localhost:3000/product/${currentProduct.id}`
+        : 'http://localhost:3000/product';
 
       const method = currentProduct ? 'PUT' : 'POST';
       data.image_url = currentProduct ? data.image_url : data.image_url;

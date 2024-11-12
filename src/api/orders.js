@@ -5,42 +5,21 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
-export function useGetProductss() {
-  const URL = endpoints.product.list;
-
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
-
-  const memoizedValue = useMemo(
-    () => ({
-      products: data?.products || [],
-      productsLoading: isLoading,
-      productsError: error,
-      productsValidating: isValidating,
-      productsEmpty: !isLoading && !data?.products.length,
-    }),
-    [data?.products, error, isLoading, isValidating]
-  );
-
-  return memoizedValue;
-}
-
-// ----------------------------------------------------------------------
-
-export function useGetProducts(commerceId) {
+export function useGetOrders(commerceId) {
   const URL = commerceId
-    ? `http://localhost:3000/product/commerce/${commerceId}`
-    : 'http://localhost:3000/product';
+    ? `hhttp://localhost:3000/order/commerce/${commerceId}`
+    : 'hhttp://localhost:3000/order';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
 
   const memoizedValue = useMemo(
     () => ({
-      products: data || [],
-      productsLoading: isLoading,
-      productsError: error,
-      productsValidating: isValidating,
-      productsEmpty: !isLoading && !data,
+      orders: data || [],
+      ordersLoading: isLoading,
+      ordersError: error,
+      ordersValidating: isValidating,
+      ordersEmpty: !isLoading && !data,
     }),
     [data, error, isLoading, isValidating]
   );
@@ -48,22 +27,24 @@ export function useGetProducts(commerceId) {
 
   return memoizedValue;
 }
-// ----------------------------------------------------------------------
 
-export function useGetProduct(productId) {
-  const URL = `http://localhost:3000/product/${productId}`;
+// ---------------------------------------------------------------------- CAMBIAR
+
+export function useGetOrder(orderId) {
+  const URL = orderId ? `hhttp://localhost:3000/order/${orderId}` : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      product: data || null,
-      productLoading: isLoading,
-      productError: error,
-      productValidating: isValidating,
+      order: data,
+      orderLoading: isLoading,
+      orderError: error,
+      orderValidating: isValidating,
     }),
     [data, error, isLoading, isValidating]
   );
+
   console.log(memoizedValue);
 
   return memoizedValue;
@@ -71,7 +52,7 @@ export function useGetProduct(productId) {
 
 // ----------------------------------------------------------------------
 
-export function useSearchProducts(query) {
+export function useSearchPublications(query) {
   const URL = query ? [endpoints.product.search, { params: { query } }] : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {

@@ -118,7 +118,7 @@ export default function UserListView() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('ttp://localhost:3000/role');
+        const response = await fetch('http://localhost:3000/role');
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -134,7 +134,7 @@ export default function UserListView() {
   /* const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('ttp://localhost:3000/employee');
+      const response = await axios.get('http://localhost:3000/employee');
       setTableData(Array.isArray(response?.data) ? response.data : []);
       setLoading(false);
     } catch (error) {
@@ -148,10 +148,10 @@ export default function UserListView() {
     try {
       setLoading(true);
 
-      let url = 'ttp://localhost:3000/employee';
+      let url = 'http://localhost:3000/employee';
 
       if (authUser.user.role_id !== 1) {
-        url = `ttp://localhost:3000/employee/commerce/${authUser.user.commerce.id}`;
+        url = `http://localhost:3000/employee/commerce/${authUser.user.commerce.id}`;
       }
 
       const response = await axios.get(url);
