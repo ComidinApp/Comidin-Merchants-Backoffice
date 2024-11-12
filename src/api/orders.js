@@ -7,8 +7,8 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 export function useGetOrders(commerceId) {
   const URL = commerceId
-    ? `hhttp://localhost:3000/order/commerce/${commerceId}`
-    : 'hhttp://localhost:3000/order';
+    ? `http://localhost:3000/order/commerce/${commerceId}`
+    : 'http://localhost:3000/order';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -31,7 +31,7 @@ export function useGetOrders(commerceId) {
 // ---------------------------------------------------------------------- CAMBIAR
 
 export function useGetOrder(orderId) {
-  const URL = orderId ? `hhttp://localhost:3000/order/${orderId}` : '';
+  const URL = orderId ? `http://localhost:3000/order/${orderId}` : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 

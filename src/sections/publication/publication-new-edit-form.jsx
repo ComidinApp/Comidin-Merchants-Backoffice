@@ -73,8 +73,28 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
-  const [price, setPrice] = useState(0);
-  const [discount, setDiscount] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [price, setPrice] = useState(currentPublication?.price || 0);
+  const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || 0);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (currentPublication?.product_id) {
+        try {
+          const response = await fetch(
+            `http://localhost:3000/product/${currentPublication.product_id}`
+          );
+          if (response.ok) {
+            const product = await response.json();
+            setSelectedProduct(product);
+          }
+        } catch (error) {
+          console.error('Error fetching product:', error);
+        }
+      }
+    };
+    fetchProduct();
+  }, [currentPublication?.product_id]);
 
   const [selectedValue, setSelectedValue] = useState();
 
@@ -85,7 +105,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     discount_percentaje: Yup.number().min(0).max(100, 'Discount should be between 0 and 100'),
     discounted_price: Yup.number(),
     available_stock: Yup.number().required('Stock is required'),
-    is_active: Yup.boolean().required('Status is required'),
+    is_active: Yup.string().required('Status is required'),
     expiration_date: Yup.date().required('Expiration date is required'),
   });
 
@@ -97,9 +117,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
       discount_percentaje: currentPublication?.discount_percentaje || 0,
       discounted_price: currentPublication?.discounted_price || 0,
       available_stock: currentPublication?.available_stock || 0,
-      expiration_date:
-        currentPublication?.expiration_date || new Date().toISOString().split('T')[0],
-      is_active: currentPublication?.is_active || true,
+      expiration_date: new Date(currentPublication?.expiration_date) || null,
+      is_active: currentPublication?.is_active || 'active',
     }),
     [currentPublication]
   );
@@ -119,11 +138,17 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const values = watch();
 
+  useEffect(() => {
+    if (currentPublication?.product_id) {
+      setValue('product_id', currentPublication.product_id);
+    }
+  }, [currentPublication, setValue]);
+
   const handleClose = useCallback(
-    (value) => {
+    (value, product) => {
       dialog.onFalse();
       setSelectedValue(value);
-
+      setSelectedProduct(product);
       setValue('commerce_id', value.commerce_id);
       setValue('product_id', value.id);
     },
@@ -163,7 +188,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      console.log(data);
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentPublication
@@ -171,7 +195,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
         : 'http://localhost:3000/publication';
 
       const method = currentPublication ? 'PUT' : 'POST';
-      data.is_active = data.is_active === 1 ? 'active' : 'inactive';
+      /* data.is_active = data.is_active === true ? 'active' : 'inactive'; */
       data.expiration_date = data.expiration_date.toISOString().split('T')[0];
 
       const response = await fetch(url, {
@@ -303,10 +327,14 @@ export default function PublicationNewEditForm({ currentPublication }) {
               }}
             >
               <Button variant="outlined" onClick={dialog.onTrue}>
-                {selectedValue ? (
+                {selectedProduct ? (
                   <>
-                    <Avatar alt={selectedValue.name} src={selectedValue.image_url} sx={{ mr: 2 }} />
-                    {selectedValue.name}
+                    <Avatar
+                      alt={selectedProduct.name}
+                      src={selectedProduct.image_url}
+                      sx={{ mr: 2 }}
+                    />
+                    {selectedProduct.name}
                   </>
                 ) : (
                   'Seleccionar Producto'
@@ -315,7 +343,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
               <Dialog
                 open={dialog.value}
-                onClose={() => handleClose(selectedValue)}
+                onClose={() => handleClose(selectedProduct)}
                 maxWidth="sm"
                 fullWidth
               >
@@ -357,7 +385,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
               <DatePicker
                 label="Fecha de vencimiento"
-                name="expiration_date"
+                value={values.expiration_date}
+                onChange={(newValue) => setValue('expiration_date', newValue)}
                 slotProps={{ textField: { fullWidth: true } }}
               />
               {/* <RHFTextField name="code" label="Publication Code" /> */}
@@ -549,7 +578,12 @@ export default function PublicationNewEditForm({ currentPublication }) {
       {mdUp && <Grid md={4} />}
       <Grid xs={12} md={8} sx={{ display: 'flex', alignItems: 'center' }}>
         <FormControlLabel
-          control={<Switch defaultChecked />}
+          control={
+            <Switch
+              checked={values.is_active === 'active'}
+              onChange={(e) => setValue('is_active', e.target.checked ? 'active' : 'inactive')}
+            />
+          }
           label="Activo"
           name="is_active"
           sx={{ flexGrow: 1, pl: 3 }}

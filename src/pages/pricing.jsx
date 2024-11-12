@@ -8,7 +8,7 @@ export default function PricingPage() {
   return (
     <>
       <Helmet>
-        <title> Pricing</title>
+        <title> Comidin: Subscripciones</title>
       </Helmet>
 
       <PricingView />

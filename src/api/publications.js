@@ -30,20 +30,22 @@ export function useGetPublications(commerceId) {
 
 // ----------------------------------------------------------------------
 
-export function useGetPublication(productId) {
-  const URL = productId ? [endpoints.product.details, { params: { productId } }] : '';
+export function useGetPublication(publicationId) {
+  const URL = publicationId ? `http://localhost:3000/publication/${publicationId}` : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      publication: data?.product,
+      publication: data,
       publicationLoading: isLoading,
       publicationError: error,
       publicationValidating: isValidating,
     }),
-    [data?.product, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating]
   );
+
+  console.log(memoizedValue);
 
   return memoizedValue;
 }

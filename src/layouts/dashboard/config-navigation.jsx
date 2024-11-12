@@ -154,11 +154,11 @@ export function useNavData() {
           },
 
           // INVOICE
-          {
+          /* {
             title: t('pagos'),
             path: paths.dashboard.invoice.root,
             icon: ICONS.invoice,
-            /* children: [
+            children: [
               { title: t('lista'), path: paths.dashboard.invoice.root },
               {
                 title: t('detalle'),
@@ -166,8 +166,8 @@ export function useNavData() {
               },
               { title: t('crear'), path: paths.dashboard.invoice.new },
               { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
-            ], */
-          },
+            ],
+          }, */
 
           // SUBCRIPCIONES
           {

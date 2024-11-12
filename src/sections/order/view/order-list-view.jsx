@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -11,6 +11,7 @@ import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -19,6 +20,7 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import { isAfter, isBetween } from 'src/utils/format-time';
 
+import { useGetOrders } from 'src/api/orders';
 import { _orders, ORDER_STATUS_OPTIONS } from 'src/_mock';
 
 import Label from 'src/components/label';
@@ -47,16 +49,6 @@ import OrderTableFiltersResult from '../order-table-filters-result';
 
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
 
-const TABLE_HEAD = [
-  { id: 'orderNumber', label: 'Order', width: 116 },
-  { id: 'name', label: 'Customer' },
-  { id: 'createdAt', label: 'Date', width: 140 },
-  { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
-  { id: 'totalAmount', label: 'Price', width: 140 },
-  { id: 'status', label: 'Status', width: 110 },
-  { id: '', width: 88 },
-];
-
 const defaultFilters = {
   name: '',
   status: 'all',
@@ -67,9 +59,22 @@ const defaultFilters = {
 // ----------------------------------------------------------------------
 
 export default function OrderListView() {
+  const authUser = useAuthContext();
+
+  const TABLE_HEAD = [
+    { id: 'order_id', label: 'Nro Pedido', width: 150 },
+    ...(authUser.user.role_id === 1 ? [{ id: 'company', label: 'Comercio', width: 220 }] : []),
+    { id: 'name', label: 'Usuario' },
+    { id: 'createdAt', label: 'Fecha', width: 140 },
+    { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
+    { id: 'totalAmount', label: 'Precio', width: 140 },
+    { id: 'status', label: 'Estado', width: 110 },
+    { id: '', width: 88 },
+  ];
+
   const { enqueueSnackbar } = useSnackbar();
 
-  const table = useTable({ defaultOrderBy: 'orderNumber' });
+  const table = useTable({ defaultOrderBy: 'order_id', defaultOrder: 'desc' });
 
   const settings = useSettingsContext();
 
@@ -77,7 +82,16 @@ export default function OrderListView() {
 
   const confirm = useBoolean();
 
-  const [tableData, setTableData] = useState(_orders);
+  const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
+  const { orders, ordersLoading } = useGetOrders(commerceId);
+
+  const [tableData, setTableData] = useState([]);
+
+  useEffect(() => {
+    if (orders) {
+      setTableData(orders);
+    }
+  }, [orders]);
 
   const [filters, setFilters] = useState(defaultFilters);
 
@@ -161,17 +175,12 @@ export default function OrderListView() {
     <>
       <Container maxWidth={settings.themeStretch ? false : 'lg'}>
         <CustomBreadcrumbs
-          heading="List"
+          heading="Lista de Pedidos"
           links={[
             {
-              name: 'Dashboard',
+              name: '',
               href: paths.dashboard.root,
             },
-            {
-              name: 'Order',
-              href: paths.dashboard.order.root,
-            },
-            { name: 'List' },
           ]}
           sx={{
             mb: { xs: 3, md: 5 },
@@ -201,11 +210,14 @@ export default function OrderListView() {
                     color={
                       (tab.value === 'completed' && 'success') ||
                       (tab.value === 'pending' && 'warning') ||
+                      (tab.value === 'confirmed' && 'info') ||
                       (tab.value === 'cancelled' && 'error') ||
                       'default'
                     }
                   >
-                    {['completed', 'pending', 'cancelled', 'refunded'].includes(tab.value)
+                    {['completed', 'pending', 'cancelled', 'refunded', 'confirmed'].includes(
+                      tab.value
+                    )
                       ? tableData.filter((user) => user.status === tab.value).length
                       : tableData.length}
                   </Label>
