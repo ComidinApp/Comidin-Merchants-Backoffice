@@ -34,16 +34,18 @@ export default function AboutWhat() {
   const lightMode = theme.palette.mode === 'light';
 
   const shadow = `-40px 40px 80px ${alpha(
-    lightMode ? theme.palette.grey[500] : theme.palette.common.black,
+    lightMode ? theme.palette.grey[500] : theme.palette.common.black, 
     0.24
   )}`;
 
   return (
+    <Box sx={{ backgroundColor: '#95541B', width: '100%'}}>
     <Container
       component={MotionViewport}
       sx={{
         py: { xs: 10, md: 15 },
         textAlign: { xs: 'center', md: 'unset' },
+        
       }}
     >
       <Grid container columnSpacing={{ md: 3 }} alignItems="flex-start">
@@ -56,6 +58,7 @@ export default function AboutWhat() {
                   src="/assets/images/about/what_2.png"
                   ratio="1/1"
                   sx={{ borderRadius: 3, boxShadow: shadow }}
+            
                 />
               </m.div>
             </Grid>
@@ -76,7 +79,7 @@ export default function AboutWhat() {
         <Grid xs={12} md={6} lg={5}>
           <m.div variants={varFade().inRight}>
             <Typography variant="h2" sx={{ mb: 3 }}>
-              Que es Comidin?
+              ¿Qué es Comidín?
             </Typography>
           </m.div>
 
@@ -84,6 +87,7 @@ export default function AboutWhat() {
             <Typography
               sx={{
                 color: theme.palette.mode === 'light' ? 'text.secondary' : 'common.white',
+                textAlign: 'justify',
               }}
             >
               Comidín es una plataforma web y móvil que conecta a consumidores con comercios para
@@ -130,6 +134,7 @@ export default function AboutWhat() {
         </Grid>
       </Grid>
     </Container>
-    // </Box>
+  </Box>
+   
   );
 }

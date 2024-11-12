@@ -16,43 +16,32 @@ import { varFade, MotionViewport } from 'src/components/animate';
 export default function AboutVision() {
   const theme = useTheme();
 
-  const renderImg = (
-    <Image
-      src="/assets/images/about/vision.jpg"
-      alt="about-vision"
-      overlay={alpha(theme.palette.grey[900], 0.48)}
-    />
-  );
-
-  const renderLogo = (
-    <Stack
-      direction="row"
-      flexWrap="wrap"
-      alignItems="center"
-      justifyContent="center"
+  const renderVideo = (
+    <Box
       sx={{
-        width: 1,
-        zIndex: 9,
-        bottom: 0,
-        opacity: 0.48,
-        position: 'absolute',
-        py: { xs: 1.5, md: 2.5 },
+        
+        position: 'relative',
+        paddingTop: '56.25%', // Aspect ratio 16:9
+        width: '100%',
+        height: 0,
+        overflow: 'hidden',
       }}
     >
-      {['ibm', 'lya', 'spotify', 'netflix', 'hbo', 'amazon'].map((logo) => (
-        <Box
-          component={m.img}
-          key={logo}
-          variants={varFade().in}
-          alt={logo}
-          src={`/assets/icons/brands/ic_brand_${logo}.svg`}
-          sx={{
-            m: { xs: 1.5, md: 2.5 },
-            height: { xs: 20, md: 32 },
-          }}
-        />
-      ))}
-    </Stack>
+      <iframe
+        title="About Vision Video" // Añadido para accesibilidad
+        src="https://www.youtube.com/embed/oHyK-3e1Y7I"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+        }}
+      />
+    </Box>
   );
 
   return (
@@ -75,6 +64,7 @@ export default function AboutVision() {
       <Container component={MotionViewport}>
         <Box
           sx={{
+            marginTop:'20px',
             mb: 10,
             borderRadius: 2,
             display: 'flex',
@@ -84,19 +74,14 @@ export default function AboutVision() {
             justifyContent: 'center',
           }}
         >
-          {renderImg}
+          {renderVideo}
 
-          {renderLogo}
-
-          <Fab sx={{ position: 'absolute', zIndex: 9 }}>
-            <Iconify icon="solar:play-broken" width={24} />
-          </Fab>
+          
         </Box>
 
         <m.div variants={varFade().inUp}>
           <Typography variant="h3" sx={{ textAlign: 'center', maxWidth: 800, mx: 'auto' }}>
-            Our vision offering the best product nulla vehicula tortor scelerisque ultrices
-            malesuada.
+            Buscamos ofrecer productos de calidad a precios accesibles cuidando el medio ambiente.
           </Typography>
         </m.div>
       </Container>

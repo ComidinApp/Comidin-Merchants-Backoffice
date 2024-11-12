@@ -28,8 +28,8 @@ export function useGetProductss() {
 
 export function useGetProducts(commerceId) {
   const URL = commerceId
-    ? `http://localhost:3000/product/commerce/${commerceId}`
-    : 'http://localhost:3000/product';
+    ? `https://6pg61wv2-3000.brs.devtunnels.ms/product/commerce/${commerceId}`
+    : 'https://6pg61wv2-3000.brs.devtunnels.ms/product';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -51,7 +51,7 @@ export function useGetProducts(commerceId) {
 // ----------------------------------------------------------------------
 
 export function useGetProduct(productId) {
-  const URL = `http://localhost:3000/product/${productId}`;
+  const URL = `https://6pg61wv2-3000.brs.devtunnels.ms/product/${productId}`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 

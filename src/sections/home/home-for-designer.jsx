@@ -42,7 +42,7 @@ export default function HomeForDesigner() {
             ),
           }}
         >
-          Descárgate la app
+          Descargá la app y empezá a ahorrar
         </Typography>
       </m.div>
 
@@ -67,6 +67,7 @@ export default function HomeForDesigner() {
           target="_blank"
           rel="noopener"
           href={paths.figma}
+          sx={{ ml: 2 }} // Añade margen a la izquierda (opcional)
         >
           Apple Store
         </Button>
@@ -80,8 +81,8 @@ export default function HomeForDesigner() {
       src="/assets/images/home/for_designer_comidin.webp"
       variants={varFade().in}
       sx={{
-        height: 1,
-        width: 0.5,
+        height: 'auto',
+        width: '80%',
         objectFit: 'cover',
         position: 'absolute',
         boxShadow: `-80px 80px 80px ${

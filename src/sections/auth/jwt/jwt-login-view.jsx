@@ -114,7 +114,7 @@ export default function JwtLoginView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Iniciar sesion
+        Iniciar sesión
       </LoadingButton>
     </Stack>
   );

@@ -92,7 +92,7 @@ export default function ClassicLoginView() {
         underline="always"
         sx={{ alignSelf: 'flex-end' }}
       >
-        Olvidaste tu contraseña?
+        ¿Olvidaste tu contraseña?
       </Link>
 
       <LoadingButton
@@ -103,7 +103,7 @@ export default function ClassicLoginView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Iniciar Sesion
+        Iniciar Sesión
       </LoadingButton>
     </Stack>
   );

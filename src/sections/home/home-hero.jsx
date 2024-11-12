@@ -20,7 +20,9 @@ import { varFade, MotionContainer } from 'src/components/animate';
 
 const StyledRoot = styled('div')(({ theme }) => ({
   ...bgGradient({
-    color: alpha(theme.palette.background.default, theme.palette.mode === 'light' ? 0.9 : 0.94),
+    color: alpha('#95541B', theme.palette.mode === 'light' ? 0.9 : 0.94),
+    startColor: '#95541B', 
+    endColor: '#7B4016',
   }),
   width: '100%',
   height: '100vh',
@@ -175,7 +177,7 @@ export default function HomeHero() {
             textAlign: 'center',
           }}
         >
-          Comenza a <br />
+          Comenzá a <br />
           vender con
         </Typography>
       </m.div>
@@ -190,13 +192,13 @@ export default function HomeHero() {
             repeat: Infinity,
           }}
         >
-          COMIDIN
+          Comidín
         </StyledTextGradient>
       </m.div>
 
       <m.div variants={varFade().in}>
         <Typography variant="body2" sx={{ textAlign: 'center' }}>
-          Supermercados, tiendas, restaurantes, panda ¡lo que sea!
+          Supermercados, tiendas, restaurantes, y mucho más!
         </Typography>
       </m.div>
 

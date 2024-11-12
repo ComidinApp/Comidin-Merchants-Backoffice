@@ -14,20 +14,20 @@ import { varFade, MotionViewport } from 'src/components/animate';
 const CARDS = [
   {
     icon: ' /assets/icons/home/ic_make_brand.svg',
-    title: 'Los mejores restaurantes de tu ciudad',
+    title: 'Control total con Reportes y Estadísticas',
     description:
-      'Con una gran variedad de restaurantes, ¡podrás pedir tu comida favorita o explorar nuevos restaurantes cerca!',
+      'Llevá un control completo de tus pedidos, ventas y productos con nuestras herramientas avanzadas de análisis.',
   },
   {
     icon: ' /assets/icons/home/ic_design.svg',
-    title: 'Entrega rapida',
-    description: '¡Como un rayo! Pide o envía cualquier cosa en tu ciudad y recíbelo en minutos',
+    title: 'Planes de crecimiento',
+    description: 'Elevá tus ventas con nuestros planes de suscripción flexibles, diseñados para maximizar el éxito de tu negocio.',
   },
   {
     icon: ' /assets/icons/home/ic_development.svg',
-    title: 'La compra del súper y mucho más',
+    title: 'Diseño adaptativo',
     description:
-      '¡Encuentra todo lo que necesites! Desde Supermercados, tiendas, farmacias, floristerías...: si está en tu ciudad, pídelo y recíbelo.',
+      'Nuestro entorno web se adapta a las características y necesidades de tu comercio, brindando una experiencia única tanto para ti como para tus clientes.',
   },
 ];
 
@@ -55,7 +55,7 @@ export default function HomeMinimal() {
         </m.div>
 
         <m.div variants={varFade().inDown}>
-          <Typography variant="h2">Todo lo que quieras</Typography>
+          <Typography variant="h2">Con tu comercio tendrás...</Typography>
         </m.div>
       </Stack>
 

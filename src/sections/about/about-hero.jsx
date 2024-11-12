@@ -35,13 +35,13 @@ export default function AboutHero() {
             },
           }}
         >
-          <TextAnimate text="Quienes" variants={varFade().inRight} sx={{ color: 'primary.main' }} />
+          <TextAnimate text="¿Quiénes" variants={varFade().inRight} sx={{ color: 'primary.main' }} />
 
           <br />
 
           <Stack spacing={2} display="inline-flex" direction="row" sx={{ color: 'common.white' }}>
             <TextAnimate text="somos" />
-            <TextAnimate text="nosotros?" />
+            <TextAnimate text="parte?" />
           </Stack>
 
           <m.div variants={varFade().inRight}>

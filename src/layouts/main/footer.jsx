@@ -23,20 +23,20 @@ const LINKS = [
   {
     headline: 'Minimal',
     children: [
-      { name: 'About us', href: paths.about },
-      { name: 'Contact us', href: paths.contact },
-      { name: 'FAQs', href: paths.faqs },
+      { name: 'Sobre nosotros', href: paths.about },
+      { name: 'Contactanos', href: paths.contact },
+      { name: 'Preguntas Frecuentes', href: paths.faqs },
     ],
   },
   {
     headline: 'Legal',
     children: [
-      { name: 'Terms and Condition', href: '#' },
-      { name: 'Privacy Policy', href: '#' },
+      { name: 'Términos y Condiciones', href: '#' },
+      { name: 'Política de Privacidad', href: '#' },
     ],
   },
   {
-    headline: 'Contact',
+    headline: 'Contacto',
     children: [{ name: 'support@minimals.cc', href: '#' }],
   },
 ];
@@ -98,8 +98,7 @@ export default function Footer() {
                 mx: { xs: 'auto', md: 'unset' },
               }}
             >
-              The starting point for your next project with Minimal UI Kit, built on the newest
-              version of Material-UI ©, ready to be customized to your style.
+              Comidín, el comodín de cada mes.
             </Typography>
 
             <Stack

@@ -11,13 +11,56 @@ export const _carouselsMembers = [
 
 // ----------------------------------------------------------------------
 
-export const _faqs = [...Array(8)].map((_, index) => ({
-  id: _mock.id(index),
-  value: `panel${index + 1}`,
-  heading: `Questions ${index + 1}`,
-  detail: _mock.description(index),
-}));
-
+export const _faqs = [
+  {
+    id: _mock.id(0),
+    value: 'panel1',
+    heading: '¿Cómo empiezo a vender?',
+    detail: _mock.description(0),
+  },
+  {
+    id: _mock.id(1),
+    value: 'panel2',
+    heading: '¿Se cobra comisión por cada pedido realizado?',
+    detail: _mock.description(1),
+  },
+  {
+    id: _mock.id(2),
+    value: 'panel3',
+    heading: '¿A qué tipo de comercios está destinado?',
+    detail: _mock.description(2),
+  },
+  {
+    id: _mock.id(3),
+    value: 'panel4',
+    heading: '¿Puedo devolver un pedido?',
+    detail: _mock.description(3),
+  },
+  {
+    id: _mock.id(4),
+    value: 'panel5',
+    heading: '¿Qué métodos de pago aceptan?',
+    detail: _mock.description(4),
+  },
+  {
+    id: _mock.id(5),
+    value: 'panel6',
+    heading: '¿Cómo me registro en la aplicación?',
+    detail: _mock.description(5),
+  },
+  {
+    id: _mock.id(6),
+    value: 'panel7',
+    heading: '¿?',
+    detail: _mock.description(6),
+  },
+  {
+    id: _mock.id(7),
+    value: 'panel8',
+    heading: '¿?',
+    detail: _mock.description(7),
+  },
+]
 // ----------------------------------------------------------------------
 
 export const _addressBooks = [...Array(24)].map((_, index) => ({

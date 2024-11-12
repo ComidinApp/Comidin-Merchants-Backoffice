@@ -123,7 +123,7 @@ export default function CognitoLoginView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Iniciar Sesion
+        Iniciar Sesión
       </LoadingButton>
     </Stack>
   );

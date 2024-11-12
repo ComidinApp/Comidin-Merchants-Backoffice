@@ -24,15 +24,16 @@ export default function HomeAdvertisement() {
           xs: 'center',
           md: 'left',
         },
+        ml: { md: 20 },
       }}
     >
       <Box
-        component={m.div}
+        component={m.div}s
         variants={varFade().inDown}
         sx={{ color: 'common.white', mb: 5, typography: 'h2' }}
       >
-        Suma tu comercio
-        <br /> y comenza a vender!
+        Sumá tu comercio 
+        <br /> y comenzá a vender!
       </Box>
 
       <Stack
@@ -106,6 +107,7 @@ export default function HomeAdvertisement() {
           }),
           borderRadius: 2,
           pb: { xs: 5, md: 0 },
+          mt: 10,
         }}
       >
         {renderImg}

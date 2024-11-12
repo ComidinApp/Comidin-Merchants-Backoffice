@@ -8,7 +8,7 @@ export default function AboutPage() {
   return (
     <>
       <Helmet>
-        <title> About us</title>
+        <title> Acerca de nosotros</title>
       </Helmet>
 
       <AboutView />

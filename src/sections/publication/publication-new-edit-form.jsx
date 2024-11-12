@@ -167,8 +167,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentPublication
-        ? `http://localhost:3000/publication/${currentPublication.id}`
-        : 'http://localhost:3000/publication';
+        ? `https://6pg61wv2-3000.brs.devtunnels.ms/publication/${currentPublication.id}`
+        : 'https://6pg61wv2-3000.brs.devtunnels.ms/publication';
 
       const method = currentPublication ? 'PUT' : 'POST';
       data.is_active = data.is_active === 1 ? 'active' : 'inactive';

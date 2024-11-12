@@ -11,7 +11,7 @@ import { PATH_AFTER_LOGIN } from 'src/config-global';
 export default function LoginButton({ sx }) {
   return (
     <Button component={RouterLink} href={PATH_AFTER_LOGIN} variant="outlined" sx={{ mr: 1, ...sx }}>
-      Iniciar Sesion
+      Iniciar Sesión
     </Button>
   );
 }
