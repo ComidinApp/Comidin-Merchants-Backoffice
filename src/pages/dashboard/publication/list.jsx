@@ -8,7 +8,7 @@ export default function PublicationListPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Publication List</title>
+        <title> Comidin: Publicaciones</title>
       </Helmet>
 
       <PublicationListView />

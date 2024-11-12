@@ -30,20 +30,22 @@ export function useGetOrders(commerceId) {
 
 // ---------------------------------------------------------------------- CAMBIAR
 
-export function useGetPublication(productId) {
-  const URL = productId ? [endpoints.product.details, { params: { productId } }] : '';
+export function useGetOrder(orderId) {
+  const URL = orderId ? `http://localhost:3000/order/${orderId}` : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
-      publication: data?.product,
-      publicationLoading: isLoading,
-      publicationError: error,
-      publicationValidating: isValidating,
+      order: data,
+      orderLoading: isLoading,
+      orderError: error,
+      orderValidating: isValidating,
     }),
-    [data?.product, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating]
   );
+
+  console.log(memoizedValue);
 
   return memoizedValue;
 }

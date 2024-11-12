@@ -8,7 +8,7 @@ export default function CommerceListPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Commerce List</title>
+        <title> Comidin: Comercios</title>
       </Helmet>
 
       <CommerceListView />

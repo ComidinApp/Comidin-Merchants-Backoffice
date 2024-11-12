@@ -35,7 +35,16 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
 
   const popover = usePopover();
 
-  const randomAvatar = _mock.image.avatar(Math.floor(Math.random() * 24) + 1);
+  function stringToNumber(input) {
+    let sum = 0;
+    for (let i = 0; i < input.length; i += 1) {
+      sum += input.charCodeAt(i);
+    }
+
+    return (sum % 24) + 1;
+  }
+
+  const randomAvatar = _mock.image.avatar(stringToNumber(user.email));
 
   const renderPrimary = (
     <TableRow hover selected={selected}>
@@ -159,7 +168,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
 
                 <ListItemText
                   primary={item.publication.product.name}
-                  secondary={`$${item.publication.price}`}
+                  secondary={`$${item.publication.discounted_price}`}
                   primaryTypographyProps={{
                     typography: 'body2',
                   }}

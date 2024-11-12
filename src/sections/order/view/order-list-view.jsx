@@ -50,7 +50,7 @@ import OrderTableFiltersResult from '../order-table-filters-result';
 const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
 
 const TABLE_HEAD = [
-  { id: 'orderNumber', label: 'Nro Pedido', width: 116 },
+  { id: 'order_id', label: 'Nro Pedido', width: 150 },
   { id: 'name', label: 'Usuario' },
   { id: 'createdAt', label: 'Fecha', width: 140 },
   { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
@@ -73,7 +73,7 @@ export default function OrderListView() {
 
   const authUser = useAuthContext();
 
-  const table = useTable({ defaultOrderBy: 'orderNumber' });
+  const table = useTable({ defaultOrderBy: 'order_id', defaultOrder: 'desc' });
 
   const settings = useSettingsContext();
 

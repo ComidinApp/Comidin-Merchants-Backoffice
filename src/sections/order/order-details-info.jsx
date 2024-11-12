@@ -19,7 +19,7 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
   const renderCustomer = (
     <>
       <CardHeader
-        title="Customer Info"
+        title="Informacion del Cliente"
         action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
@@ -51,7 +51,7 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
             startIcon={<Iconify icon="mingcute:add-line" />}
             sx={{ mt: 1 }}
           >
-            Add to Blacklist
+            Agregar a la Blacklist
           </Button>
         </Stack>
       </Stack>
@@ -71,7 +71,7 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
       <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
         <Stack direction="row" alignItems="center">
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Ship by
+            Encargado del envio
           </Box>
           {delivery.shipBy}
         </Stack>
@@ -96,7 +96,7 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
   const renderShipping = (
     <>
       <CardHeader
-        title="Shipping"
+        title="Entrega"
         action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
@@ -106,14 +106,14 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
       <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
         <Stack direction="row">
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Address
+            Direccion
           </Box>
           {shippingAddress.fullAddress}
         </Stack>
 
         <Stack direction="row">
           <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Phone number
+            Numero de telefono
           </Box>
           {shippingAddress.phoneNumber}
         </Stack>
@@ -124,7 +124,7 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
   const renderPayment = (
     <>
       <CardHeader
-        title="Payment"
+        title="Pago"
         action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
@@ -133,7 +133,7 @@ export default function OrderDetailsInfo({ customer, delivery, payment, shipping
       />
       <Stack direction="row" alignItems="center" sx={{ p: 3, typography: 'body2' }}>
         <Box component="span" sx={{ color: 'text.secondary', flexGrow: 1 }}>
-          Phone number
+          Medio de pago
         </Box>
 
         {payment.cardNumber}

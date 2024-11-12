@@ -8,7 +8,7 @@ export default function ProductListPage() {
   return (
     <>
       <Helmet>
-        <title> Dashboard: Product List</title>
+        <title> Comidin: Productos</title>
       </Helmet>
 
       <ProductListView />

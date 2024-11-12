@@ -6,6 +6,7 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 
 import { paths } from 'src/routes/paths';
+import { useGetOrder } from 'src/api/orders';
 
 import { _orders, ORDER_STATUS_OPTIONS } from 'src/_mock';
 
@@ -21,7 +22,9 @@ import OrderDetailsHistory from '../order-details-history';
 export default function OrderDetailsView({ id }) {
   const settings = useSettingsContext();
 
-  const currentOrder = _orders.filter((order) => order.id === id)[0];
+  const test = useGetOrder(id);
+
+  const currentOrder = _orders[0];
 
   const [status, setStatus] = useState(currentOrder.status);
 
