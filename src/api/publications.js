@@ -7,8 +7,8 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 export function useGetPublications(commerceId) {
   const URL = commerceId
-    ? `https://6pg61wv2-3000.brs.devtunnels.ms/publication/commerce/${commerceId}`
-    : 'https://6pg61wv2-3000.brs.devtunnels.ms/publication';
+    ? `ttp://localhost:3000/publication/commerce/${commerceId}`
+    : 'ttp://localhost:3000/publication';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);

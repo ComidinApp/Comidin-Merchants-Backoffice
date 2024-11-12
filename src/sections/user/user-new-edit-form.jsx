@@ -44,7 +44,7 @@ export default function UserNewEditForm({ currentUser }) {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('https://6pg61wv2-3000.brs.devtunnels.ms/role');
+        const response = await fetch('ttp://localhost:3000/role');
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -58,7 +58,7 @@ export default function UserNewEditForm({ currentUser }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('https://6pg61wv2-3000.brs.devtunnels.ms/commerce');
+        const response = await fetch('ttp://localhost:3000/commerce');
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -150,8 +150,8 @@ export default function UserNewEditForm({ currentUser }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentUser
-        ? `https://6pg61wv2-3000.brs.devtunnels.ms/employee/${currentUser.id}`
-        : 'https://6pg61wv2-3000.brs.devtunnels.ms/employee';
+        ? `ttp://localhost:3000/employee/${currentUser.id}`
+        : 'ttp://localhost:3000/employee';
 
       const method = currentUser ? 'PUT' : 'POST';
 

@@ -58,7 +58,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('https://6pg61wv2-3000.brs.devtunnels.ms/commerce');
+        const response = await fetch('ttp://localhost:3000/commerce');
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -72,7 +72,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
-        const response = await fetch('https://6pg61wv2-3000.brs.devtunnels.ms/commerceCategory');
+        const response = await fetch('ttp://localhost:3000/commerceCategory');
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
@@ -129,8 +129,8 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentCommerce
-        ? `https://6pg61wv2-3000.brs.devtunnels.ms/commerce/${currentCommerce.id}`
-        : 'https://6pg61wv2-3000.brs.devtunnels.ms/commerce';
+        ? `ttp://localhost:3000/commerce/${currentCommerce.id}`
+        : 'ttp://localhost:3000/commerce';
 
       const method = currentCommerce ? 'PUT' : 'POST';
       data.image_url = currentCommerce ? data.image_url[0] : data.image_url;

@@ -178,7 +178,7 @@ export function AuthProvider({ children }) {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        const url = 'https://6pg61wv2-3000.brs.devtunnels.ms/employee';
+        const url = 'ttp://localhost:3000/employee';
         const method = 'POST';
 
         const response = await fetch(url, {

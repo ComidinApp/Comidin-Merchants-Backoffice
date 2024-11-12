@@ -118,7 +118,7 @@ export default function UserListView() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('https://6pg61wv2-3000.brs.devtunnels.ms/role');
+        const response = await fetch('ttp://localhost:3000/role');
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -134,7 +134,7 @@ export default function UserListView() {
   /* const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('https://6pg61wv2-3000.brs.devtunnels.ms/employee');
+      const response = await axios.get('ttp://localhost:3000/employee');
       setTableData(Array.isArray(response?.data) ? response.data : []);
       setLoading(false);
     } catch (error) {
@@ -148,10 +148,10 @@ export default function UserListView() {
     try {
       setLoading(true);
 
-      let url = 'https://6pg61wv2-3000.brs.devtunnels.ms/employee';
+      let url = 'ttp://localhost:3000/employee';
 
       if (authUser.user.role_id !== 1) {
-        url = `https://6pg61wv2-3000.brs.devtunnels.ms/employee/commerce/${authUser.user.commerce.id}`;
+        url = `ttp://localhost:3000/employee/commerce/${authUser.user.commerce.id}`;
       }
 
       const response = await axios.get(url);

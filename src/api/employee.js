@@ -7,7 +7,7 @@ import { fetcher, endpoints } from 'src/utils/axios';
 
 export async function getEmployee(email) {
   try {
-    const URL = `https://6pg61wv2-3000.brs.devtunnels.ms/employee/email/${email}`;
+    const URL = `ttp://localhost:3000/employee/email/${email}`;
 
     const response = await axios.get(URL);
     return response;
@@ -18,7 +18,7 @@ export async function getEmployee(email) {
 }
 
 export async function sendEmployeeVerificationCode(email) {
-  const URL = `https://6pg61wv2-3000.brs.devtunnels.ms/auth/send-code`;
+  const URL = `ttp://localhost:3000/auth/send-code`;
 
   try {
     const response = await axios.post(URL, { email });
@@ -30,7 +30,7 @@ export async function sendEmployeeVerificationCode(email) {
 }
 
 export async function changeEmployeePassword(email, code, newPassword) {
-  const URL = `https://6pg61wv2-3000.brs.devtunnels.ms/auth/change-pass`;
+  const URL = `ttp://localhost:3000/auth/change-pass`;
 
   try {
     const response = await axios.post(URL, { email, code, newPassword });
