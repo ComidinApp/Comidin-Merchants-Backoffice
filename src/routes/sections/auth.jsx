@@ -111,7 +111,7 @@ const authCognito = {
       path: 'register',
       element: (
         <GuestGuard>
-          <AuthClassicLayout title="Comenzá a vender asi de simple!">
+          <AuthClassicLayout title="¡Comenzá a vender así de simple!">
             <CognitoRegisterPage />
           </AuthClassicLayout>
         </GuestGuard>
@@ -154,7 +154,7 @@ const authJwt = {
       path: 'register',
       element: (
         <GuestGuard>
-          <AuthClassicLayout title="Comenzá a vender así de simple!">
+          <AuthClassicLayout title="¡Comenzá a vender así de simple!">
             <JwtRegisterPage />
           </AuthClassicLayout>
         </GuestGuard>

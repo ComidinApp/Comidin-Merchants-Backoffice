@@ -8,7 +8,7 @@ export default function OverviewAnalyticsPage() {
   return (
     <>
       <Helmet>
-        <title> Comidin - Analiticas</title>
+        <title> Comidin - Analíticas</title>
       </Helmet>
 
       <OverviewAnalyticsView />

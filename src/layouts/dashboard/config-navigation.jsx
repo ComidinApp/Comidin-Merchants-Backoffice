@@ -69,7 +69,7 @@ export function useNavData() {
             icon: ICONS.ecommerce,
           }, */
           {
-            title: t('Analiticas'),
+            title: t('Reportes'),
             path: paths.dashboard.general.analytics,
             icon: ICONS.analytics,
           },

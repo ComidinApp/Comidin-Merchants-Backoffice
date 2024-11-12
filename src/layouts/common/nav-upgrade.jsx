@@ -80,7 +80,7 @@ export default function NavUpgrade() {
         </Stack>
 
         <Button variant="contained" onClick={handleLogout} target="_blank" rel="noopener">
-          Cerrar Sesion
+          Cerrar Sesión
         </Button>
       </Stack>
     </Stack>

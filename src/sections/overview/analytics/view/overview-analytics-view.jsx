@@ -41,7 +41,7 @@ export default function OverviewAnalyticsView() {
         <Grid xs={12} md={8}>
           <AppWelcome
             title={`Te damos la bienvenida 👋 \n ${authUser.user?.first_name} ${authUser.user?.last_name}`}
-            description="Gracias por tu increible contribución, tu trabajo ha dejado una huella imborrale al mundo!"
+            description="¿Qué vas a vender hoy? Hay muchos clientes esperando por tus productos"
             img={<SeoIllustration />}
             /* action={
               <Button variant="contained" color="primary">
