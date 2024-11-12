@@ -148,7 +148,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     (value, product) => {
       dialog.onFalse();
       setSelectedValue(value);
-      setSelectedProduct(product);
+      setSelectedProduct(value);
       setValue('commerce_id', value.commerce_id);
       setValue('product_id', value.id);
     },
