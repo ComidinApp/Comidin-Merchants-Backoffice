@@ -10,6 +10,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Retrieve environment variables from SSM
+        run: |
+          VITE_HOST_API=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_HOST_API" --with-decryption --query "Parameter.Value" --output text)
+          VITE_ASSETS_API=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_ASSETS_API" --with-decryption --query "Parameter.Value" --output text)
+          VITE_S3_ASSETS_AVATAR=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_S3_ASSETS_AVATAR" --with-decryption --query "Parameter.Value" --output text)
+          VITE_AWS_COGNITO_USER_POOL_ID=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_AWS_COGNITO_USER_POOL_ID" --with-decryption --query "Parameter.Value" --output text)
+          VITE_AWS_COGNITO_CLIENT_ID=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_AWS_COGNITO_CLIENT_ID" --with-decryption --query "Parameter.Value" --output text)
+          echo "VITE_HOST_API=$VITE_HOST_API" >> $GITHUB_ENV
+          echo "VITE_ASSETS_API=$VITE_ASSETS_API" >> $GITHUB_ENV
+          echo "VITE_S3_ASSETS_AVATAR=$VITE_S3_ASSETS_AVATAR" >> $GITHUB_ENV
+          echo "VITE_AWS_COGNITO_USER_POOL_ID=$VITE_AWS_COGNITO_USER_POOL_ID" >> $GITHUB_ENV
+          echo "VITE_AWS_COGNITO_CLIENT_ID=$VITE_AWS_COGNITO_CLIENT_ID" >> $GITHUB_ENV
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
