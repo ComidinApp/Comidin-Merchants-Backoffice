@@ -1,14 +1,40 @@
-name: deploy static website to AWS-S3
+name: Pipeline Backoffice Website
 
 on:
   push:
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16 # Puedes ajustar la versión según tu proyecto
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: build/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -19,4 +45,4 @@ jobs:
 
       - name: Deploy to AWS S3
         run: |
-          aws s3 sync . s3://comidin.com.ar --delete
+          aws s3 sync ./build s3://<your-bucket-name> --delete
