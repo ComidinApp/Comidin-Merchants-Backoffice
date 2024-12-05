@@ -13,7 +13,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16 # Puedes ajustar la versión según tu proyecto
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
@@ -24,8 +24,8 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build
-          path: build/
+          name: dist
+          path: dist/
 
   deploy:
     runs-on: ubuntu-latest
@@ -34,7 +34,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build
+          name: dist
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
@@ -45,4 +45,4 @@ jobs:
 
       - name: Deploy to AWS S3
         run: |
-          aws s3 sync ./build s3://<your-bucket-name> --delete
+          aws s3 sync ./dist s3://<your-bucket-name> --delete
