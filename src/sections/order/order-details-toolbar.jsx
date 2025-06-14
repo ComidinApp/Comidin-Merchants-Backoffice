@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
@@ -16,6 +15,8 @@ import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
+const { VITE_API_COMIDIN } = import.meta.env;
+
 const statusTranslations = {
   pending: 'Pendiente',
   completed: 'Completado',

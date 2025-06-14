@@ -1,7 +1,7 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useCallback, useEffect } from 'react';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
+
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
@@ -46,6 +46,7 @@ import UserTableToolbar from '../user-table-toolbar';
 import UserTableFiltersResult from '../user-table-filters-result';
 
 // ----------------------------------------------------------------------
+const { VITE_API_COMIDIN } = import.meta.env;
 
 const STATUS_OPTIONS = [{ value: 'all', label: 'Todos' }, ...USER_STATUS_OPTIONS];
 

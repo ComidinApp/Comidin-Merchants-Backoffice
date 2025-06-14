@@ -3,7 +3,6 @@ import { useMemo, useEffect, useReducer, useCallback } from 'react';
 import { paths } from 'src/routes/paths';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'src/components/snackbar';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import axios, { endpoints } from 'src/utils/axios';
 import {
   sendEmployeeVerificationCode,
@@ -14,6 +13,7 @@ import { CognitoUserPool, CognitoUser, AuthenticationDetails } from 'amazon-cogn
 
 import { AuthContext } from './auth-context';
 
+const { VITE_API_COMIDIN } = import.meta.env;
 const user_pool = import.meta.env.VITE_AWS_COGNITO_USER_POOL_ID;
 const client_id = import.meta.env.VITE_AWS_COGNITO_CLIENT_ID;
 

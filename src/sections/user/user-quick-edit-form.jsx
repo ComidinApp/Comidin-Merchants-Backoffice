@@ -3,7 +3,6 @@ import { useMemo, useEffect, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -26,6 +25,7 @@ import FormProvider, {
   RHFUploadAvatar,
 } from 'src/components/hook-form';
 
+const { VITE_API_COMIDIN } = import.meta.env;
 export default function UserQuickEditForm({ currentUser, open, onClose }) {
   const { enqueueSnackbar } = useSnackbar();
 

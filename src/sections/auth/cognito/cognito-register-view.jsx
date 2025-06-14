@@ -24,12 +24,13 @@ import { RouterLink } from 'src/routes/components';
 import { useAuthContext } from 'src/auth/hooks';
 import { Upload } from 'src/components/upload';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 import { gridColumnGroupsLookupSelector } from '@mui/x-data-grid';
+
+const { VITE_API_COMIDIN } = import.meta.env;
 
 export default function CognitoRegisterView() {
   const { register } = useAuthContext();

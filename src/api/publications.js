@@ -1,9 +1,9 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
+const { VITE_API_COMIDIN } = import.meta.env;
 
 export function useGetPublications(commerceId) {
   const URL = commerceId

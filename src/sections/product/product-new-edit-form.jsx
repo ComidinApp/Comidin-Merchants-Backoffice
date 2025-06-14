@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
@@ -44,7 +43,7 @@ import FormProvider, {
 } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
-
+const { VITE_API_COMIDIN } = import.meta.env;
 export default function ProductNewEditForm({ currentProduct }) {
   const router = useRouter();
 

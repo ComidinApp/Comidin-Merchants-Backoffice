@@ -2,9 +2,9 @@ import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios from 'axios';
 import { fetcher, endpoints } from 'src/utils/axios';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 
 // ----------------------------------------------------------------------
+const { VITE_API_COMIDIN } = import.meta.env;
 
 export async function getEmployee(email) {
   try {

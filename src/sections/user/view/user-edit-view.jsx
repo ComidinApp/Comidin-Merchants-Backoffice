@@ -4,10 +4,10 @@ import Container from '@mui/material/Container';
 import { paths } from 'src/routes/paths';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
-import UserNewEditForm from '../user-new-edit-form';
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
-// ----------------------------------------------------------------------
 
+import UserNewEditForm from '../user-new-edit-form';
+// ----------------------------------------------------------------------
+const { VITE_API_COMIDIN } = import.meta.env;
 export default function UserEditView({ id }) {
   const settings = useSettingsContext();
 
