@@ -8,7 +8,7 @@ import { fetcher, endpoints } from 'src/utils/axios';
 export function useGetPublications(commerceId) {
   const URL = commerceId
     ? `${VITE_API_COMIDIN}/publication/commerce/${commerceId}`
-    : '${VITE_API_COMIDIN}/publication';
+    : `${VITE_API_COMIDIN}/publication`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);

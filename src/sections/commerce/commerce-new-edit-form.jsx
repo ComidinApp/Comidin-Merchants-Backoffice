@@ -58,7 +58,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/commerce');
+        const response = await fetch(`${VITE_API_COMIDIN}/commerce`);
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -72,7 +72,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/commerceCategory');
+        const response = await fetch(`${VITE_API_COMIDIN}/commerceCategory`);
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
@@ -130,7 +130,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
       const url = currentCommerce
         ? `${VITE_API_COMIDIN}/commerce/${currentCommerce.id}`
-        : '${VITE_API_COMIDIN}/commerce';
+        : `${VITE_API_COMIDIN}/commerce`;
 
       const method = currentCommerce ? 'PUT' : 'POST';
       data.image_url = currentCommerce ? data.image_url[0] : data.image_url;

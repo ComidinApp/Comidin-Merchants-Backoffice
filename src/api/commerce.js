@@ -79,7 +79,7 @@ export function useGetCommercess() {
 // ----------------------------------------------------------------------
 
 export function useGetCommerces() {
-  const URL = '${VITE_API_COMIDIN}/commerce';
+  const URL = `${VITE_API_COMIDIN}/commerce`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);

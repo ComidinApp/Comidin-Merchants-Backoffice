@@ -29,7 +29,7 @@ export function useGetProductss() {
 export function useGetProducts(commerceId) {
   const URL = commerceId
     ? `${VITE_API_COMIDIN}/product/commerce/${commerceId}`
-    : '${VITE_API_COMIDIN}/product';
+    : `${VITE_API_COMIDIN}/product`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);

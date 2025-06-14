@@ -35,7 +35,7 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/role');
+        const response = await fetch(`${VITE_API_COMIDIN}/role`);
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -45,7 +45,7 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
 
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/commerce');
+        const response = await fetch(`${VITE_API_COMIDIN}/commerce`);
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -111,7 +111,7 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       const url = currentUser
         ? `${VITE_API_COMIDIN}/employee/${currentUser.id}`
-        : '${VITE_API_COMIDIN}/employee';
+        : `${VITE_API_COMIDIN}/employee`;
 
       const method = currentUser ? 'PUT' : 'POST';
 

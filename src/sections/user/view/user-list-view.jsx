@@ -118,7 +118,7 @@ export default function UserListView() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/role');
+        const response = await fetch(`${VITE_API_COMIDIN}/role`);
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -134,7 +134,7 @@ export default function UserListView() {
   /* const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('${VITE_API_COMIDIN}/employee');
+      const response = await axios.get(`${VITE_API_COMIDIN}/employee`);
       setTableData(Array.isArray(response?.data) ? response.data : []);
       setLoading(false);
     } catch (error) {
@@ -148,7 +148,7 @@ export default function UserListView() {
     try {
       setLoading(true);
 
-      let url = '${VITE_API_COMIDIN}/employee';
+      let url = `${VITE_API_COMIDIN}/employee`;
 
       if (authUser.user.role_id !== 1) {
         url = `${VITE_API_COMIDIN}/employee/commerce/${authUser.user.commerce.id}`;

@@ -227,7 +227,7 @@ export default function CognitoRegisterView() {
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/commerceCategory');
+        const response = await fetch(`${VITE_API_COMIDIN}/commerceCategory`);
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {

@@ -62,7 +62,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/commerce');
+        const response = await fetch(`${VITE_API_COMIDIN}/commerce`);
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -76,7 +76,7 @@ export default function ProductNewEditForm({ currentProduct }) {
   useEffect(() => {
     const fetchProductCategories = async () => {
       try {
-        const response = await fetch('${VITE_API_COMIDIN}/productCategory');
+        const response = await fetch(`${VITE_API_COMIDIN}/productCategory`);
         const data = await response.json();
         setProductCategories(data || []);
       } catch (error) {
@@ -143,7 +143,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
       const url = currentProduct
         ? `${VITE_API_COMIDIN}/product/${currentProduct.id}`
-        : '${VITE_API_COMIDIN}/product';
+        : `${VITE_API_COMIDIN}/product`;
 
       const method = currentProduct ? 'PUT' : 'POST';
       data.image_url = currentProduct ? data.image_url : data.image_url;

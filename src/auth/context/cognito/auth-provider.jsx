@@ -178,7 +178,7 @@ export function AuthProvider({ children }) {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        const url = '${VITE_API_COMIDIN}/employee';
+        const url = `${VITE_API_COMIDIN}/employee`;
         const method = 'POST';
 
         const response = await fetch(url, {

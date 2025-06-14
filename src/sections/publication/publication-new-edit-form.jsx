@@ -192,7 +192,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
       const url = currentPublication
         ? `${VITE_API_COMIDIN}/publication/${currentPublication.id}`
-        : '${VITE_API_COMIDIN}/publication';
+        : `${VITE_API_COMIDIN}/publication`;
 
       const method = currentPublication ? 'PUT' : 'POST';
       /* data.is_active = data.is_active === true ? 'active' : 'inactive'; */
