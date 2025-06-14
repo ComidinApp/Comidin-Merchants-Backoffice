@@ -24,6 +24,7 @@ jobs:
           VITE_S3_ASSETS_AVATAR=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_S3_ASSETS_AVATAR" --with-decryption --query "Parameter.Value" --output text)
           VITE_AWS_COGNITO_USER_POOL_ID=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_AWS_COGNITO_USER_POOL_ID" --with-decryption --query "Parameter.Value" --output text)
           VITE_AWS_COGNITO_CLIENT_ID=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_AWS_COGNITO_CLIENT_ID" --with-decryption --query "Parameter.Value" --output text)
+          VITE_API_COMIDIN=$(aws ssm get-parameter --name "/comidin-backoffice/VITE_API_COMIDIN" --with-decryption --query "Parameter.Value" --output text)
           echo "VITE_HOST_API=$VITE_HOST_API" >> $GITHUB_ENV
           echo "VITE_ASSETS_API=$VITE_ASSETS_API" >> $GITHUB_ENV
           echo "VITE_S3_ASSETS_AVATAR=$VITE_S3_ASSETS_AVATAR" >> $GITHUB_ENV
