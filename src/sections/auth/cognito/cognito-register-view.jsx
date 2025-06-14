@@ -24,7 +24,7 @@ import { RouterLink } from 'src/routes/components';
 import { useAuthContext } from 'src/auth/hooks';
 import { Upload } from 'src/components/upload';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import Iconify from 'src/components/iconify';
@@ -227,7 +227,7 @@ export default function CognitoRegisterView() {
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
-        const response = await fetch('http://localhost:3000/commerceCategory');
+        const response = await fetch('${VITE_API_COMIDIN}/commerceCategory');
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {

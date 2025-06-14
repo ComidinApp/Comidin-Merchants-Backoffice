@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
@@ -58,7 +58,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('http://localhost:3000/commerce');
+        const response = await fetch('${VITE_API_COMIDIN}/commerce');
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -72,7 +72,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
-        const response = await fetch('http://localhost:3000/commerceCategory');
+        const response = await fetch('${VITE_API_COMIDIN}/commerceCategory');
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
@@ -129,8 +129,8 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentCommerce
-        ? `http://localhost:3000/commerce/${currentCommerce.id}`
-        : 'http://localhost:3000/commerce';
+        ? `${VITE_API_COMIDIN}/commerce/${currentCommerce.id}`
+        : '${VITE_API_COMIDIN}/commerce';
 
       const method = currentCommerce ? 'PUT' : 'POST';
       data.image_url = currentCommerce ? data.image_url[0] : data.image_url;

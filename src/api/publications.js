@@ -1,14 +1,14 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 
 export function useGetPublications(commerceId) {
   const URL = commerceId
-    ? `http://localhost:3000/publication/commerce/${commerceId}`
-    : 'http://localhost:3000/publication';
+    ? `${VITE_API_COMIDIN}/publication/commerce/${commerceId}`
+    : '${VITE_API_COMIDIN}/publication';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -31,7 +31,7 @@ export function useGetPublications(commerceId) {
 // ----------------------------------------------------------------------
 
 export function useGetPublication(publicationId) {
-  const URL = publicationId ? `http://localhost:3000/publication/${publicationId}` : '';
+  const URL = publicationId ? `${VITE_API_COMIDIN}/publication/${publicationId}` : '';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 

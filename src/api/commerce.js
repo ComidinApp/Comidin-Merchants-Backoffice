@@ -2,12 +2,13 @@ import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios from 'axios';
 import { fetcher, endpoints } from 'src/utils/axios';
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 
 // ----------------------------------------------------------------------
 
 export async function getCommerceById(id) {
   try {
-    const URL = `http://localhost:3000/commerce/${id}`;
+    const URL = `${VITE_API_COMIDIN}/commerce/${id}`;
 
     const response = await axios.get(URL);
     return response;
@@ -18,7 +19,7 @@ export async function getCommerceById(id) {
 }
 
 export async function createCommerce(commerce) {
-  const URL = `http://localhost:3000/commerce`;
+  const URL = `${VITE_API_COMIDIN}/commerce`;
 
   try {
     const response = await axios.post(URL, commerce);
@@ -31,7 +32,7 @@ export async function createCommerce(commerce) {
 
 export async function changeCommerceStatus(id, status) {
   console.log(status);
-  const URL = `http://localhost:3000/commerce/status/${id}`;
+  const URL = `${VITE_API_COMIDIN}/commerce/status/${id}`;
 
   try {
     const response = await axios.put(URL, { status });
@@ -43,7 +44,7 @@ export async function changeCommerceStatus(id, status) {
 }
 
 export async function activateCommerce(id) {
-  const URL = `http://localhost:3000/commerce/activate/${id}`;
+  const URL = `${VITE_API_COMIDIN}/commerce/activate/${id}`;
 
   try {
     const response = await axios.put(URL);
@@ -78,7 +79,7 @@ export function useGetCommercess() {
 // ----------------------------------------------------------------------
 
 export function useGetCommerces() {
-  const URL = 'http://localhost:3000/commerce';
+  const URL = '${VITE_API_COMIDIN}/commerce';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -101,7 +102,7 @@ export function useGetCommerces() {
 // ----------------------------------------------------------------------
 
 export function useGetCommerce(commerceId) {
-  const URL = `http://localhost:3000/prodcommerceuct/${commerceId}`;
+  const URL = `${VITE_API_COMIDIN}/prodcommerceuct/${commerceId}`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
@@ -36,7 +36,7 @@ export default function OrderDetailsToolbar({
 
   const handleChangeStatus = async (newStatus) => {
     try {
-      const response = await axios.put(`http://localhost:3000/order/status/${orderNumber}`, {
+      const response = await axios.put(`${VITE_API_COMIDIN}/order/status/${orderNumber}`, {
         status: newStatus,
       });
 

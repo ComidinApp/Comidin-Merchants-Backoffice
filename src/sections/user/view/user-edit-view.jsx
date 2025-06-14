@@ -5,7 +5,7 @@ import { paths } from 'src/routes/paths';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import UserNewEditForm from '../user-new-edit-form';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 // ----------------------------------------------------------------------
 
 export default function UserEditView({ id }) {
@@ -16,7 +16,7 @@ export default function UserEditView({ id }) {
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/employee/${id}`);
+        const response = await fetch(`${VITE_API_COMIDIN}/employee/${id}`);
         const data = await response.json();
         console.log(data);
         setEmployee(data || null);

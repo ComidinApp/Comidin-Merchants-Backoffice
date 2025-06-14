@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
@@ -28,8 +28,8 @@ export function useGetProductss() {
 
 export function useGetProducts(commerceId) {
   const URL = commerceId
-    ? `http://localhost:3000/product/commerce/${commerceId}`
-    : 'http://localhost:3000/product';
+    ? `${VITE_API_COMIDIN}/product/commerce/${commerceId}`
+    : '${VITE_API_COMIDIN}/product';
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
   console.log(data);
@@ -51,7 +51,7 @@ export function useGetProducts(commerceId) {
 // ----------------------------------------------------------------------
 
 export function useGetProduct(productId) {
-  const URL = `http://localhost:3000/product/${productId}`;
+  const URL = `${VITE_API_COMIDIN}/product/${productId}`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 

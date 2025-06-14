@@ -2,12 +2,13 @@ import useSWR from 'swr';
 import { useMemo } from 'react';
 import axios from 'axios';
 import { fetcher, endpoints } from 'src/utils/axios';
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 
 // ----------------------------------------------------------------------
 
 export async function getEmployee(email) {
   try {
-    const URL = `http://localhost:3000/employee/email/${email}`;
+    const URL = `${VITE_API_COMIDIN}/employee/email/${email}`;
 
     const response = await axios.get(URL);
     return response;
@@ -18,7 +19,7 @@ export async function getEmployee(email) {
 }
 
 export async function sendEmployeeVerificationCode(email) {
-  const URL = `http://localhost:3000/auth/send-code`;
+  const URL = `${VITE_API_COMIDIN}/auth/send-code`;
 
   try {
     const response = await axios.post(URL, { email });
@@ -30,7 +31,7 @@ export async function sendEmployeeVerificationCode(email) {
 }
 
 export async function changeEmployeePassword(email, code, newPassword) {
-  const URL = `http://localhost:3000/auth/change-pass`;
+  const URL = `${VITE_API_COMIDIN}/auth/change-pass`;
 
   try {
     const response = await axios.post(URL, { email, code, newPassword });

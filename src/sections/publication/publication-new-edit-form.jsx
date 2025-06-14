@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
@@ -82,7 +82,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       if (currentPublication?.product_id) {
         try {
           const response = await fetch(
-            `http://localhost:3000/product/${currentPublication.product_id}`
+            `${VITE_API_COMIDIN}/product/${currentPublication.product_id}`
           );
           if (response.ok) {
             const product = await response.json();
@@ -191,8 +191,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentPublication
-        ? `http://localhost:3000/publication/${currentPublication.id}`
-        : 'http://localhost:3000/publication';
+        ? `${VITE_API_COMIDIN}/publication/${currentPublication.id}`
+        : '${VITE_API_COMIDIN}/publication';
 
       const method = currentPublication ? 'PUT' : 'POST';
       /* data.is_active = data.is_active === true ? 'active' : 'inactive'; */

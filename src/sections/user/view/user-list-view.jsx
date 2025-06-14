@@ -1,7 +1,7 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useCallback, useEffect } from 'react';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Card from '@mui/material/Card';
@@ -118,7 +118,7 @@ export default function UserListView() {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('http://localhost:3000/role');
+        const response = await fetch('${VITE_API_COMIDIN}/role');
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -134,7 +134,7 @@ export default function UserListView() {
   /* const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/employee');
+      const response = await axios.get('${VITE_API_COMIDIN}/employee');
       setTableData(Array.isArray(response?.data) ? response.data : []);
       setLoading(false);
     } catch (error) {
@@ -148,10 +148,10 @@ export default function UserListView() {
     try {
       setLoading(true);
 
-      let url = 'http://localhost:3000/employee';
+      let url = '${VITE_API_COMIDIN}/employee';
 
       if (authUser.user.role_id !== 1) {
-        url = `http://localhost:3000/employee/commerce/${authUser.user.commerce.id}`;
+        url = `${VITE_API_COMIDIN}/employee/commerce/${authUser.user.commerce.id}`;
       }
 
       const response = await axios.get(url);
@@ -174,7 +174,7 @@ export default function UserListView() {
     async (id) => {
       try {
         // Realiza la eliminación en el backend
-        await axios.delete(`http://localhost:3000/employee/${id}`);
+        await axios.delete(`${VITE_API_COMIDIN}/employee/${id}`);
 
         // Actualiza el estado de los datos después de la eliminación
         const deleteRow = tableData.filter((row) => row.id !== id);
@@ -196,7 +196,7 @@ export default function UserListView() {
       // Elimina los usuarios seleccionados
       const selectedIds = table.selected;
       await Promise.all(
-        selectedIds.map((id) => axios.delete(`http://localhost:3000/employee/${id}`))
+        selectedIds.map((id) => axios.delete(`${VITE_API_COMIDIN}/employee/${id}`))
       );
 
       // Actualiza el estado después de la eliminación

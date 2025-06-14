@@ -4,7 +4,7 @@ import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
-
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -44,7 +44,7 @@ export default function UserNewEditForm({ currentUser }) {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch('http://localhost:3000/role');
+        const response = await fetch('${VITE_API_COMIDIN}/role');
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
@@ -58,7 +58,7 @@ export default function UserNewEditForm({ currentUser }) {
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch('http://localhost:3000/commerce');
+        const response = await fetch('${VITE_API_COMIDIN}/commerce');
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
@@ -150,8 +150,8 @@ export default function UserNewEditForm({ currentUser }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentUser
-        ? `http://localhost:3000/employee/${currentUser.id}`
-        : 'http://localhost:3000/employee';
+        ? `${VITE_API_COMIDIN}/employee/${currentUser.id}`
+        : '${VITE_API_COMIDIN}/employee';
 
       const method = currentUser ? 'PUT' : 'POST';
 
