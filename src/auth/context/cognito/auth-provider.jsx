@@ -156,16 +156,17 @@ export function AuthProvider({ children }) {
         onFailure: (err) => {
           console.error(err);
         },
-        newPasswordRequired: async (session) => {
+        newPasswordRequired: (session) => {
           console.log('Se requiere una nueva contraseña.');
-          const my_employee = await getEmployee(email);
-          if (my_employee.data.commerce.status !== 'admitted') {
-            user.signOut();
-            navigate(paths.unauthorizedCommerce);
-          } else {
-            sendEmployeeVerificationCode(email);
-            navigate(paths.auth.cognito.newPassword);
-          }
+          getEmployee(email).then((my_employee) => {
+            if (my_employee.data.commerce.status !== 'admitted') {
+              user.signOut();
+              navigate(paths.unauthorizedCommerce);
+            } else {
+              sendEmployeeVerificationCode(email);
+              navigate(paths.auth.cognito.newPassword);
+            }
+          });
         },
       });
     },
@@ -210,6 +211,9 @@ export function AuthProvider({ children }) {
   const confirmPassword = useCallback(async (email, code, newPassword) => {
     await changeEmployeePassword(email, code, newPassword);
   }, []);
+
+
+  // CONFIRM RESET PASSWORD
 
   // RESEND CONFIRMATION CODE
   const resendConfirmationCode = useCallback(async (email) => {
