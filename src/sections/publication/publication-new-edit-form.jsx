@@ -97,16 +97,47 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const [selectedValue, setSelectedValue] = useState();
 
-  const NewPublicationSchema = Yup.object().shape({
-    commerce_id: Yup.number().required('Commerce is required'),
-    product_id: Yup.number().required('Product is required'),
-    price: Yup.number().moreThan(0, 'Price should be greater than 0'),
-    discount_percentaje: Yup.number().min(0).max(100, 'Discount should be between 0 and 100'),
-    discounted_price: Yup.number(),
-    available_stock: Yup.number().required('Stock is required'),
-    is_active: Yup.string().required('Status is required'),
-    expiration_date: Yup.date().required('Expiration date is required'),
-  });
+ const NewPublicationSchema = Yup.object().shape({
+  commerce_id: Yup.number()
+    .required('Commerce is required'),
+
+  product_id: Yup.number()
+    .required('Product is required'),
+
+  price: Yup.number()
+    .required('Price is required')
+    .moreThan(0, 'Price should be greater than 0'),
+
+  discount_percentaje: Yup.number()
+    .min(0, 'Discount cannot be negative')
+    .max(100, 'Discount should be between 0 and 100'),
+
+  discounted_price: Yup.number()
+    .required('Discounted price is required')
+    .test(
+      'discounted-price-check',
+      'Discounted price does not match discount percentage',
+      function (value) {
+        const { price, discount_percentaje } = this.parent;
+        const expected = price - (price * (discount_percentaje / 100));
+        return Math.abs(value - expected) < 0.01; // tolerancia centavos
+      } 
+    ),
+
+  available_stock: Yup.number()
+    .required('Stock is required')
+    .integer('Stock must be an integer')
+    .min(0, 'Stock cannot be negative'),
+
+  is_active: Yup.string()
+    .required('Status is required')
+    .oneOf(['active', 'inactive'], 'Invalid status'),
+
+  expiration_date: Yup.date()
+    .required('Expiration date is required')
+    .min(new Date(), 'Expiration date cannot be in the past'),
+});
+
 
   const defaultValues = useMemo(
     () => ({

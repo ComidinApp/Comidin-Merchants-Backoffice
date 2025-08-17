@@ -1,7 +1,5 @@
 import PropTypes from 'prop-types';
-
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -9,20 +7,40 @@ import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
 import { PlanFreeIcon, PlanStarterIcon, PlanPremiumIcon } from 'src/assets/icons';
-
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 
-// ----------------------------------------------------------------------
-
 export default function PricingCard({ card, sx, ...other }) {
-  const { subscription, price, caption, lists, not_lists, labelAction } = card;
+  const { subscription, price, caption, lists, not_lists, labelAction, planId } = card;
 
   const basic = subscription === 'Básica';
-
   const starter = subscription === 'Estándar';
-
   const premium = subscription === 'Premium';
+
+  // 🚀 Suscripción directamente desde el card
+  const handleSubscribe = async () => {
+    try {
+      const response = await fetch("/subscriptions/crear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId, // usamos el planId que trae el card
+          email: "cliente@correo.com", // luego se reemplaza por el usuario logueado
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data?.link) {
+        window.open(data.link, "_blank");
+      } else {
+        alert("No se pudo generar el enlace de suscripción.");
+      }
+    } catch (error) {
+      console.error("Error al iniciar suscripción:", error);
+      alert("Ocurrió un error al intentar suscribirse.");
+    }
+  };
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -31,7 +49,6 @@ export default function PricingCard({ card, sx, ...other }) {
         {starter && <PlanStarterIcon />}
         {premium && <PlanPremiumIcon />}
       </Box>
-
       {starter && <Label color="info">POPULAR</Label>}
     </Stack>
   );
@@ -50,9 +67,7 @@ export default function PricingCard({ card, sx, ...other }) {
   ) : (
     <Stack direction="row">
       <Typography variant="h4">$</Typography>
-
       <Typography variant="h2">{price}</Typography>
-
       <Typography
         component="span"
         sx={{
@@ -73,35 +88,16 @@ export default function PricingCard({ card, sx, ...other }) {
         <Box component="span" sx={{ typography: 'overline' }}>
           Características
         </Box>
-        {/* <Link variant="body2" color="inherit" underline="always">
-          All
-        </Link> */}
       </Stack>
 
       {lists.map((item) => (
-        <Stack
-          key={item}
-          spacing={1}
-          direction="row"
-          alignItems="center"
-          sx={{
-            typography: 'body2',
-          }}
-        >
+        <Stack key={item} spacing={1} direction="row" alignItems="center" sx={{ typography: 'body2' }}>
           <Iconify icon="eva:checkmark-fill" width={16} sx={{ mr: 1 }} />
           {item}
         </Stack>
       ))}
       {not_lists.map((item) => (
-        <Stack
-          key={item}
-          spacing={1}
-          direction="row"
-          alignItems="center"
-          sx={{
-            typography: 'body2',
-          }}
-        >
+        <Stack key={item} spacing={1} direction="row" alignItems="center" sx={{ typography: 'body2' }}>
           <Iconify icon="eva:close-fill" width={16} sx={{ mr: 1 }} />
           {item}
         </Stack>
@@ -137,21 +133,17 @@ export default function PricingCard({ card, sx, ...other }) {
       {...other}
     >
       {renderIcon}
-
       {renderSubscription}
-
       {renderPrice}
-
       <Divider sx={{ borderStyle: 'dashed' }} />
-
       {renderList}
-
       <Button
         fullWidth
         size="large"
         variant="contained"
         disabled={basic}
         color={starter ? 'primary' : 'inherit'}
+        onClick={handleSubscribe}
       >
         {labelAction}
       </Button>
