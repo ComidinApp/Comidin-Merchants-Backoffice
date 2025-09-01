@@ -40,9 +40,15 @@ export default function PricingCard({ card, sx, ...other }) {
         }),
       });
 
-      let data = null;
-      try { data = await res.json(); } catch {}
-
+let data = null;
+const ct = res.headers.get('content-type') || '';
+if (ct.includes('application/json')) {
+  try {
+    data = await res.json();
+  } catch (e) {
+    console.debug('JSON parse failed:', e);
+  }
+}
       if (!res.ok) {
         const msg = data?.error || data?.message || `Error ${res.status}`;
         throw new Error(msg);
