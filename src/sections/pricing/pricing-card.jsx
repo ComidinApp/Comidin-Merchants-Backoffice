@@ -15,9 +15,9 @@ import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 export default function PricingCard({ card, sx, ...other }) {
   const { subscription, price, caption, lists, not_lists, labelAction, planId } = card;
 
-  const { user } = useAuthContext?.() || { user: null };
-  const userEmail = user?.email || 'cliente@correo.com';
-  const userId = user?.id || null;
+  const { user } = useAuthContext();
+  const userEmail = user?.email ?? 'cliente@correo.com';
+  const userId = user?.id ?? null;
 
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +25,6 @@ export default function PricingCard({ card, sx, ...other }) {
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
-  // 🚀 Suscripción
   const handleSubscribe = async () => {
     if (!planId || basic) return;
     try {
@@ -35,15 +34,14 @@ export default function PricingCard({ card, sx, ...other }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planId,               // lo que espera hoy tu backend
-          email: userEmail,     // luego lo reemplazamos por el del usuario logueado real
-          userId,               // opcional
+          planId,
+          email: userEmail,
+          userId,
         }),
       });
 
-      // intenta parsear siempre, incluso si no es 2xx, para mostrar mensaje del backend
       let data = null;
-      try { data = await res.json(); } catch (_) {}
+      try { data = await res.json(); } catch {}
 
       if (!res.ok) {
         const msg = data?.error || data?.message || `Error ${res.status}`;
@@ -52,7 +50,6 @@ export default function PricingCard({ card, sx, ...other }) {
 
       const url = data?.link || data?.init_point;
       if (url) {
-        // mejor redirigir en la misma pestaña
         window.location.href = url;
       } else {
         throw new Error('No se recibió el enlace de suscripción.');
@@ -130,16 +127,23 @@ export default function PricingCard({ card, sx, ...other }) {
         p: 5,
         borderRadius: 2,
         boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
-        ...(starter && { borderTopRightRadius: { md: 0 }, borderBottomRightRadius: { md: 0 } }),
-        ...((starter || premium) => ({
-          boxShadow: (theme) => ({
-            xs: theme.customShadows.card,
-            md: `-40px 40px 80px 0px ${alpha(
-              theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
-              0.16
-            )}`,
-          }),
-        })),
+        ...(starter && {
+          borderTopRightRadius: { md: 0 },
+          borderBottomRightRadius: { md: 0 },
+        }),
+        ...(starter || premium
+          ? {
+              boxShadow: (theme) => ({
+                xs: theme.customShadows.card,
+                md: `-40px 40px 80px 0px ${alpha(
+                  theme.palette.mode === 'light'
+                    ? theme.palette.grey[500]
+                    : theme.palette.common.black,
+                  0.16
+                )}`,
+              }),
+            }
+          : {}),
         ...sx,
       }}
       {...other}
