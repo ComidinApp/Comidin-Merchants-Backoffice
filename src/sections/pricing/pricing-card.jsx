@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -9,36 +10,58 @@ import Typography from '@mui/material/Typography';
 import { PlanFreeIcon, PlanStarterIcon, PlanPremiumIcon } from 'src/assets/icons';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 export default function PricingCard({ card, sx, ...other }) {
   const { subscription, price, caption, lists, not_lists, labelAction, planId } = card;
+
+  const { user } = useAuthContext?.() || { user: null };
+  const userEmail = user?.email || 'cliente@correo.com';
+  const userId = user?.id || null;
+
+  const [loading, setLoading] = useState(false);
 
   const basic = subscription === 'Básica';
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
-  // 🚀 Suscripción directamente desde el card
+  // 🚀 Suscripción
   const handleSubscribe = async () => {
+    if (!planId || basic) return;
     try {
-      const response = await fetch("/subscriptions/crear", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      setLoading(true);
+
+      const res = await fetch('/subscriptions/crear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planId, // usamos el planId que trae el card
-          email: "cliente@correo.com", // luego se reemplaza por el usuario logueado
+          planId,               // lo que espera hoy tu backend
+          email: userEmail,     // luego lo reemplazamos por el del usuario logueado real
+          userId,               // opcional
         }),
       });
 
-      const data = await response.json();
+      // intenta parsear siempre, incluso si no es 2xx, para mostrar mensaje del backend
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
 
-      if (data?.link) {
-        window.open(data.link, "_blank");
-      } else {
-        alert("No se pudo generar el enlace de suscripción.");
+      if (!res.ok) {
+        const msg = data?.error || data?.message || `Error ${res.status}`;
+        throw new Error(msg);
       }
-    } catch (error) {
-      console.error("Error al iniciar suscripción:", error);
-      alert("Ocurrió un error al intentar suscribirse.");
+
+      const url = data?.link || data?.init_point;
+      if (url) {
+        // mejor redirigir en la misma pestaña
+        window.location.href = url;
+      } else {
+        throw new Error('No se recibió el enlace de suscripción.');
+      }
+    } catch (err) {
+      console.error('Error al iniciar suscripción:', err);
+      alert(err.message || 'Ocurrió un error al intentar suscribirse.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,12 +93,7 @@ export default function PricingCard({ card, sx, ...other }) {
       <Typography variant="h2">{price}</Typography>
       <Typography
         component="span"
-        sx={{
-          alignSelf: 'center',
-          color: 'text.disabled',
-          ml: 1,
-          typography: 'body2',
-        }}
+        sx={{ alignSelf: 'center', color: 'text.disabled', ml: 1, typography: 'body2' }}
       >
         / mes
       </Typography>
@@ -111,15 +129,9 @@ export default function PricingCard({ card, sx, ...other }) {
       sx={{
         p: 5,
         borderRadius: 2,
-        boxShadow: (theme) => ({
-          xs: theme.customShadows.card,
-          md: 'none',
-        }),
-        ...(starter && {
-          borderTopRightRadius: { md: 0 },
-          borderBottomRightRadius: { md: 0 },
-        }),
-        ...((starter || premium) && {
+        boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
+        ...(starter && { borderTopRightRadius: { md: 0 }, borderBottomRightRadius: { md: 0 } }),
+        ...((starter || premium) => ({
           boxShadow: (theme) => ({
             xs: theme.customShadows.card,
             md: `-40px 40px 80px 0px ${alpha(
@@ -127,7 +139,7 @@ export default function PricingCard({ card, sx, ...other }) {
               0.16
             )}`,
           }),
-        }),
+        })),
         ...sx,
       }}
       {...other}
@@ -137,15 +149,16 @@ export default function PricingCard({ card, sx, ...other }) {
       {renderPrice}
       <Divider sx={{ borderStyle: 'dashed' }} />
       {renderList}
+
       <Button
         fullWidth
         size="large"
         variant="contained"
-        disabled={basic}
+        disabled={basic || loading}
         color={starter ? 'primary' : 'inherit'}
         onClick={handleSubscribe}
       >
-        {labelAction}
+        {loading ? 'Generando enlace...' : labelAction}
       </Button>
     </Stack>
   );

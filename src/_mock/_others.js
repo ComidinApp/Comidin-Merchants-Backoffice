@@ -223,6 +223,7 @@ export const _pricingPlans = [
       'Agregado de empleados y roles.',
     ],
     labelAction: 'Plan Actual',
+    planId: 1, // si es gratis podrías no permitir suscripción
   },
   {
     subscription: 'Estándar',
@@ -235,6 +236,7 @@ export const _pricingPlans = [
     ],
     not_lists: ['Visibilidad de listado de comercios.'],
     labelAction: 'Elegir Estándar',
+    planId: 2, // ← importante
   },
   {
     subscription: 'Premium',
@@ -250,6 +252,7 @@ export const _pricingPlans = [
     ],
     not_lists: [],
     labelAction: 'Elegi Premium',
+    planId: 3, // ← importante
   },
 ];
 
