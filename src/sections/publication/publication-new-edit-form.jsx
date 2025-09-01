@@ -98,11 +98,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const [selectedValue, setSelectedValue] = useState();
 
  const NewPublicationSchema = Yup.object().shape({
-  commerce_id: Yup.number()
-    .required('Commerce is required'),
+  commerce_id: Yup.number().required('Commerce is required'),
 
-  product_id: Yup.number()
-    .required('Product is required'),
+  product_id: Yup.number().required('Product is required'),
 
   price: Yup.number()
     .required('Price is required')
@@ -117,11 +115,13 @@ export default function PublicationNewEditForm({ currentPublication }) {
     .test(
       'discounted-price-check',
       'Discounted price does not match discount percentage',
-      function (value) {
-        const { price, discount_percentaje } = this.parent;
-        const expected = price - (price * (discount_percentaje / 100));
-        return Math.abs(value - expected) < 0.01; // tolerancia centavos
-      } 
+      // ✅ sin `this` y sin sombrear `price`
+      (value, ctx) => {
+        const { price: formPrice, discount_percentaje } = ctx?.parent || {};
+        if (typeof formPrice !== 'number' || typeof discount_percentaje !== 'number') return true;
+        const expected = formPrice - (formPrice * (discount_percentaje / 100));
+        return Math.abs((value ?? 0) - expected) < 0.01; // tolerancia centavos
+      }
     ),
 
   available_stock: Yup.number()
@@ -137,6 +137,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     .required('Expiration date is required')
     .min(new Date(), 'Expiration date cannot be in the past'),
 });
+
 
 
   const defaultValues = useMemo(
