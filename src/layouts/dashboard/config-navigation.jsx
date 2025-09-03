@@ -171,9 +171,25 @@ export function useNavData() {
 
           // SUBCRIPCIONES
           {
-            title: t('subcripciones'),
+            title: t('subscripciones'),
             path: paths.dashboard.pricing,
             icon: ICONS.label,
+            /* children: [
+              { title: t('lista'), path: paths.dashboard.invoice.root },
+              {
+                title: t('detalle'),
+                path: paths.dashboard.invoice.demo.details,
+              },
+              { title: t('crear'), path: paths.dashboard.invoice.new },
+              { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
+            ], */
+          },
+
+          // Raitings
+          {
+            title: t('reseñas'),
+            path: paths.dashboard.reviews,
+            icon: ICONS.chat,
             /* children: [
               { title: t('lista'), path: paths.dashboard.invoice.root },
               {
