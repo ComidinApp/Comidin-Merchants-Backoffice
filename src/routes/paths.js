@@ -123,6 +123,7 @@ export const paths = {
       file: `${ROOTS.DASHBOARD}/file`,
     },
     pricing: `${ROOTS.DASHBOARD}/pricing`,
+    reviews: `${ROOTS.DASHBOARD}/reviews`,
     user: {
       root: `${ROOTS.DASHBOARD}/user`,
       new: `${ROOTS.DASHBOARD}/user/new`,
