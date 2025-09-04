@@ -12,6 +12,9 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
+// ⚙️ Base de API desde env (definí VITE_API_BASE_URL en el front)
+const API_BASE = import.meta.env.VITE_API_COMIDIN || '';
+
 export default function PricingCard({ card, sx, ...other }) {
   const { subscription, price, caption, lists, not_lists, labelAction, planId } = card;
 
@@ -27,10 +30,17 @@ export default function PricingCard({ card, sx, ...other }) {
 
   const handleSubscribe = async () => {
     if (!planId || basic) return;
+
+    if (!API_BASE) {
+      console.error('VITE_API_BASE_URL no está configurada');
+      alert('Error de configuración: falta VITE_API_BASE_URL');
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const res = await fetch('/subscriptions/crear', {
+      const res = await fetch(`${API_BASE}/subscriptions/crear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -38,17 +48,19 @@ export default function PricingCard({ card, sx, ...other }) {
           email: userEmail,
           userId,
         }),
+        // credentials: 'include', // descomentar si tu API necesita cookies
       });
 
-let data = null;
-const ct = res.headers.get('content-type') || '';
-if (ct.includes('application/json')) {
-  try {
-    data = await res.json();
-  } catch (e) {
-    console.debug('JSON parse failed:', e);
-  }
-}
+      let data = null;
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch (e) {
+          console.debug('JSON parse failed:', e);
+        }
+      }
+
       if (!res.ok) {
         const msg = data?.error || data?.message || `Error ${res.status}`;
         throw new Error(msg);
