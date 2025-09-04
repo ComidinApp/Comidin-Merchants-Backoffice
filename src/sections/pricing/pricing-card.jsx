@@ -12,21 +12,15 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
-// ⚙️ Base de API desde env (definí VITE_API_BASE_URL en el front)
+
 const API_BASE = import.meta.env.VITE_API_COMIDIN || '';
 
 export default function PricingCard({ card, sx, ...other }) {
-  const { subscription, price, caption, lists, not_lists, labelAction, planId } = card;
-
+  
   const { user } = useAuthContext();
-  const userEmail = user?.email ?? 'cliente@correo.com';
-  const userId = user?.id ?? null;
-
-  const [loading, setLoading] = useState(false);
-
-  const basic = subscription === 'Básica';
-  const starter = subscription === 'Estándar';
-  const premium = subscription === 'Premium';
+  const userEmail   = user?.email ?? 'cliente@correo.com';
+  const userId      = user?.id ?? null;
+  const commerceId  = user?.commerce?.id ?? user?.commerce_id ?? null; 
 
   const handleSubscribe = async () => {
     if (!planId || basic) return;
@@ -40,25 +34,22 @@ export default function PricingCard({ card, sx, ...other }) {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/subscriptions/crear`, {
+      
+      const res = await fetch(`${API_BASE}/crear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId,
+          commerceId,  
           email: userEmail,
           userId,
         }),
-        // credentials: 'include', // descomentar si tu API necesita cookies
       });
 
       let data = null;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-        try {
-          data = await res.json();
-        } catch (e) {
-          console.debug('JSON parse failed:', e);
-        }
+        try { data = await res.json(); } catch (e) { console.debug('JSON parse failed:', e); }
       }
 
       if (!res.ok) {
@@ -67,11 +58,8 @@ export default function PricingCard({ card, sx, ...other }) {
       }
 
       const url = data?.link || data?.init_point;
-      if (url) {
-        window.location.href = url;
-      } else {
-        throw new Error('No se recibió el enlace de suscripción.');
-      }
+      if (url) window.location.href = url;
+      else throw new Error('No se recibió el enlace de suscripción.');
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
