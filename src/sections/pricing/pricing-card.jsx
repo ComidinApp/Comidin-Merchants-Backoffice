@@ -12,35 +12,57 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
-
+// Base de API desde tu .env del front
 const API_BASE = import.meta.env.VITE_API_COMIDIN || '';
 
 export default function PricingCard({ card, sx, ...other }) {
-  
-  const { user } = useAuthContext();
-  const userEmail   = user?.email ?? 'cliente@correo.com';
-  const userId      = user?.id ?? null;
-  const commerceId  = user?.commerce?.id ?? user?.commerce_id ?? null; 
+  const {
+    subscription,
+    price,
+    caption,
+    lists = [],
+    not_lists = [],
+    labelAction,
+    planId,
+  } = card ?? {};
+
+  // auth
+  const auth = useAuthContext();
+  const user = auth?.user;
+  const userEmail = user?.email ?? 'cliente@correo.com';
+  const userId = user?.id ?? null;
+  const commerceId = user?.commerce?.id ?? user?.commerce_id ?? null;
+
+  // estado
+  const [loading, setLoading] = useState(false);
+
+  // flags de plan
+  const basic = subscription === 'Básica';
+  const starter = subscription === 'Estándar';
+  const premium = subscription === 'Premium';
 
   const handleSubscribe = async () => {
     if (!planId || basic) return;
 
     if (!API_BASE) {
-      console.error('VITE_API_BASE_URL no está configurada');
-      alert('Error de configuración: falta VITE_API_BASE_URL');
+      console.error('VITE_API_COMIDIN no está configurada');
+      alert('Error de configuración: falta VITE_API_COMIDIN');
       return;
     }
 
     try {
       setLoading(true);
 
-      
-      const res = await fetch(`${API_BASE}/crear`, {
+      // Fallback: /crear. Cuando el proxy preserve el prefijo, usar /subscriptions/crear
+      const endpoint = `${API_BASE}/crear`;
+      // const endpoint = `${API_BASE}/subscriptions/crear`;
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId,
-          commerceId,  
+          commerceId, // requerido por tu validador (normalizeBody → commerce_id)
           email: userEmail,
           userId,
         }),
@@ -49,7 +71,11 @@ export default function PricingCard({ card, sx, ...other }) {
       let data = null;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-        try { data = await res.json(); } catch (e) { console.debug('JSON parse failed:', e); }
+        try {
+          data = await res.json();
+        } catch (e) {
+          console.debug('JSON parse failed:', e);
+        }
       }
 
       if (!res.ok) {
@@ -58,8 +84,11 @@ export default function PricingCard({ card, sx, ...other }) {
       }
 
       const url = data?.link || data?.init_point;
-      if (url) window.location.href = url;
-      else throw new Error('No se recibió el enlace de suscripción.');
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('No se recibió el enlace de suscripción.');
+      }
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
@@ -175,6 +204,14 @@ export default function PricingCard({ card, sx, ...other }) {
 }
 
 PricingCard.propTypes = {
-  card: PropTypes.object,
+  card: PropTypes.shape({
+    subscription: PropTypes.string,
+    price: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    caption: PropTypes.string,
+    lists: PropTypes.arrayOf(PropTypes.string),
+    not_lists: PropTypes.arrayOf(PropTypes.string),
+    labelAction: PropTypes.string,
+    planId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  }),
   sx: PropTypes.object,
 };
