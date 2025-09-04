@@ -53,9 +53,7 @@ export default function PricingCard({ card, sx, ...other }) {
     try {
       setLoading(true);
 
-      // Fallback: /crear. Cuando el proxy preserve el prefijo, usar /subscriptions/crear
-      const endpoint = `${API_BASE}/crear`;
-      // const endpoint = `${API_BASE}/subscriptions/crear`;
+      const endpoint = `${API_BASE}/subscriptions/crear`;
 
       const res = await fetch(endpoint, {
         method: 'POST',
