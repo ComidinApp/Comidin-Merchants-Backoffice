@@ -12,7 +12,6 @@ import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
-// Base de API desde tu .env del front
 const API_BASE = import.meta.env.VITE_API_COMIDIN || '';
 
 export default function PricingCard({ card, sx, ...other }) {
@@ -42,25 +41,32 @@ export default function PricingCard({ card, sx, ...other }) {
   const premium = subscription === 'Premium';
 
   const handleSubscribe = async () => {
+    // gratis no suscribe
     if (!planId || basic) return;
 
+    // requiere base url
     if (!API_BASE) {
       console.error('VITE_API_COMIDIN no está configurada');
       alert('Error de configuración: falta VITE_API_COMIDIN');
       return;
     }
 
+    if (!commerceId) {
+      alert('No se encontró el comercio para este usuario. Por favor, agregá un comercio al perfil.');
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const endpoint = `${API_BASE}/subscriptions/crear`;
+      const endpoint = `${API_BASE}/subscriptions`;
 
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planId,
-          commerceId, // requerido por tu validador (normalizeBody → commerce_id)
+          planId: Number(planId),
+          commerceId: Number(commerceId),
           email: userEmail,
           userId,
         }),
@@ -81,9 +87,9 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error(msg);
       }
 
-      const url = data?.link || data?.init_point;
+      const url = data?.link || data?.init_point || data?.sandbox_init_point;
       if (url) {
-        window.location.href = url;
+        window.location.href = url; // redirigimos a MP
       } else {
         throw new Error('No se recibió el enlace de suscripción.');
       }
