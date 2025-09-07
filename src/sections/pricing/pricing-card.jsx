@@ -73,9 +73,7 @@ export default function PricingCard({ card, sx, ...other }) {
       let data = null;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-        try {
-          data = await res.json();
-        } catch {}
+        data = await res.json().catch(() => null); 
       }
 
       if (!res.ok) {
