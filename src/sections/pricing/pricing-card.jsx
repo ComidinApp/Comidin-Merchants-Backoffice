@@ -41,16 +41,14 @@ export default function PricingCard({ card, sx, ...other }) {
   const premium = subscription === 'Premium';
 
   const handleSubscribe = async () => {
-    // gratis no suscribe
+    if (loading) return; 
     if (!planId || basic) return;
 
-    // requiere base url
     if (!API_BASE) {
       console.error('VITE_API_COMIDIN no está configurada');
       alert('Error de configuración: falta VITE_API_COMIDIN');
       return;
     }
-
     if (!commerceId) {
       alert('No se encontró el comercio para este usuario. Por favor, agregá un comercio al perfil.');
       return;
@@ -65,10 +63,10 @@ export default function PricingCard({ card, sx, ...other }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planId: Number(planId),
-          commerceId: Number(commerceId),
+          plan_id: Number(planId),
+          commerce_id: Number(commerceId),
           email: userEmail,
-          userId,
+          userId, 
         }),
       });
 
@@ -77,9 +75,7 @@ export default function PricingCard({ card, sx, ...other }) {
       if (ct.includes('application/json')) {
         try {
           data = await res.json();
-        } catch (e) {
-          console.debug('JSON parse failed:', e);
-        }
+        } catch {}
       }
 
       if (!res.ok) {
@@ -89,7 +85,7 @@ export default function PricingCard({ card, sx, ...other }) {
 
       const url = data?.link || data?.init_point || data?.sandbox_init_point;
       if (url) {
-        window.location.href = url; // redirigimos a MP
+        window.location.href = url; // redirige a Mercado Pago
       } else {
         throw new Error('No se recibió el enlace de suscripción.');
       }
