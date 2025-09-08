@@ -65,7 +65,7 @@ export default function PricingCard({ card, sx, ...other }) {
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email: userEmail,
+          payer_email: 'TEST_USER_1278385314@testuser.com',
           userId, 
         }),
       });
