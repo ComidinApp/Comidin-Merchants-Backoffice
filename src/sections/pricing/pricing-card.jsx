@@ -117,7 +117,7 @@ export default function PricingCard({ card, sx, ...other }) {
           body: JSON.stringify({
             preapproval_id: preapprovalId,
             plan_id: planIdLS || undefined,
-            payer_email: payerEmailLS || 'TEST_USER_1278385314@testuser.com',
+            payer_email: 'TEST_USER_1278385314@testuser.com',
             commerce_id: commerceIdLS,
           }),
         });
