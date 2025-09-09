@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -41,7 +41,7 @@ export default function PricingCard({ card, sx, ...other }) {
   const premium = subscription === 'Premium';
 
   const handleSubscribe = async () => {
-    if (loading) return; 
+    if (loading) return;
     if (!planId || basic) return;
 
     if (!API_BASE) {
@@ -65,15 +65,15 @@ export default function PricingCard({ card, sx, ...other }) {
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email: 'TEST_USER_1278385314@testuser.com',
-          userId, 
+          payer_email: userEmail || 'TEST_USER_1278385314@testuser.com',
+          userId,
         }),
       });
 
       let data = null;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-        data = await res.json().catch(() => null); 
+        data = await res.json().catch(() => null);
       }
 
       if (!res.ok) {
@@ -82,11 +82,14 @@ export default function PricingCard({ card, sx, ...other }) {
       }
 
       const url = data?.link || data?.init_point || data?.sandbox_init_point;
-      if (url) {
-        window.location.href = url; // redirige a Mercado Pago
-      } else {
-        throw new Error('No se recibió el enlace de suscripción.');
-      }
+      if (!url) throw new Error('No se recibió el enlace de suscripción.');
+
+      // guardo info para confirmar al regresar
+      localStorage.setItem('pending_plan_id', String(planId));
+      localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
+      localStorage.setItem('pending_commerce_id', String(commerceId));
+
+      window.location.href = url; // redirige a Mercado Pago
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
@@ -94,6 +97,45 @@ export default function PricingCard({ card, sx, ...other }) {
       setLoading(false);
     }
   };
+
+  // Al volver de MP con ?preapproval_id=..., confirmo en el backend
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const preapprovalId = params.get('preapproval_id');
+    if (!preapprovalId) return;
+    if (!API_BASE) return;
+
+    const planIdLS = Number(localStorage.getItem('pending_plan_id'));
+    const payerEmailLS = localStorage.getItem('pending_payer_email');
+    const commerceIdLS = Number(localStorage.getItem('pending_commerce_id'));
+
+    (async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/subscriptions/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            preapproval_id: preapprovalId,
+            plan_id: planIdLS || undefined,
+            payer_email: payerEmailLS || 'TEST_USER_1278385314@testuser.com',
+            commerce_id: commerceIdLS,
+          }),
+        });
+        const json = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
+
+        // limpiar estado temporal
+        localStorage.removeItem('pending_plan_id');
+        localStorage.removeItem('pending_payer_email');
+        localStorage.removeItem('pending_commerce_id');
+
+        // opcional: feedback UI
+        console.log('Suscripción confirmada', json.subscription);
+      } catch (e) {
+        console.error('Confirmación falló:', e);
+      }
+    })();
+  }, []);
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -169,9 +211,7 @@ export default function PricingCard({ card, sx, ...other }) {
               boxShadow: (theme) => ({
                 xs: theme.customShadows.card,
                 md: `-40px 40px 80px 0px ${alpha(
-                  theme.palette.mode === 'light'
-                    ? theme.palette.grey[500]
-                    : theme.palette.common.black,
+                  theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
                   0.16
                 )}`,
               }),
