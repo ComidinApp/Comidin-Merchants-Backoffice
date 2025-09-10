@@ -65,7 +65,7 @@ export default function PricingCard({ card, sx, ...other }) {
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email: userEmail || 'TEST_USER_1278385314@testuser.com',
+          payer_email:'TEST_USER_1278385314@testuser.com',
           userId,
         }),
       });
@@ -84,7 +84,7 @@ export default function PricingCard({ card, sx, ...other }) {
       const url = data?.link || data?.init_point || data?.sandbox_init_point;
       if (!url) throw new Error('No se recibió el enlace de suscripción.');
 
-      // guardo info para confirmar al regresar
+      // Guardar info para confirmar al regresar
       localStorage.setItem('pending_plan_id', String(planId));
       localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
       localStorage.setItem('pending_commerce_id', String(commerceId));
@@ -98,12 +98,15 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
-  // Al volver de MP con ?preapproval_id=..., confirmo en el backend
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalId = params.get('preapproval_id');
     if (!preapprovalId) return;
     if (!API_BASE) return;
+
+    const guardKey = `confirmed:${preapprovalId}`;
+    if (sessionStorage.getItem(guardKey)) return;
+    sessionStorage.setItem(guardKey, '1');
 
     const planIdLS = Number(localStorage.getItem('pending_plan_id'));
     const payerEmailLS = localStorage.getItem('pending_payer_email');
@@ -117,25 +120,32 @@ export default function PricingCard({ card, sx, ...other }) {
           body: JSON.stringify({
             preapproval_id: preapprovalId,
             plan_id: planIdLS || undefined,
-            payer_email: 'TEST_USER_1278385314@testuser.com',
+            payer_email:'TEST_USER_1278385314@testuser.com',
             commerce_id: commerceIdLS,
           }),
         });
+
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
 
-        // limpiar estado temporal
+
         localStorage.removeItem('pending_plan_id');
         localStorage.removeItem('pending_payer_email');
         localStorage.removeItem('pending_commerce_id');
 
-        // opcional: feedback UI
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete('preapproval_id');
+        window.history.replaceState({}, '', url.toString());
+
         console.log('Suscripción confirmada', json.subscription);
       } catch (e) {
         console.error('Confirmación falló:', e);
+    
+        sessionStorage.removeItem(guardKey);
       }
     })();
-  }, []);
+  }, []); // intencionalmente vacío; el guard evita dobles
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
