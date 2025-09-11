@@ -46,7 +46,7 @@ export default function PricingCard({ card, sx, ...other }) {
   useEffect(() => {
     let abort = false;
     (async () => {
-      if (!API_BASE || !commerceId) {
+      if (!commerceId) {
         setCheckingSub(false);
         return;
       }
@@ -65,14 +65,18 @@ export default function PricingCard({ card, sx, ...other }) {
         if (!abort) setCheckingSub(false);
       }
     })();
-    return () => { abort = true; };
-  }, [API_BASE, commerceId]);
+    return () => {
+      abort = true;
+    };
+    // Nota: API_BASE es constante de build; no debe ir en deps.
+  }, [commerceId]);
 
   const handleSubscribe = async () => {
     if (loading) return;
     if (!planId || basic) return;
 
     if (!API_BASE) {
+      // eslint-disable-next-line no-console
       console.error('VITE_API_COMIDIN no está configurada');
       alert('Error de configuración: falta VITE_API_COMIDIN');
       return;
@@ -97,7 +101,7 @@ export default function PricingCard({ card, sx, ...other }) {
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email: userEmail || 'TEST_USER_1278385314@testuser.com',
+          payer_email:'TEST_USER_1278385314@testuser.com',
           userId,
         }),
       });
@@ -123,6 +127,7 @@ export default function PricingCard({ card, sx, ...other }) {
 
       window.location.href = url; // redirige a Mercado Pago
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
     } finally {
@@ -130,12 +135,11 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
-  // Al volver de MP con ?preapproval_id=..., confirmo en el backend 
+  // Al volver de MP con ?preapproval_id=..., confirmo en el backend (guard anti-doble)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalId = params.get('preapproval_id');
     if (!preapprovalId) return;
-    if (!API_BASE) return;
 
     const guardKey = `confirmed:${preapprovalId}`;
     if (sessionStorage.getItem(guardKey)) return;
@@ -153,7 +157,7 @@ export default function PricingCard({ card, sx, ...other }) {
           body: JSON.stringify({
             preapproval_id: preapprovalId,
             plan_id: planIdLS || undefined,
-            payer_email: payerEmailLS || 'TEST_USER_1278385314@testuser.com',
+            payer_email:'TEST_USER_1278385314@testuser.com',
             commerce_id: commerceIdLS,
           }),
         });
@@ -173,24 +177,31 @@ export default function PricingCard({ card, sx, ...other }) {
 
         // Refrescar estado local: agregar este plan a la lista
         if (planIdLS) {
-          setSubscribedPlans(prev => new Set([...prev, Number(planIdLS)]));
+          setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
         }
 
+        // eslint-disable-next-line no-console
         console.log('Suscripción confirmada', json.subscription);
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('Confirmación falló:', e);
         sessionStorage.removeItem(guardKey);
       }
     })();
-  }, []);
+    // Nota: API_BASE es constante de build; no debe ir en deps.
+  }, []); // intencionalmente vacío; el guard evita dobles
 
   // Deshabilitar botón si: es Básico, está cargando, estoy chequeando subs o YA tiene ESTE plan
   const disableSubscribe =
     basic || loading || checkingSub || subscribedPlans.has(Number(planId));
 
-  const buttonLabel = subscribedPlans.has(Number(planId))
-    ? 'Ya tenés este plan'
-    : (loading ? 'Generando enlace...' : labelAction);
+  // Evitar ternario anidado (linter)
+  let buttonLabel = labelAction;
+  if (subscribedPlans.has(Number(planId))) {
+    buttonLabel = 'Ya tenés este plan';
+  } else if (loading) {
+    buttonLabel = 'Generando enlace...';
+  }
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
