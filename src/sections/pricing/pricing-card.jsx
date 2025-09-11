@@ -42,7 +42,9 @@ export default function PricingCard({ card, sx, ...other }) {
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
-  // --- fetchSubscriptions memoizada ---
+  //si no tiene ningún plan → se considera Gratis
+  const hasAnyPlan = subscribedPlans.size > 0;
+
   const fetchSubscriptions = useCallback(async (abortSignal) => {
     if (!commerceId) {
       setCheckingSub(false);
@@ -64,6 +66,7 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   }, [commerceId]);
 
+  // --- montar: cargar y escuchar actualizaciones globales ---
   useEffect(() => {
     const ctrl = new AbortController();
     fetchSubscriptions(ctrl.signal);
@@ -78,12 +81,10 @@ export default function PricingCard({ card, sx, ...other }) {
       ctrl.abort();
       window.removeEventListener('comidin:subscriptions-updated', onUpdated);
     };
-    // API_BASE es constante de build; no poner en deps
   }, [commerceId, fetchSubscriptions]);
 
   const handleSubscribe = async () => {
     if (loading) return;
-    // Para básico permitimos sin planId numérico
     if (!planId && !basic) return;
 
     if (!API_BASE) {
@@ -105,7 +106,7 @@ export default function PricingCard({ card, sx, ...other }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             commerce_id: Number(commerceId),
-            cancel_mp: false, 
+            cancel_mp: true,
           }),
         });
         const json = await resp.json().catch(() => ({}));
@@ -160,12 +161,11 @@ export default function PricingCard({ card, sx, ...other }) {
       const url = data?.link || data?.init_point || data?.sandbox_init_point;
       if (!url) throw new Error('No se recibió el enlace de suscripción.');
 
-      // Guardar info para confirmar al regresar
       localStorage.setItem('pending_plan_id', String(planId));
       localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
       localStorage.setItem('pending_commerce_id', String(commerceId));
 
-      window.location.href = url; // redirige a Mercado Pago
+      window.location.href = url;
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
@@ -174,7 +174,7 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
-  // Confirmar al volver de MP (?preapproval_id=...)
+  // Confirmar al volver de MP
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalId = params.get('preapproval_id');
@@ -204,17 +204,14 @@ export default function PricingCard({ card, sx, ...other }) {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
 
-        // limpiar estado temporal
         localStorage.removeItem('pending_plan_id');
         localStorage.removeItem('pending_payer_email');
         localStorage.removeItem('pending_commerce_id');
 
-        // limpiar la URL
         const url = new URL(window.location.href);
         url.searchParams.delete('preapproval_id');
         window.history.replaceState({}, '', url.toString());
 
-        // refrescar estado y notificar a todas las tarjetas
         if (planIdLS) setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
@@ -224,16 +221,17 @@ export default function PricingCard({ card, sx, ...other }) {
         sessionStorage.removeItem(guardKey);
       }
     })();
-    // API_BASE es constante de build; deps vacías
   }, []);
 
-  // deshabilitado por estado o si ya tiene ESTE plan
+  // Deshabilitar botón:
   const disableSubscribe =
-    loading || checkingSub || subscribedPlans.has(Number(planId));
+    loading || checkingSub || subscribedPlans.has(Number(planId)) || (basic && !hasAnyPlan);
 
+  // Label del botón
   let buttonLabel = labelAction;
-  if (basic) buttonLabel = 'Elegir Gratis';
-  if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés este plan';
+  if (basic && !hasAnyPlan) buttonLabel = 'Plan Actual';
+  else if (basic) buttonLabel = 'Elegir Gratis';
+  else if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés este plan';
   else if (loading) buttonLabel = 'Procesando...';
 
   const renderIcon = (
@@ -256,6 +254,11 @@ export default function PricingCard({ card, sx, ...other }) {
       {subscribedPlans.has(Number(planId)) && !basic && (
         <Typography variant="caption" color="text.secondary">
           Ya estás suscripto a este plan.
+        </Typography>
+      )}
+      {basic && !hasAnyPlan && (
+        <Typography variant="caption" color="text.secondary">
+          Estás en el plan gratuito.
         </Typography>
       )}
     </Stack>
