@@ -34,11 +34,39 @@ export default function PricingCard({ card, sx, ...other }) {
 
   // estado
   const [loading, setLoading] = useState(false);
+  const [checkingSub, setCheckingSub] = useState(true);
+  const [subscribedPlans, setSubscribedPlans] = useState(new Set());
 
   // flags de plan
   const basic = subscription === 'Básica';
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
+
+  // Al entrar: verificar planes ya tomados por el comercio
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      if (!API_BASE || !commerceId) {
+        setCheckingSub(false);
+        return;
+      }
+      try {
+        const resp = await fetch(`${API_BASE}/subscriptions/commerce/${commerceId}`);
+        if (!resp.ok) {
+          setSubscribedPlans(new Set());
+        } else {
+          const arr = await resp.json().catch(() => []);
+          const plans = new Set((arr || []).map((s) => Number(s.plan_id)).filter(Boolean));
+          if (!abort) setSubscribedPlans(plans);
+        }
+      } catch {
+        if (!abort) setSubscribedPlans(new Set());
+      } finally {
+        if (!abort) setCheckingSub(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, [API_BASE, commerceId]);
 
   const handleSubscribe = async () => {
     if (loading) return;
@@ -53,6 +81,10 @@ export default function PricingCard({ card, sx, ...other }) {
       alert('No se encontró el comercio para este usuario. Por favor, agregá un comercio al perfil.');
       return;
     }
+    if (subscribedPlans.has(Number(planId))) {
+      alert('Ya tenés este plan.');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -65,7 +97,7 @@ export default function PricingCard({ card, sx, ...other }) {
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email:'TEST_USER_1278385314@testuser.com',
+          payer_email: userEmail || 'TEST_USER_1278385314@testuser.com',
           userId,
         }),
       });
@@ -98,6 +130,7 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
+  // Al volver de MP con ?preapproval_id=..., confirmo en el backend 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalId = params.get('preapproval_id');
@@ -120,7 +153,7 @@ export default function PricingCard({ card, sx, ...other }) {
           body: JSON.stringify({
             preapproval_id: preapprovalId,
             plan_id: planIdLS || undefined,
-            payer_email:'TEST_USER_1278385314@testuser.com',
+            payer_email: payerEmailLS || 'TEST_USER_1278385314@testuser.com',
             commerce_id: commerceIdLS,
           }),
         });
@@ -128,24 +161,36 @@ export default function PricingCard({ card, sx, ...other }) {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
 
-
+        // limpiar estado temporal
         localStorage.removeItem('pending_plan_id');
         localStorage.removeItem('pending_payer_email');
         localStorage.removeItem('pending_commerce_id');
 
-
+        // Quitar el preapproval_id de la URL para evitar re-disparos
         const url = new URL(window.location.href);
         url.searchParams.delete('preapproval_id');
         window.history.replaceState({}, '', url.toString());
 
+        // Refrescar estado local: agregar este plan a la lista
+        if (planIdLS) {
+          setSubscribedPlans(prev => new Set([...prev, Number(planIdLS)]));
+        }
+
         console.log('Suscripción confirmada', json.subscription);
       } catch (e) {
         console.error('Confirmación falló:', e);
-    
         sessionStorage.removeItem(guardKey);
       }
     })();
-  }, []); // intencionalmente vacío; el guard evita dobles
+  }, []);
+
+  // Deshabilitar botón si: es Básico, está cargando, estoy chequeando subs o YA tiene ESTE plan
+  const disableSubscribe =
+    basic || loading || checkingSub || subscribedPlans.has(Number(planId));
+
+  const buttonLabel = subscribedPlans.has(Number(planId))
+    ? 'Ya tenés este plan'
+    : (loading ? 'Generando enlace...' : labelAction);
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -164,6 +209,11 @@ export default function PricingCard({ card, sx, ...other }) {
         {subscription}
       </Typography>
       <Typography variant="subtitle2">{caption}</Typography>
+      {subscribedPlans.has(Number(planId)) && !basic && (
+        <Typography variant="caption" color="text.secondary">
+          Ya estás suscripto a este plan.
+        </Typography>
+      )}
     </Stack>
   );
 
@@ -241,11 +291,11 @@ export default function PricingCard({ card, sx, ...other }) {
         fullWidth
         size="large"
         variant="contained"
-        disabled={basic || loading}
+        disabled={disableSubscribe}
         color={starter ? 'primary' : 'inherit'}
         onClick={handleSubscribe}
       >
-        {loading ? 'Generando enlace...' : labelAction}
+        {buttonLabel}
       </Button>
     </Stack>
   );
