@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -42,7 +42,8 @@ export default function PricingCard({ card, sx, ...other }) {
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
-  const fetchSubscriptions = async (abortSignal) => {
+  // --- fetchSubscriptions memoizada ---
+  const fetchSubscriptions = useCallback(async (abortSignal) => {
     if (!commerceId) {
       setCheckingSub(false);
       return;
@@ -61,14 +62,12 @@ export default function PricingCard({ card, sx, ...other }) {
     } finally {
       setCheckingSub(false);
     }
-  };
+  }, [commerceId]);
 
-  // Al entrar: verificar planes ya tomados por el comercio
   useEffect(() => {
     const ctrl = new AbortController();
     fetchSubscriptions(ctrl.signal);
 
-    // 🔔 Suscribirse a eventos globales para refrescar en todas las tarjetas
     const onUpdated = () => {
       setCheckingSub(true);
       fetchSubscriptions(ctrl.signal);
@@ -79,8 +78,8 @@ export default function PricingCard({ card, sx, ...other }) {
       ctrl.abort();
       window.removeEventListener('comidin:subscriptions-updated', onUpdated);
     };
-    // Nota: API_BASE es constante de build; no va en deps.
-  }, [commerceId]);
+    // API_BASE es constante de build; no poner en deps
+  }, [commerceId, fetchSubscriptions]);
 
   const handleSubscribe = async () => {
     if (loading) return;
@@ -88,7 +87,6 @@ export default function PricingCard({ card, sx, ...other }) {
     if (!planId && !basic) return;
 
     if (!API_BASE) {
-      // eslint-disable-next-line no-console
       console.error('VITE_API_COMIDIN no está configurada');
       alert('Error de configuración: falta VITE_API_COMIDIN');
       return;
@@ -98,7 +96,7 @@ export default function PricingCard({ card, sx, ...other }) {
       return;
     }
 
-
+    // Básica: downgrade inmediato
     if (basic) {
       try {
         setLoading(true);
@@ -107,20 +105,17 @@ export default function PricingCard({ card, sx, ...other }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             commerce_id: Number(commerceId),
-            cancel_mp: true, // poné false si no cancelás en MP en el backend
+            cancel_mp: false, 
           }),
         });
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
 
-        // limpiar estado local inmediato (esta tarjeta) y avisar al resto
         setSubscribedPlans(new Set());
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
-
         alert('Pasaste al plan gratuito.');
         return;
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error('Error al pasar a Free:', err);
         alert(err.message || 'Ocurrió un error');
         return;
@@ -129,7 +124,7 @@ export default function PricingCard({ card, sx, ...other }) {
       }
     }
 
-    // Caso planes pagos (Estándar/Premium)
+    // Planes pagos
     if (subscribedPlans.has(Number(planId))) {
       alert('Ya tenés este plan.');
       return;
@@ -172,7 +167,6 @@ export default function PricingCard({ card, sx, ...other }) {
 
       window.location.href = url; // redirige a Mercado Pago
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
     } finally {
@@ -180,7 +174,7 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
-  // Al volver de MP con ?preapproval_id=..., confirmo en el backend (guard anti-doble)
+  // Confirmar al volver de MP (?preapproval_id=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalId = params.get('preapproval_id');
@@ -215,29 +209,25 @@ export default function PricingCard({ card, sx, ...other }) {
         localStorage.removeItem('pending_payer_email');
         localStorage.removeItem('pending_commerce_id');
 
-        // Quitar el preapproval_id de la URL para evitar re-disparos
+        // limpiar la URL
         const url = new URL(window.location.href);
         url.searchParams.delete('preapproval_id');
         window.history.replaceState({}, '', url.toString());
 
-        // Refrescar estado local inmediato y avisar al resto
-        if (planIdLS) {
-          setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
-        }
+        // refrescar estado y notificar a todas las tarjetas
+        if (planIdLS) setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
-    
         console.log('Suscripción confirmada', json.subscription);
       } catch (e) {
-   
         console.error('Confirmación falló:', e);
         sessionStorage.removeItem(guardKey);
       }
     })();
+    // API_BASE es constante de build; deps vacías
+  }, []);
 
-  }, []); 
-
-  // Deshabilitar botón si: está cargando, estoy chequeando subs o YA tiene ESTE plan.
+  // deshabilitado por estado o si ya tiene ESTE plan
   const disableSubscribe =
     loading || checkingSub || subscribedPlans.has(Number(planId));
 
