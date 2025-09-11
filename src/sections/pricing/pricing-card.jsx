@@ -42,7 +42,7 @@ export default function PricingCard({ card, sx, ...other }) {
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
-  //si no tiene ningún plan → se considera Gratis
+  // si no tiene ningún plan → se considera Gratis
   const hasAnyPlan = subscribedPlans.size > 0;
 
   const fetchSubscriptions = useCallback(async (abortSignal) => {
