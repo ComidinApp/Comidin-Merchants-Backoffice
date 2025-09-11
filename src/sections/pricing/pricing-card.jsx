@@ -42,33 +42,44 @@ export default function PricingCard({ card, sx, ...other }) {
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
+  const fetchSubscriptions = async (abortSignal) => {
+    if (!commerceId) {
+      setCheckingSub(false);
+      return;
+    }
+    try {
+      const resp = await fetch(`${API_BASE}/subscriptions/commerce/${commerceId}`, { signal: abortSignal });
+      if (!resp.ok) {
+        setSubscribedPlans(new Set());
+      } else {
+        const arr = await resp.json().catch(() => []);
+        const plans = new Set((arr || []).map((s) => Number(s.plan_id)).filter(Boolean));
+        setSubscribedPlans(plans);
+      }
+    } catch {
+      setSubscribedPlans(new Set());
+    } finally {
+      setCheckingSub(false);
+    }
+  };
+
   // Al entrar: verificar planes ya tomados por el comercio
   useEffect(() => {
-    let abort = false;
-    (async () => {
-      if (!commerceId) {
-        setCheckingSub(false);
-        return;
-      }
-      try {
-        const resp = await fetch(`${API_BASE}/subscriptions/commerce/${commerceId}`);
-        if (!resp.ok) {
-          setSubscribedPlans(new Set());
-        } else {
-          const arr = await resp.json().catch(() => []);
-          const plans = new Set((arr || []).map((s) => Number(s.plan_id)).filter(Boolean));
-          if (!abort) setSubscribedPlans(plans);
-        }
-      } catch {
-        if (!abort) setSubscribedPlans(new Set());
-      } finally {
-        if (!abort) setCheckingSub(false);
-      }
-    })();
-    return () => {
-      abort = true;
+    const ctrl = new AbortController();
+    fetchSubscriptions(ctrl.signal);
+
+    // 🔔 Suscribirse a eventos globales para refrescar en todas las tarjetas
+    const onUpdated = () => {
+      setCheckingSub(true);
+      fetchSubscriptions(ctrl.signal);
     };
-    // Nota: API_BASE es constante de build; no debe ir en deps.
+    window.addEventListener('comidin:subscriptions-updated', onUpdated);
+
+    return () => {
+      ctrl.abort();
+      window.removeEventListener('comidin:subscriptions-updated', onUpdated);
+    };
+    // Nota: API_BASE es constante de build; no va en deps.
   }, [commerceId]);
 
   const handleSubscribe = async () => {
@@ -87,7 +98,7 @@ export default function PricingCard({ card, sx, ...other }) {
       return;
     }
 
-    // Caso plan Básica: downgrade inmediato (sin pasar por MP)
+
     if (basic) {
       try {
         setLoading(true);
@@ -96,16 +107,16 @@ export default function PricingCard({ card, sx, ...other }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             commerce_id: Number(commerceId),
-            // Si aún no cancelás en MP en el backend, podés enviar false.
-            // Cuando tengas mp_preapproval_id, enviá true para cancelar en MP también.
-            cancel_mp: true
+            cancel_mp: true, // poné false si no cancelás en MP en el backend
           }),
         });
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
 
-        // limpiar estado: ya no tiene suscripciones de pago
+        // limpiar estado local inmediato (esta tarjeta) y avisar al resto
         setSubscribedPlans(new Set());
+        window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
+
         alert('Pasaste al plan gratuito.');
         return;
       } catch (err) {
@@ -209,37 +220,31 @@ export default function PricingCard({ card, sx, ...other }) {
         url.searchParams.delete('preapproval_id');
         window.history.replaceState({}, '', url.toString());
 
-        // Refrescar estado local: agregar este plan a la lista
+        // Refrescar estado local inmediato y avisar al resto
         if (planIdLS) {
           setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
         }
+        window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
-        // eslint-disable-next-line no-console
+    
         console.log('Suscripción confirmada', json.subscription);
       } catch (e) {
-        // eslint-disable-next-line no-console
+   
         console.error('Confirmación falló:', e);
         sessionStorage.removeItem(guardKey);
       }
     })();
-    // Nota: API_BASE es constante de build; no debe ir en deps.
-  }, []); // intencionalmente vacío; el guard evita dobles
+
+  }, []); 
 
   // Deshabilitar botón si: está cargando, estoy chequeando subs o YA tiene ESTE plan.
-  // El plan Básica ahora SÍ se puede elegir.
   const disableSubscribe =
     loading || checkingSub || subscribedPlans.has(Number(planId));
 
-  // Etiqueta del botón (sin ternario anidado)
   let buttonLabel = labelAction;
-  if (basic) {
-    buttonLabel = 'Elegir Gratis';
-  }
-  if (subscribedPlans.has(Number(planId))) {
-    buttonLabel = 'Ya tenés este plan';
-  } else if (loading) {
-    buttonLabel = 'Procesando...';
-  }
+  if (basic) buttonLabel = 'Elegir Gratis';
+  if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés este plan';
+  else if (loading) buttonLabel = 'Procesando...';
 
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
