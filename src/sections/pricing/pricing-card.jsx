@@ -73,7 +73,8 @@ export default function PricingCard({ card, sx, ...other }) {
 
   const handleSubscribe = async () => {
     if (loading) return;
-    if (!planId || basic) return;
+    // Para básico permitimos sin planId numérico
+    if (!planId && !basic) return;
 
     if (!API_BASE) {
       // eslint-disable-next-line no-console
@@ -85,6 +86,39 @@ export default function PricingCard({ card, sx, ...other }) {
       alert('No se encontró el comercio para este usuario. Por favor, agregá un comercio al perfil.');
       return;
     }
+
+    // Caso plan Básica: downgrade inmediato (sin pasar por MP)
+    if (basic) {
+      try {
+        setLoading(true);
+        const resp = await fetch(`${API_BASE}/subscriptions/free`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            commerce_id: Number(commerceId),
+            // Si aún no cancelás en MP en el backend, podés enviar false.
+            // Cuando tengas mp_preapproval_id, enviá true para cancelar en MP también.
+            cancel_mp: true
+          }),
+        });
+        const json = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
+
+        // limpiar estado: ya no tiene suscripciones de pago
+        setSubscribedPlans(new Set());
+        alert('Pasaste al plan gratuito.');
+        return;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Error al pasar a Free:', err);
+        alert(err.message || 'Ocurrió un error');
+        return;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Caso planes pagos (Estándar/Premium)
     if (subscribedPlans.has(Number(planId))) {
       alert('Ya tenés este plan.');
       return;
@@ -191,16 +225,20 @@ export default function PricingCard({ card, sx, ...other }) {
     // Nota: API_BASE es constante de build; no debe ir en deps.
   }, []); // intencionalmente vacío; el guard evita dobles
 
-  // Deshabilitar botón si: es Básico, está cargando, estoy chequeando subs o YA tiene ESTE plan
+  // Deshabilitar botón si: está cargando, estoy chequeando subs o YA tiene ESTE plan.
+  // El plan Básica ahora SÍ se puede elegir.
   const disableSubscribe =
-    basic || loading || checkingSub || subscribedPlans.has(Number(planId));
+    loading || checkingSub || subscribedPlans.has(Number(planId));
 
-  // Evitar ternario anidado (linter)
+  // Etiqueta del botón (sin ternario anidado)
   let buttonLabel = labelAction;
+  if (basic) {
+    buttonLabel = 'Elegir Gratis';
+  }
   if (subscribedPlans.has(Number(planId))) {
     buttonLabel = 'Ya tenés este plan';
   } else if (loading) {
-    buttonLabel = 'Generando enlace...';
+    buttonLabel = 'Procesando...';
   }
 
   const renderIcon = (
