@@ -25,26 +25,27 @@ export default function PricingCard({ card, sx, ...other }) {
     planId,
   } = card ?? {};
 
-  // auth
+  // info del user logueado
   const auth = useAuthContext();
   const user = auth?.user;
   const userEmail = user?.email ?? 'cliente@correo.com';
   const userId = user?.id ?? null;
   const commerceId = user?.commerce?.id ?? user?.commerce_id ?? null;
 
-  // estado
+  // estados de UI
   const [loading, setLoading] = useState(false);
   const [checkingSub, setCheckingSub] = useState(true);
   const [subscribedPlans, setSubscribedPlans] = useState(new Set());
 
-  // flags de plan
+  // flags rápidos
   const basic = subscription === 'Básica';
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
 
-  // si no tiene ningún plan → se considera Gratis
+  // si no hay ningún plan guardado → asumimos que está en Gratis
   const hasAnyPlan = subscribedPlans.size > 0;
 
+  // trae las subscripciones actuales del comercio
   const fetchSubscriptions = useCallback(async (abortSignal) => {
     if (!commerceId) {
       setCheckingSub(false);
@@ -66,7 +67,7 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   }, [commerceId]);
 
-  // --- montar: cargar y escuchar actualizaciones globales ---
+  // al montar la card: cargar subs y escuchar cambios globales
   useEffect(() => {
     const ctrl = new AbortController();
     fetchSubscriptions(ctrl.signal);
@@ -83,21 +84,22 @@ export default function PricingCard({ card, sx, ...other }) {
     };
   }, [commerceId, fetchSubscriptions]);
 
+  // click en botón de suscripción
   const handleSubscribe = async () => {
     if (loading) return;
     if (!planId && !basic) return;
 
     if (!API_BASE) {
-      console.error('VITE_API_COMIDIN no está configurada');
-      alert('Error de configuración: falta VITE_API_COMIDIN');
+      console.error('Falta VITE_API_COMIDIN');
+      alert('Error de configuración del backend');
       return;
     }
     if (!commerceId) {
-      alert('No se encontró el comercio para este usuario. Por favor, agregá un comercio al perfil.');
+      alert('El usuario no tiene comercio asignado');
       return;
     }
 
-    // Básica: downgrade inmediato
+    // caso plan Básica → downgrade inmediato, no va a MP
     if (basic) {
       try {
         setLoading(true);
@@ -112,6 +114,7 @@ export default function PricingCard({ card, sx, ...other }) {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
 
+        // actualizamos UI y notificamos global
         setSubscribedPlans(new Set());
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
         alert('Pasaste al plan gratuito.');
@@ -125,24 +128,23 @@ export default function PricingCard({ card, sx, ...other }) {
       }
     }
 
-    // Planes pagos
+    // si ya tiene este plan, no dejamos repetir
     if (subscribedPlans.has(Number(planId))) {
       alert('Ya tenés este plan.');
       return;
     }
 
+    // flujo para planes pagos → pedir link al backend y redirigir a MP
     try {
       setLoading(true);
 
-      const endpoint = `${API_BASE}/subscriptions`;
-
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${API_BASE}/subscriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email:'TEST_USER_1278385314@testuser.com',
+          payer_email:'TEST_USER_1278385314@testuser.com', // fijo de test, sino nos falla el sandBox de MP
           userId,
         }),
       });
@@ -159,13 +161,14 @@ export default function PricingCard({ card, sx, ...other }) {
       }
 
       const url = data?.link || data?.init_point || data?.sandbox_init_point;
-      if (!url) throw new Error('No se recibió el enlace de suscripción.');
+      if (!url) throw new Error('No se recibió el link de suscripción.');
 
+      // guardamos contexto para confirmar al volver
       localStorage.setItem('pending_plan_id', String(planId));
       localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
       localStorage.setItem('pending_commerce_id', String(commerceId));
 
-      window.location.href = url;
+      window.location.href = url; // redirect a MP
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
       alert(err.message || 'Ocurrió un error al intentar suscribirse.');
@@ -174,7 +177,7 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
-  // Confirmar al volver de MP
+  // al volver de MP con ?preapproval_id=... confirmamos en backend
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalId = params.get('preapproval_id');
@@ -185,7 +188,6 @@ export default function PricingCard({ card, sx, ...other }) {
     sessionStorage.setItem(guardKey, '1');
 
     const planIdLS = Number(localStorage.getItem('pending_plan_id'));
-    const payerEmailLS = localStorage.getItem('pending_payer_email');
     const commerceIdLS = Number(localStorage.getItem('pending_commerce_id'));
 
     (async () => {
@@ -204,14 +206,17 @@ export default function PricingCard({ card, sx, ...other }) {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
 
+        // limpiar datos temporales
         localStorage.removeItem('pending_plan_id');
         localStorage.removeItem('pending_payer_email');
         localStorage.removeItem('pending_commerce_id');
 
+        // limpiar query param para no re-disparar
         const url = new URL(window.location.href);
         url.searchParams.delete('preapproval_id');
         window.history.replaceState({}, '', url.toString());
 
+        // actualizar estado local + avisar global
         if (planIdLS) setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
@@ -223,17 +228,18 @@ export default function PricingCard({ card, sx, ...other }) {
     })();
   }, []);
 
-  // Deshabilitar botón:
+  // regla de disable del botón
   const disableSubscribe =
     loading || checkingSub || subscribedPlans.has(Number(planId)) || (basic && !hasAnyPlan);
 
-  // Label del botón
+  // label dinámico
   let buttonLabel = labelAction;
   if (basic && !hasAnyPlan) buttonLabel = 'Plan Actual';
   else if (basic) buttonLabel = 'Elegir Gratis';
   else if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés este plan';
   else if (loading) buttonLabel = 'Procesando...';
 
+  // UI
   const renderIcon = (
     <Stack direction="row" alignItems="center" justifyContent="space-between">
       <Box sx={{ width: 48, height: 48 }}>
