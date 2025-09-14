@@ -25,6 +25,13 @@ export default function PricingCard({ card, sx, ...other }) {
     planId,
   } = card ?? {};
 
+  
+  // podria considerarse a futuro persistir el preaproval id
+  // y mostrarle al cliente el estado de su subscripcion, 
+  // habria que ajustar el modelo y que al ingresar a la 
+  // panatalla y ya tener una subcripcion se le muestre estado y fecha de proximo pago, no necesario, pero user friendly
+  // MP lo permite haciendole un post con el preaproval id y el token de MP
+
   // info del user logueado
   const auth = useAuthContext();
   const user = auth?.user;
