@@ -38,7 +38,6 @@ const API_BASE =
   (import.meta?.env?.VITE_API_COMIDIN) ||
   'https://api.comidin.com.ar';
 
-// intenta encontrar el token en localStorage (ajústalo si lo guardas en otro lado)
 function getToken() {
   const direct =
     localStorage.getItem('token') ||
@@ -47,13 +46,16 @@ function getToken() {
 
   if (direct) return direct;
 
-  // patrón típico de Cognito sin Amplify
-for (let i = 0; i < localStorage.length; i += 1) {
-  const key = localStorage.key(i);
-  if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
-    return localStorage.getItem(key);
+  // patrón típico de Cognito sin Amplify (sin for..in)
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
+      const val = localStorage.getItem(key);
+      if (val) return val;
+    }
   }
-}
+
+  return null;
 }
 
 // ----------------------------------------------------------------------

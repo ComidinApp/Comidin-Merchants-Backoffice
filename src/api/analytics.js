@@ -11,12 +11,14 @@ function getToken() {
     localStorage.getItem('idToken');
   if (direct) return direct;
 
-  // Si usás Cognito (sin Amplify), suele guardarlo con esta forma
-  for (const key in localStorage) {
-    if (key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
-      return localStorage.getItem(key);
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
+      const val = localStorage.getItem(key);
+      if (val) return val;
     }
   }
+
   return null;
 }
 
