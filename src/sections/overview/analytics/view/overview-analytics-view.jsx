@@ -48,12 +48,12 @@ function getToken() {
   if (direct) return direct;
 
   // patrón típico de Cognito sin Amplify
-  for (const key in localStorage) {
-    if (key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
-      return localStorage.getItem(key);
-    }
+for (let i = 0; i < localStorage.length; i += 1) {
+  const key = localStorage.key(i);
+  if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
+    return localStorage.getItem(key);
   }
-  return null;
+}
 }
 
 // ----------------------------------------------------------------------
