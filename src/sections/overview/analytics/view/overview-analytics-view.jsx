@@ -2,6 +2,8 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
 
+import { useEffect, useState } from 'react';
+
 import { useMockedUser } from 'src/hooks/use-mocked-user';
 
 import { SeoIllustration } from 'src/assets/illustrations';
@@ -29,11 +31,63 @@ import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
 
 // ----------------------------------------------------------------------
+// Helpers locales para este archivo
+
+const API_BASE =
+  (import.meta?.env?.VITE_HOST_API) ||
+  (import.meta?.env?.VITE_API_COMIDIN) ||
+  'https://api.comidin.com.ar';
+
+// intenta encontrar el token en localStorage (ajústalo si lo guardas en otro lado)
+function getToken() {
+  const direct =
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('idToken');
+
+  if (direct) return direct;
+
+  // patrón típico de Cognito sin Amplify
+  for (const key in localStorage) {
+    if (key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
+      return localStorage.getItem(key);
+    }
+  }
+  return null;
+}
+
+// ----------------------------------------------------------------------
 
 export default function OverviewAnalyticsView() {
   const authUser = useAuthContext();
   const { user } = useMockedUser();
   const settings = useSettingsContext();
+
+  // estado para métricas del backend
+  const [overview, setOverview] = useState(null);
+
+  useEffect(() => {
+    const token = getToken();
+    const url = `${API_BASE}/api/analytics/overview?period=last30d`;
+
+    fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        // data esperado:
+        // { ordersCount, productsSold, monthlySalesAmount, monthlyOrdersCount, totalUsers }
+        setOverview(data);
+        // console.log('overview 👉', data);
+      })
+      .catch((err) => {
+        console.error('overview error', err);
+        // si falla, dejamos overview = null y las cards mostrarán 0
+      });
+  }, []);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -58,8 +112,9 @@ export default function OverviewAnalyticsView() {
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Ventas Semanales"
-            total={714000}
+            title="Ventas (últimos 30 días)"
+            // monthlySalesAmount: monto total últimos 30 días
+            total={Number(overview?.monthlySalesAmount ?? 0)}
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
           />
         </Grid>
@@ -67,7 +122,7 @@ export default function OverviewAnalyticsView() {
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
             title="Usuarios"
-            total={1352831}
+            total={Number(overview?.totalUsers ?? 0)}
             color="info"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
           />
@@ -75,8 +130,8 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Pedidos"
-            total={1723315}
+            title="Pedidos (últimos 30 días)"
+            total={Number(overview?.monthlyOrdersCount ?? 0)}
             color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
           />
@@ -84,13 +139,14 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Productos vendidos"
-            total={234}
+            title="Productos vendidos (histórico)"
+            total={Number(overview?.productsSold ?? 0)}
             color="error"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}
           />
         </Grid>
 
+        {/* El resto de widgets/gráficas quedan igual, aún mockeados */}
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsWebsiteVisits
             title="Website Visits"
