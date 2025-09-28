@@ -1,3 +1,4 @@
+// src/sections/overview/analytics/analytics-widget-summary.jsx
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
@@ -6,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
 import { fShortenNumber } from 'src/utils/format-number';
-
 import { bgGradient } from 'src/theme/css';
 
 // ----------------------------------------------------------------------
@@ -21,8 +21,12 @@ export default function AnalyticsWidgetSummary({
 }) {
   const theme = useTheme();
 
-  // ✅ Normalizamos el valor para que 0 se muestre siempre
-  const safeTotal = Number.isFinite(Number(total)) ? Number(total) : 0;
+  // ✅ Normalizamos el total: si viene null/undefined/NaN → 0
+  const numericTotal = Number.isFinite(Number(total)) ? Number(total) : 0;
+
+  // ✅ Formateo que SIEMPRE muestra 0
+  const displayTotal =
+    numericTotal === 0 ? '0' : fShortenNumber(numericTotal);
 
   return (
     <Stack
@@ -44,8 +48,8 @@ export default function AnalyticsWidgetSummary({
     >
       {icon && <Box sx={{ width: 64, height: 64, mb: 1 }}>{icon}</Box>}
 
-      {/* ✅ Usamos safeTotal para que incluso 0 se muestre */}
-      <Typography variant="h3">{fShortenNumber(safeTotal)}</Typography>
+      {/* ✅ Muestra 0 correctamente */}
+      <Typography variant="h3">{displayTotal}</Typography>
 
       <Typography variant="subtitle2" sx={{ opacity: 0.64 }}>
         {title}
@@ -59,5 +63,5 @@ AnalyticsWidgetSummary.propTypes = {
   icon: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
   sx: PropTypes.object,
   title: PropTypes.string,
-  total: PropTypes.number,
+  total: PropTypes.oneOfType([PropTypes.number, PropTypes.string]), // ← aceptamos string también
 };
