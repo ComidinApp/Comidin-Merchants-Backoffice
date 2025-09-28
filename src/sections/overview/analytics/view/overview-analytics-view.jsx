@@ -1,16 +1,20 @@
-import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
-
 import { useEffect, useState } from 'react';
 
-import { useMockedUser } from 'src/hooks/use-mocked-user';
 import { useSettingsContext } from 'src/components/settings';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { SeoIllustration } from 'src/assets/illustrations';
 
-// 👉 import de API ANTES de los imports relativos locales (regla import/order)
+// 👉 Imports absolutos antes de relativos (ESLint import/order)
 import { fetchOverview } from 'src/api/analytics';
+import {
+  _appFeatured,
+  _analyticTasks,
+  _analyticPosts,
+  _analyticTraffic,
+  _analyticOrderTimeline,
+} from 'src/_mock';
 
 import AppWelcome from '../app-welcome';
 import AppFeatured from '../app-featured';
@@ -28,10 +32,8 @@ import AnalyticsConversionRates from '../analytics-conversion-rates';
 
 export default function OverviewAnalyticsView() {
   const authUser = useAuthContext();
-  const { user } = useMockedUser();
   const settings = useSettingsContext();
 
-  // estado para métricas del backend
   const [overview, setOverview] = useState(null);
 
   useEffect(() => {
