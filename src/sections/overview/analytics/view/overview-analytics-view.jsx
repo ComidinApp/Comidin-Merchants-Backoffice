@@ -35,12 +35,10 @@ export default function OverviewAnalyticsView() {
   const settings = useSettingsContext();
 
   const [overview, setOverview] = useState(null);
+  const [error, setError] = useState('');
 
-  // Helpers locales para role/admin y commerceId del usuario (como en PricingCard)
-  const roleId =
-    auth?.user?.role_id ?? auth?.role_id ?? auth?.user?.role?.id ?? null;
-  const isAdmin = String(roleId) === '1';
-  const commerceId =
+  // SIEMPRE tomamos el commerce del usuario logueado
+  const userCommerceId =
     auth?.user?.commerce?.id ??
     auth?.user?.commerce_id ??
     auth?.commerce?.id ??
@@ -48,27 +46,25 @@ export default function OverviewAnalyticsView() {
     null;
 
   useEffect(() => {
-    // Regla: si NO es admin, mandamos siempre commerceId del usuario por query
-    const payload = isAdmin
-      ? { period: 'last30d' }
-      : { period: 'last30d', commerceId };
-
-    // Si no-admin pero no pudimos inferir commerceId, dejamos overview en null
-    if (!isAdmin && !commerceId) {
-      console.warn(
-        '[Analytics] No se pudo inferir commerceId del usuario logueado'
-      );
+    // Si no pudimos inferir commerceId, no llamamos (evita 400) y marcamos error visible
+    if (userCommerceId == null) {
+      console.warn('[Analytics] No se pudo obtener commerceId del usuario');
       setOverview(null);
+      setError('No se pudo determinar tu comercio (commerceId).');
       return;
     }
 
-    fetchOverview(payload.period, payload.commerceId)
+    setError('');
+    console.debug('[Analytics] usando commerceId:', userCommerceId); // DEBUG
+
+    fetchOverview('last30d', Number(userCommerceId))
       .then(setOverview)
       .catch((err) => {
         console.error('overview error', err);
         setOverview(null);
+        setError(err?.message || 'No se pudieron cargar las métricas');
       });
-  }, [isAdmin, commerceId]);
+  }, [userCommerceId]);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -84,6 +80,12 @@ export default function OverviewAnalyticsView() {
           <AppFeatured list={_appFeatured} />
         </Grid>
       </Grid>
+
+      {!!error && (
+        <div style={{ color: 'crimson', marginTop: 12 }}>
+          {error}
+        </div>
+      )}
 
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={3}>

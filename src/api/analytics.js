@@ -3,7 +3,7 @@ const API_BASE =
   import.meta?.env?.VITE_API_COMIDIN ||
   'https://api.comidin.com.ar';
 
-// (Opcional) buscar un token si existiera — no es necesario para testing si tu backend permite público
+// (Opcional) token — no es necesario para testing si tu backend permite público
 function getToken() {
   const direct =
     localStorage.getItem('token') ||
@@ -22,46 +22,27 @@ function getToken() {
   return null;
 }
 
-// Igual que en PricingCard: obtenemos commerceId del usuario logueado si no nos lo pasan
-function getCommerceIdFromAuth() {
-  try {
-    const raw = localStorage.getItem('authUser') || localStorage.getItem('user');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const roleId = parsed?.user?.role_id ?? parsed?.role_id ?? parsed?.user?.role?.id;
-      if (Number(roleId) === 1) return null; // admin → no forzar
-      const commerceId =
-        parsed?.user?.commerce?.id ??
-        parsed?.user?.commerce_id ??
-        parsed?.commerce?.id ??
-        parsed?.commerce_id ??
-        null;
-      return Number.isFinite(Number(commerceId)) ? Number(commerceId) : null;
-    }
-  } catch {
-    // ignoramos parse errors
-  }
-  return null;
-}
-
 /**
  * Pide el overview de analytics.
- * - Si NO sos admin, se manda commerceId (del auth) por query automáticamente.
- * - Si sos admin, podés no enviarlo (o pasarlo explícitamente).
+ * Requiere SIEMPRE commerceId (según tu dominio, incluso para admins).
  *
  * @param {string} period 'last30d' | 'prev_month'
- * @param {number|undefined|null} commerceIdParam
+ * @param {number} commerceId  // requerido
  * @returns {Promise<any>}
  */
-export async function fetchOverview(period = 'last30d', commerceIdParam) {
+export async function fetchOverview(period = 'last30d', commerceId) {
   const token = getToken();
-  const commerceId = commerceIdParam ?? getCommerceIdFromAuth();
 
-  const qs = new URLSearchParams({ period });
-  if (commerceId != null) qs.set('commerceId', String(commerceId));
+  if (commerceId == null) {
+    // En tu dominio siempre pertenece a un commerce: lo exigimos para evitar 400 silenciosos
+    throw new Error('commerceId requerido en fetchOverview');
+  }
+
+  const qs = new URLSearchParams({ period, commerceId: String(commerceId) });
+
+  console.debug('[fetchOverview] qs:', qs.toString()); // DEBUG
 
   const res = await fetch(`${API_BASE}/api/analytics/overview?${qs.toString()}`, {
-    // Para testing no es necesario, pero lo dejo por compatibilidad futura
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
