@@ -30,8 +30,11 @@ import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
 import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
 
+// 👉 usamos la función centralizada
+import { fetchOverview } from 'src/api/analytics';
+
 // ----------------------------------------------------------------------
-// Helpers locales para este archivo
+// (dejamos estos helpers por si los usás en otro lado del archivo)
 
 const API_BASE =
   (import.meta?.env?.VITE_HOST_API) ||
@@ -46,7 +49,6 @@ function getToken() {
 
   if (direct) return direct;
 
-  // patrón típico de Cognito sin Amplify (sin for..in)
   for (let i = 0; i < localStorage.length; i += 1) {
     const key = localStorage.key(i);
     if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
@@ -69,27 +71,17 @@ export default function OverviewAnalyticsView() {
   const [overview, setOverview] = useState(null);
 
   useEffect(() => {
-    const token = getToken();
-    const url = `${API_BASE}/api/analytics/overview?period=last30d`;
+    // si es admin (role_id === 1), no pasamos commerceId
+    const roleId = authUser?.user?.role_id;
+    const maybeCommerceId = Number(roleId) === 1 ? null : authUser?.user?.commerce?.id;
 
-    fetch(url, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
-        // data esperado:
-        // { ordersCount, productsSold, monthlySalesAmount, monthlyOrdersCount, totalUsers }
-        setOverview(data);
-        // console.log('overview 👉', data);
-      })
+    fetchOverview('last30d', maybeCommerceId ?? undefined)
+      .then(setOverview)
       .catch((err) => {
         console.error('overview error', err);
-        // si falla, dejamos overview = null y las cards mostrarán 0
+        setOverview(null);
       });
-  }, []);
+  }, [authUser?.user?.role_id, authUser?.user?.commerce?.id]);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -99,11 +91,6 @@ export default function OverviewAnalyticsView() {
             title={`Te damos la bienvenida 👋 \n ${authUser.user?.first_name} ${authUser.user?.last_name}`}
             description="¿Qué vas a vender hoy? Hay muchos clientes esperando por tus productos"
             img={<SeoIllustration />}
-            /* action={
-              <Button variant="contained" color="primary">
-                Go Now
-              </Button>
-            } */
           />
         </Grid>
         <Grid xs={12} md={4}>
@@ -115,7 +102,6 @@ export default function OverviewAnalyticsView() {
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
             title="Ventas (últimos 30 días)"
-            // monthlySalesAmount: monto total últimos 30 días
             total={Number(overview?.monthlySalesAmount ?? 0)}
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
           />
@@ -148,7 +134,7 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* El resto de widgets/gráficas quedan igual, aún mockeados */}
+        {/* Resto de widgets mockeados sin cambios */}
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsWebsiteVisits
             title="Website Visits"
