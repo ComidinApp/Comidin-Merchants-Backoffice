@@ -21,6 +21,9 @@ export default function AnalyticsWidgetSummary({
 }) {
   const theme = useTheme();
 
+  // ✅ Normalizamos el valor para que 0 se muestre siempre
+  const safeTotal = Number.isFinite(Number(total)) ? Number(total) : 0;
+
   return (
     <Stack
       alignItems="center"
@@ -41,7 +44,8 @@ export default function AnalyticsWidgetSummary({
     >
       {icon && <Box sx={{ width: 64, height: 64, mb: 1 }}>{icon}</Box>}
 
-      <Typography variant="h3">{fShortenNumber(total)}</Typography>
+      {/* ✅ Usamos safeTotal para que incluso 0 se muestre */}
+      <Typography variant="h3">{fShortenNumber(safeTotal)}</Typography>
 
       <Typography variant="subtitle2" sx={{ opacity: 0.64 }}>
         {title}
