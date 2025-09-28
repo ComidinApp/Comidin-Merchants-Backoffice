@@ -5,18 +5,12 @@ import Container from '@mui/material/Container';
 import { useEffect, useState } from 'react';
 
 import { useMockedUser } from 'src/hooks/use-mocked-user';
-
-import { SeoIllustration } from 'src/assets/illustrations';
-import {
-  _appFeatured,
-  _analyticTasks,
-  _analyticPosts,
-  _analyticTraffic,
-  _analyticOrderTimeline,
-} from 'src/_mock';
-
 import { useSettingsContext } from 'src/components/settings';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { SeoIllustration } from 'src/assets/illustrations';
+
+// 👉 import de API ANTES de los imports relativos locales (regla import/order)
+import { fetchOverview } from 'src/api/analytics';
 
 import AppWelcome from '../app-welcome';
 import AppFeatured from '../app-featured';
@@ -29,36 +23,6 @@ import AnalyticsWidgetSummary from '../analytics-widget-summary';
 import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
 import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
-
-// 👉 usamos la función centralizada
-import { fetchOverview } from 'src/api/analytics';
-
-// ----------------------------------------------------------------------
-// (dejamos estos helpers por si los usás en otro lado del archivo)
-
-const API_BASE =
-  (import.meta?.env?.VITE_HOST_API) ||
-  (import.meta?.env?.VITE_API_COMIDIN) ||
-  'https://api.comidin.com.ar';
-
-function getToken() {
-  const direct =
-    localStorage.getItem('token') ||
-    localStorage.getItem('accessToken') ||
-    localStorage.getItem('idToken');
-
-  if (direct) return direct;
-
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i);
-    if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
-      const val = localStorage.getItem(key);
-      if (val) return val;
-    }
-  }
-
-  return null;
-}
 
 // ----------------------------------------------------------------------
 
@@ -154,24 +118,9 @@ export default function OverviewAnalyticsView() {
                 '11/01/2003',
               ],
               series: [
-                {
-                  name: 'Team A',
-                  type: 'column',
-                  fill: 'solid',
-                  data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30],
-                },
-                {
-                  name: 'Team B',
-                  type: 'area',
-                  fill: 'gradient',
-                  data: [44, 55, 41, 67, 22, 43, 21, 41, 56, 27, 43],
-                },
-                {
-                  name: 'Team C',
-                  type: 'line',
-                  fill: 'solid',
-                  data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39],
-                },
+                { name: 'Team A', type: 'column', fill: 'solid', data: [23, 11, 22, 27, 13, 22, 37, 21, 44, 22, 30] },
+                { name: 'Team B', type: 'area', fill: 'gradient', data: [44, 55, 41, 67, 22, 43, 21, 41, 56, 27, 43] },
+                { name: 'Team C', type: 'line', fill: 'solid', data: [30, 25, 36, 30, 45, 35, 64, 52, 59, 36, 39] },
               ],
             }}
           />
