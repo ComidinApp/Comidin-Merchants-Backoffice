@@ -31,30 +31,51 @@ import AnalyticsConversionRates from '../analytics-conversion-rates';
 // ----------------------------------------------------------------------
 
 export default function OverviewAnalyticsView() {
-  const authUser = useAuthContext();
+  const auth = useAuthContext();
   const settings = useSettingsContext();
 
   const [overview, setOverview] = useState(null);
 
-  useEffect(() => {
-    // si es admin (role_id === 1), no pasamos commerceId
-    const roleId = authUser?.user?.role_id;
-    const maybeCommerceId = Number(roleId) === 1 ? null : authUser?.user?.commerce?.id;
+  // Helpers locales para role/admin y commerceId del usuario (como en PricingCard)
+  const roleId =
+    auth?.user?.role_id ?? auth?.role_id ?? auth?.user?.role?.id ?? null;
+  const isAdmin = String(roleId) === '1';
+  const commerceId =
+    auth?.user?.commerce?.id ??
+    auth?.user?.commerce_id ??
+    auth?.commerce?.id ??
+    auth?.commerce_id ??
+    null;
 
-    fetchOverview('last30d', maybeCommerceId ?? undefined)
+  useEffect(() => {
+    // Regla: si NO es admin, mandamos siempre commerceId del usuario por query
+    const payload = isAdmin
+      ? { period: 'last30d' }
+      : { period: 'last30d', commerceId };
+
+    // Si no-admin pero no pudimos inferir commerceId, dejamos overview en null
+    if (!isAdmin && !commerceId) {
+      console.warn(
+        '[Analytics] No se pudo inferir commerceId del usuario logueado'
+      );
+      setOverview(null);
+      return;
+    }
+
+    fetchOverview(payload.period, payload.commerceId)
       .then(setOverview)
       .catch((err) => {
         console.error('overview error', err);
         setOverview(null);
       });
-  }, [authUser?.user?.role_id, authUser?.user?.commerce?.id]);
+  }, [isAdmin, commerceId]);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
       <Grid container spacing={3}>
         <Grid xs={12} md={8}>
           <AppWelcome
-            title={`Te damos la bienvenida 👋 \n ${authUser.user?.first_name} ${authUser.user?.last_name}`}
+            title={`Te damos la bienvenida 👋 \n ${auth?.user?.first_name ?? ''} ${auth?.user?.last_name ?? ''}`}
             description="¿Qué vas a vender hoy? Hay muchos clientes esperando por tus productos"
             img={<SeoIllustration />}
           />
