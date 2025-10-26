@@ -10,16 +10,19 @@ import Chart, { useChart } from 'src/components/chart';
 // ----------------------------------------------------------------------
 
 export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...other }) {
-  const { labels = [], colors, series = [], options } = chart || {};
+  const { labels = [], series = [], options } = chart || {};
 
   // Derivar stroke/fill dinámicos
   const strokeWidth = series.map((s) => (s.type === 'area' ? 2 : 3));
   const fillTypes = series.map((s) => s.fill || 'solid');
 
-  // ¿Tenemos dos ejes? (si hay dos series y una parece "ventas")
+  // 🎨 Paleta de colores personalizada
+  // Azul del gráfico de torta (#00B8D9) y naranja actual (#FF8C00)
+  const customColors = ['#00B8D9', '#FF8C00'];
+
+  // Detectar doble eje Y (Pedidos + Ventas)
   const hasDualAxis = series.length === 2 && series.some((s) => /venta|\$|monto/i.test(s.name));
 
-  // Mapear cada eje a la serie por nombre
   const yaxis = hasDualAxis
     ? [
         {
@@ -42,9 +45,9 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
     : undefined;
 
   const chartOptions = useChart({
-    colors,
+    colors: customColors,
     stroke: { width: strokeWidth, curve: 'smooth' },
-    fill: { type: fillTypes },
+    fill: { type: fillTypes, opacity: [1, 0.25] }, // el área de ventas semitransparente
     labels,
     xaxis: {
       type: 'category',
@@ -65,7 +68,13 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
         },
       },
     },
-    legend: { show: true },
+    legend: {
+      show: true,
+      position: 'top',
+      horizontalAlign: 'right',
+      labels: { colors: '#555' },
+      markers: { width: 10, height: 10, radius: 6 },
+    },
     ...options,
   });
 
@@ -73,7 +82,14 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
     <Card {...other}>
       <CardHeader title={title} subheader={subheader} />
       <Box sx={{ p: 3, pb: 1 }}>
-        <Chart dir="ltr" type="line" series={series} options={chartOptions} width="100%" height={364} />
+        <Chart
+          dir="ltr"
+          type="line"
+          series={series}
+          options={chartOptions}
+          width="100%"
+          height={364}
+        />
       </Box>
     </Card>
   );
@@ -82,7 +98,6 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
 AnalyticsWebsiteVisits.propTypes = {
   chart: PropTypes.shape({
     labels: PropTypes.arrayOf(PropTypes.string),
-    colors: PropTypes.array,
     series: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
