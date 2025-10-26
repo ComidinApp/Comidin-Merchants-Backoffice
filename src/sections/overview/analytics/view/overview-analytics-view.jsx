@@ -7,7 +7,6 @@ import { useSettingsContext } from 'src/components/settings';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { SeoIllustration } from 'src/assets/illustrations';
 
-// 👉 Imports absolutos antes de relativos
 import { fetchOverview } from 'src/api/analytics';
 import {
   _appFeatured,
@@ -29,38 +28,28 @@ import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
 import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
 
-// ----------------------------------------------------------------------
-// Helpers de transformación
-
-// "2025-10" -> "oct '25"
+// --- Helpers ---
 function monthKeyToShortLabel(key) {
   const [y, m] = key.split('-').map((n) => parseInt(n, 10));
   const d = new Date(y, m - 1, 1);
   return new Intl.DateTimeFormat('es-AR', { month: 'short', year: '2-digit' }).format(d);
 }
 
-// Solo labels
-function buildMonthlyLabels(overview) {
-  return (overview?.salesByMonth ?? []).map((m) => monthKeyToShortLabel(m.month));
+function buildMonthlyChart(overview) {
+  const months = overview?.salesByMonth ?? [];
+  const labels = months.map((m) => monthKeyToShortLabel(m.month));
+  const ordersSeries = months.map((m) => Number(m.ordersCount ?? 0));
+  const amountSeries = months.map((m) => Number(m.totalAmount ?? 0));
+
+  return {
+    labels,
+    series: [
+      { name: 'Pedidos', type: 'line', fill: 'solid', data: ordersSeries },
+      { name: 'Ventas ($)', type: 'area', fill: 'gradient', data: amountSeries },
+    ],
+  };
 }
 
-// Serie de pedidos por mes (enteros)
-function buildOrdersSeries(overview) {
-  const data = (overview?.salesByMonth ?? []).map((m) => Number(m.ordersCount ?? 0));
-  return [
-    { name: 'Pedidos', type: 'column', fill: 'solid', data },
-  ];
-}
-
-// Serie de ventas por mes (monto)
-function buildAmountSeries(overview) {
-  const data = (overview?.salesByMonth ?? []).map((m) => Number(m.totalAmount ?? 0));
-  return [
-    { name: 'Ventas ($)', type: 'area', fill: 'gradient', data },
-  ];
-}
-
-// Torta de top productos (porcentaje)
 function buildTopProducts(overview) {
   const top = overview?.topProducts ?? [];
   return top.map((t) => ({
@@ -69,8 +58,7 @@ function buildTopProducts(overview) {
   }));
 }
 
-// ----------------------------------------------------------------------
-
+// --- Page ---
 export default function OverviewAnalyticsView() {
   const auth = useAuthContext();
   const settings = useSettingsContext();
@@ -78,7 +66,6 @@ export default function OverviewAnalyticsView() {
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState('');
 
-  // SIEMPRE tomamos el commerce del usuario logueado
   const userCommerceId =
     auth?.user?.commerce?.id ??
     auth?.user?.commerce_id ??
@@ -95,8 +82,6 @@ export default function OverviewAnalyticsView() {
     }
 
     setError('');
-    console.debug('[Analytics] usando commerceId:', userCommerceId);
-
     fetchOverview('last30d', Number(userCommerceId))
       .then(setOverview)
       .catch((err) => {
@@ -106,10 +91,7 @@ export default function OverviewAnalyticsView() {
       });
   }, [userCommerceId]);
 
-  // Datos memorizados para los gráficos
-  const labels = useMemo(() => buildMonthlyLabels(overview), [overview]);
-  const ordersSeries = useMemo(() => buildOrdersSeries(overview), [overview]);
-  const amountSeries = useMemo(() => buildAmountSeries(overview), [overview]);
+  const monthlyChart = useMemo(() => buildMonthlyChart(overview), [overview]);
   const topProductsSeries = useMemo(() => buildTopProducts(overview), [overview]);
 
   return (
@@ -165,31 +147,19 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* 📊 Gráfico 1: Pedidos por mes */}
-        <Grid xs={12} md={6}>
+        {/* ✅ Un solo gráfico con 2 funciones */}
+        <Grid xs={12} md={12}>
           <AnalyticsWebsiteVisits
-            title="Pedidos por mes"
+            title="Ventas y pedidos por mes"
             subheader="Últimos 12 meses"
             chart={{
-              labels,
-              series: ordersSeries, // 1 serie (column)
+              labels: monthlyChart.labels,
+              series: monthlyChart.series, // [Pedidos(line), Ventas(area)]
             }}
           />
         </Grid>
 
-        {/* 💰 Gráfico 2: Ventas ($) por mes */}
-        <Grid xs={12} md={6}>
-          <AnalyticsWebsiteVisits
-            title="Ventas ($) por mes"
-            subheader="Últimos 12 meses"
-            chart={{
-              labels,
-              series: amountSeries, // 1 serie (area)
-            }}
-          />
-        </Grid>
-
-        {/* 🥧 Top productos por porcentaje */}
+        {/* 🥧 Top productos (porcentaje) */}
         <Grid xs={12} md={6} lg={4}>
           <AnalyticsCurrentVisits
             title="Top productos (porcentaje de unidades)"
@@ -197,7 +167,7 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* 🔽 El resto queda mockeado sin cambios */}
+        {/* Resto mockeado */}
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsConversionRates
             title="Conversion Rates"
@@ -222,15 +192,12 @@ export default function OverviewAnalyticsView() {
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsNews title="News" list={_analyticPosts} />
         </Grid>
-
         <Grid xs={12} md={6} lg={4}>
           <AnalyticsOrderTimeline title="Order Timeline" list={_analyticOrderTimeline} />
         </Grid>
-
         <Grid xs={12} md={6} lg={4}>
           <AnalyticsTrafficBySite title="Traffic by Site" list={_analyticTraffic} />
         </Grid>
-
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsTasks title="Tasks" list={_analyticTasks} />
         </Grid>

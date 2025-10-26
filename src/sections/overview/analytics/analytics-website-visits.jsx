@@ -12,29 +12,45 @@ import Chart, { useChart } from 'src/components/chart';
 export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...other }) {
   const { labels = [], colors, series = [], options } = chart || {};
 
-  // Derivar stroke.width dinámicamente según el tipo de serie
-  const strokeWidth = series.map((s) => {
-    if (s.type === 'column') return 0;
-    if (s.type === 'area') return 2;
-    return 3; // line u otros
-  });
-
-  // Derivar fill.type según cada serie (fallback a 'solid')
+  // Derivar stroke/fill dinámicos
+  const strokeWidth = series.map((s) => (s.type === 'area' ? 2 : 3));
   const fillTypes = series.map((s) => s.fill || 'solid');
+
+  // ¿Tenemos dos ejes? (si hay dos series y una parece "ventas")
+  const hasDualAxis = series.length === 2 && series.some((s) => /venta|\$|monto/i.test(s.name));
+
+  // Mapear cada eje a la serie por nombre
+  const yaxis = hasDualAxis
+    ? [
+        {
+          seriesName: 'Pedidos',
+          title: { text: 'Pedidos' },
+          decimalsInFloat: 0,
+          labels: {
+            formatter: (v) => `${Math.round(Number(v) || 0)}`,
+          },
+        },
+        {
+          seriesName: 'Ventas ($)',
+          title: { text: 'Ventas ($)' },
+          opposite: true,
+          labels: {
+            formatter: (v) => `$ ${Number(v || 0).toLocaleString('es-AR')}`,
+          },
+        },
+      ]
+    : undefined;
 
   const chartOptions = useChart({
     colors,
-    plotOptions: {
-      bar: { columnWidth: '16%' },
-    },
-    stroke: { width: strokeWidth },
+    stroke: { width: strokeWidth, curve: 'smooth' },
     fill: { type: fillTypes },
-    // Usamos labels textuales (p.ej. "Oct '25"), no datetime
     labels,
     xaxis: {
       type: 'category',
       categories: labels,
     },
+    yaxis,
     tooltip: {
       shared: true,
       intersect: false,
@@ -42,8 +58,6 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
         formatter: (value, { seriesIndex }) => {
           if (value == null || Number.isNaN(value)) return value;
           const name = (series?.[seriesIndex]?.name || '').toLowerCase();
-
-          // Heurística: si es ventas ($), mostramos moneda; si no, entero
           if (name.includes('venta') || name.includes('$') || name.includes('monto')) {
             return `$ ${Number(value).toLocaleString('es-AR')}`;
           }
@@ -51,22 +65,15 @@ export default function AnalyticsWebsiteVisits({ title, subheader, chart, ...oth
         },
       },
     },
+    legend: { show: true },
     ...options,
   });
 
   return (
     <Card {...other}>
       <CardHeader title={title} subheader={subheader} />
-
       <Box sx={{ p: 3, pb: 1 }}>
-        <Chart
-          dir="ltr"
-          type="line"
-          series={series}
-          options={chartOptions}
-          width="100%"
-          height={364}
-        />
+        <Chart dir="ltr" type="line" series={series} options={chartOptions} width="100%" height={364} />
       </Box>
     </Card>
   );
@@ -78,10 +85,10 @@ AnalyticsWebsiteVisits.propTypes = {
     colors: PropTypes.array,
     series: PropTypes.arrayOf(
       PropTypes.shape({
-        name: PropTypes.string,
-        type: PropTypes.oneOf(['line', 'area', 'column']),
+        name: PropTypes.string.isRequired,
+        type: PropTypes.oneOf(['line', 'area']).isRequired,
         fill: PropTypes.oneOf(['solid', 'gradient']),
-        data: PropTypes.arrayOf(PropTypes.number),
+        data: PropTypes.arrayOf(PropTypes.number).isRequired,
       })
     ),
     options: PropTypes.object,
