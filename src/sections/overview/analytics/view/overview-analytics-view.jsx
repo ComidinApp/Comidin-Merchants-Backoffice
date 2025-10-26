@@ -32,34 +32,37 @@ import AnalyticsConversionRates from '../analytics-conversion-rates';
 // ----------------------------------------------------------------------
 // Helpers de transformación
 
-// "2025-10" -> "Oct '25" (o el formato que prefieras)
+// "2025-10" -> "oct '25"
 function monthKeyToShortLabel(key) {
-  // key viene como "YYYY-MM"
   const [y, m] = key.split('-').map((n) => parseInt(n, 10));
   const d = new Date(y, m - 1, 1);
   return new Intl.DateTimeFormat('es-AR', { month: 'short', year: '2-digit' }).format(d);
 }
 
-function buildMonthlyCharts(overview) {
-  const months = overview?.salesByMonth ?? [];
-
-  const labels = months.map((m) => monthKeyToShortLabel(m.month));
-  const ordersSeries = months.map((m) => Number(m.ordersCount ?? 0));
-  const amountSeries = months.map((m) => Number(m.totalAmount ?? 0));
-
-  return {
-    labels,
-    // dos series: pedidos y dinero (puedes ajustar tipos/estilos como gustes)
-    series: [
-      { name: 'Pedidos', type: 'column', fill: 'solid', data: ordersSeries },
-      { name: 'Ventas ($)', type: 'area', fill: 'gradient', data: amountSeries },
-    ],
-  };
+// Solo labels
+function buildMonthlyLabels(overview) {
+  return (overview?.salesByMonth ?? []).map((m) => monthKeyToShortLabel(m.month));
 }
 
+// Serie de pedidos por mes (enteros)
+function buildOrdersSeries(overview) {
+  const data = (overview?.salesByMonth ?? []).map((m) => Number(m.ordersCount ?? 0));
+  return [
+    { name: 'Pedidos', type: 'column', fill: 'solid', data },
+  ];
+}
+
+// Serie de ventas por mes (monto)
+function buildAmountSeries(overview) {
+  const data = (overview?.salesByMonth ?? []).map((m) => Number(m.totalAmount ?? 0));
+  return [
+    { name: 'Ventas ($)', type: 'area', fill: 'gradient', data },
+  ];
+}
+
+// Torta de top productos (porcentaje)
 function buildTopProducts(overview) {
   const top = overview?.topProducts ?? [];
-  // Usamos porcentaje para la torta, y el label como nombre
   return top.map((t) => ({
     label: t.productName ?? 'Desconocido',
     value: Number(t.percentage ?? 0),
@@ -103,8 +106,10 @@ export default function OverviewAnalyticsView() {
       });
   }, [userCommerceId]);
 
-  // Construimos datos de gráficos desde overview
-  const monthlyCharts = useMemo(() => buildMonthlyCharts(overview), [overview]);
+  // Datos memorizados para los gráficos
+  const labels = useMemo(() => buildMonthlyLabels(overview), [overview]);
+  const ordersSeries = useMemo(() => buildOrdersSeries(overview), [overview]);
+  const amountSeries = useMemo(() => buildAmountSeries(overview), [overview]);
   const topProductsSeries = useMemo(() => buildTopProducts(overview), [overview]);
 
   return (
@@ -160,25 +165,35 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* 📈 Ventas y pedidos por mes (con datos reales) */}
-        <Grid xs={12} md={6} lg={8}>
+        {/* 📊 Gráfico 1: Pedidos por mes */}
+        <Grid xs={12} md={6}>
           <AnalyticsWebsiteVisits
-            title="Ventas y pedidos por mes"
+            title="Pedidos por mes"
             subheader="Últimos 12 meses"
             chart={{
-              labels: monthlyCharts.labels,
-              series: monthlyCharts.series,
+              labels,
+              series: ordersSeries, // 1 serie (column)
             }}
           />
         </Grid>
 
-        {/* 🥧 Top productos por porcentaje (con datos reales) */}
+        {/* 💰 Gráfico 2: Ventas ($) por mes */}
+        <Grid xs={12} md={6}>
+          <AnalyticsWebsiteVisits
+            title="Ventas ($) por mes"
+            subheader="Últimos 12 meses"
+            chart={{
+              labels,
+              series: amountSeries, // 1 serie (area)
+            }}
+          />
+        </Grid>
+
+        {/* 🥧 Top productos por porcentaje */}
         <Grid xs={12} md={6} lg={4}>
           <AnalyticsCurrentVisits
             title="Top productos (porcentaje de unidades)"
-            chart={{
-              series: topProductsSeries,
-            }}
+            chart={{ series: topProductsSeries }}
           />
         </Grid>
 
@@ -199,20 +214,6 @@ export default function OverviewAnalyticsView() {
                 { label: 'Netherlands', value: 1100 },
                 { label: 'United States', value: 1200 },
                 { label: 'United Kingdom', value: 1380 },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid xs={12} md={6} lg={4}>
-          <AnalyticsCurrentSubject
-            title="Current Subject"
-            chart={{
-              categories: ['English', 'History', 'Physics', 'Geography', 'Chinese', 'Math'],
-              series: [
-                { name: 'Series 1', data: [80, 50, 30, 40, 100, 20] },
-                { name: 'Series 2', data: [20, 30, 40, 80, 20, 80] },
-                { name: 'Series 3', data: [44, 76, 78, 13, 43, 10] },
               ],
             }}
           />
