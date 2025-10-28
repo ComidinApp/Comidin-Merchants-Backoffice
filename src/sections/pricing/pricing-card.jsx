@@ -1,3 +1,4 @@
+// src/sections/pricing/components/PricingCard.jsx
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
@@ -24,13 +25,6 @@ export default function PricingCard({ card, sx, ...other }) {
     labelAction,
     planId,
   } = card ?? {};
-
-  
-  // podria considerarse a futuro persistir el preaproval id
-  // y mostrarle al cliente el estado de su subscripcion, 
-  // habria que ajustar el modelo y que al ingresar a la 
-  // panatalla y ya tener una subcripcion se le muestre estado y fecha de proximo pago, no necesario, pero user friendly
-  // MP lo permite haciendole un post con el preaproval id y el token de MP
 
   // info del user logueado
   const auth = useAuthContext();
@@ -151,7 +145,7 @@ export default function PricingCard({ card, sx, ...other }) {
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email:'TEST_USER_1278385314@testuser.com', // fijo de test, sino nos falla el sandBox de MP
+          payer_email: 'TEST_USER_1278385314@testuser.com', // fijo de test para sandbox
           userId,
         }),
       });
@@ -166,6 +160,9 @@ export default function PricingCard({ card, sx, ...other }) {
         const msg = data?.error || data?.message || `Error ${res.status}`;
         throw new Error(msg);
       }
+
+      // ✅ Guardamos el preapproval_id por si MP no lo devuelve en la URL al volver
+      if (data?.id) sessionStorage.setItem('mp_preapproval_id', String(data.id));
 
       const url = data?.link || data?.init_point || data?.sandbox_init_point;
       if (!url) throw new Error('No se recibió el link de suscripción.');
@@ -184,10 +181,12 @@ export default function PricingCard({ card, sx, ...other }) {
     }
   };
 
-  // al volver de MP con ?preapproval_id=... confirmamos en backend
+  // al volver de MP: confirmamos en backend
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const preapprovalId = params.get('preapproval_id');
+    const preapprovalFromQuery = params.get('preapproval_id');
+    // Fallback: si no vino en query, usamos el guardado al crear
+    const preapprovalId = preapprovalFromQuery || sessionStorage.getItem('mp_preapproval_id');
     if (!preapprovalId) return;
 
     const guardKey = `confirmed:${preapprovalId}`;
@@ -205,7 +204,7 @@ export default function PricingCard({ card, sx, ...other }) {
           body: JSON.stringify({
             preapproval_id: preapprovalId,
             plan_id: planIdLS || undefined,
-            payer_email:'TEST_USER_1278385314@testuser.com',
+            payer_email: 'TEST_USER_1278385314@testuser.com', // podés dejarlo; el back ya no lo exige
             commerce_id: commerceIdLS,
           }),
         });
@@ -217,11 +216,14 @@ export default function PricingCard({ card, sx, ...other }) {
         localStorage.removeItem('pending_plan_id');
         localStorage.removeItem('pending_payer_email');
         localStorage.removeItem('pending_commerce_id');
+        sessionStorage.removeItem('mp_preapproval_id');
 
         // limpiar query param para no re-disparar
-        const url = new URL(window.location.href);
-        url.searchParams.delete('preapproval_id');
-        window.history.replaceState({}, '', url.toString());
+        if (preapprovalFromQuery) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('preapproval_id');
+          window.history.replaceState({}, '', url.toString());
+        }
 
         // actualizar estado local + avisar global
         if (planIdLS) setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
@@ -233,7 +235,7 @@ export default function PricingCard({ card, sx, ...other }) {
         sessionStorage.removeItem(guardKey);
       }
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // regla de disable del botón
   const disableSubscribe =
