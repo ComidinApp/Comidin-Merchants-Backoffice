@@ -161,11 +161,24 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error(msg);
       }
 
-      // ✅ Guardamos el preapproval_id por si MP no lo devuelve en la URL al volver
-      if (data?.id) sessionStorage.setItem('mp_preapproval_id', String(data.id));
+// ✅ Si el backend devuelve preapproval directo, lo guardamos
+if (data?.id) {
+  sessionStorage.setItem('mp_preapproval_id', String(data.id));
+}
 
-      const url = data?.link || data?.init_point || data?.sandbox_init_point;
-      if (!url) throw new Error('No se recibió el link de suscripción.');
+// ✅ Soporte para modo fallback (plan_init_point_fallback)
+const url =
+  data?.init_point ||
+  data?.sandbox_init_point ||
+  data?.link ||
+  (data?.mode === 'plan_init_point_fallback'
+    ? data?.init_point || data?.sandbox_init_point
+    : null);
+
+if (!url) {
+  console.error('Respuesta del backend:', data);
+  throw new Error('No se recibió el link de suscripción.');
+}
 
       // guardamos contexto para confirmar al volver
       localStorage.setItem('pending_plan_id', String(planId));
