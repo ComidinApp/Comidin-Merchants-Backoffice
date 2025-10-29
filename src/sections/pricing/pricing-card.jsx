@@ -161,24 +161,24 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error(msg);
       }
 
-// ✅ Si el backend devuelve preapproval directo, lo guardamos
-if (data?.id) {
-  sessionStorage.setItem('mp_preapproval_id', String(data.id));
-}
+      // ✅ Si el backend devuelve preapproval directo, lo guardamos
+      if (data?.id) {
+        sessionStorage.setItem('mp_preapproval_id', String(data.id));
+      }
 
-// ✅ Soporte para modo fallback (plan_init_point_fallback)
-const url =
-  data?.init_point ||
-  data?.sandbox_init_point ||
-  data?.link ||
-  (data?.mode === 'plan_init_point_fallback'
-    ? data?.init_point || data?.sandbox_init_point
-    : null);
+      // ✅ Soporte para modo fallback (plan_init_point_fallback)
+      const url =
+        data?.init_point ||
+        data?.sandbox_init_point ||
+        data?.link ||
+        (data?.mode === 'plan_init_point_fallback'
+          ? data?.init_point || data?.sandbox_init_point
+          : null);
 
-if (!url) {
-  console.error('Respuesta del backend:', data);
-  throw new Error('No se recibió el link de suscripción.');
-}
+      if (!url) {
+        console.error('Respuesta del backend:', data);
+        throw new Error('No se recibió el link de suscripción.');
+      }
 
       // guardamos contexto para confirmar al volver
       localStorage.setItem('pending_plan_id', String(planId));
@@ -198,28 +198,41 @@ if (!url) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const preapprovalFromQuery = params.get('preapproval_id');
+    const statusFromQuery = params.get('status'); // a veces MP devuelve status=approved
+
     // Fallback: si no vino en query, usamos el guardado al crear
     const preapprovalId = preapprovalFromQuery || sessionStorage.getItem('mp_preapproval_id');
-    if (!preapprovalId) return;
 
-    const guardKey = `confirmed:${preapprovalId}`;
-    if (sessionStorage.getItem(guardKey)) return;
-    sessionStorage.setItem(guardKey, '1');
-
+    // Datos guardados al iniciar la suscripción
     const planIdLS = Number(localStorage.getItem('pending_plan_id'));
     const commerceIdLS = Number(localStorage.getItem('pending_commerce_id'));
 
+    // Si no hay nada pendiente, no hacemos nada
+    if (!planIdLS || !commerceIdLS) {
+      if (statusFromQuery && !preapprovalId) {
+        console.warn('Volvió de MP con status pero sin preapproval_id:', statusFromQuery);
+      }
+      return;
+    }
+
+    // Guard para no disparar 2 veces
+    const guardKey = preapprovalId ? `confirmed:${preapprovalId}` : `confirmed:by-search:${commerceIdLS}`;
+    if (sessionStorage.getItem(guardKey)) return;
+    sessionStorage.setItem(guardKey, '1');
+
     (async () => {
       try {
+        const payload = {
+          plan_id: planIdLS || undefined,
+          payer_email: 'TEST_USER_1278385314@testuser.com', // el back no lo exige, pero no molesta
+          commerce_id: commerceIdLS,
+        };
+        if (preapprovalId) payload.preapproval_id = preapprovalId;
+
         const resp = await fetch(`${API_BASE}/subscriptions/confirm`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            preapproval_id: preapprovalId,
-            plan_id: planIdLS || undefined,
-            payer_email: 'TEST_USER_1278385314@testuser.com', // podés dejarlo; el back ya no lo exige
-            commerce_id: commerceIdLS,
-          }),
+          body: JSON.stringify(payload),
         });
 
         const json = await resp.json().catch(() => ({}));
@@ -242,7 +255,7 @@ if (!url) {
         if (planIdLS) setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
-        console.log('Suscripción confirmada', json.subscription);
+        console.log('Suscripción confirmada', json.subscription, 'mp_status:', json?.mp_status, 'mp_id:', json?.mp_id);
       } catch (e) {
         console.error('Confirmación falló:', e);
         sessionStorage.removeItem(guardKey);
@@ -334,26 +347,27 @@ if (!url) {
     <Stack
       spacing={5}
       sx={{
-        p: 5,
-        borderRadius: 2,
-        boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
-        ...(starter && {
-          borderTopRightRadius: { md: 0 },
-          borderBottomRightRadius: { md: 0 },
+  p: 5,
+  borderRadius: 2,
+  boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
+  ...(starter && {
+    borderTopRightRadius: { md: 0 },
+    borderBottomRightRadius: { md: 0 },
+  }),
+  ...(starter || premium
+    ? {
+        boxShadow: (theme) => ({
+          xs: theme.customShadows.card,
+          md: `-40px 40px 80px 0px ${alpha(
+            theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
+            0.16
+          )}`,
         }),
-        ...(starter || premium
-          ? {
-              boxShadow: (theme) => ({
-                xs: theme.customShadows.card,
-                md: `-40px 40px 80px 0px ${alpha(
-                  theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
-                  0.16
-                )}`,
-              }),
-            }
-          : {}),
-        ...sx,
-      }}
+      }
+    : {}),
+  ...sx,
+}}
+
       {...other}
     >
       {renderIcon}
