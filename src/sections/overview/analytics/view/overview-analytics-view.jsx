@@ -1,4 +1,4 @@
-// src/sections/overview/overview-analytics-view.jsx
+// src/sections/overview/analytics/view/overview-analytics-view.jsx
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
 import { useEffect, useState, useMemo } from 'react';
@@ -28,6 +28,9 @@ import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
 import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
 
+// 👉 NUEVO: Top 3 en barras (ruta relativa desde /overview/analytics/view/)
+import AnalyticsTopProductsBar from '../../analytics-top-products-bar';
+
 // --- Helpers ---
 function monthKeyToShortLabel(key) {
   const [y, m] = key.split('-').map((n) => parseInt(n, 10));
@@ -48,14 +51,6 @@ function buildMonthlyChart(overview) {
       { name: 'Ventas ($)', type: 'area', fill: 'gradient', data: amountSeries },
     ],
   };
-}
-
-function buildTopProducts(overview) {
-  const top = overview?.topProducts ?? [];
-  return top.map((t) => ({
-    label: t.productName ?? 'Desconocido',
-    value: Number(t.percentage ?? 0),
-  }));
 }
 
 // --- Page ---
@@ -92,7 +87,6 @@ export default function OverviewAnalyticsView() {
   }, [userCommerceId]);
 
   const monthlyChart = useMemo(() => buildMonthlyChart(overview), [overview]);
-  const topProductsSeries = useMemo(() => buildTopProducts(overview), [overview]);
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -112,42 +106,43 @@ export default function OverviewAnalyticsView() {
       {!!error && <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>}
 
       <Grid container spacing={3}>
+        {/* KPIs nuevos */}
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Ventas (últimos 30 días)"
-            total={Number(overview?.monthlySalesAmount ?? 0)}
+            title="Ingresos (histórico)"
+            total={Number(overview?.totalRevenue ?? 0)}
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
           />
         </Grid>
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Usuarios"
-            total={Number(overview?.totalUsers ?? 0)}
+            title="Pedidos realizados (histórico)"
+            total={Number(overview?.totalOrders ?? 0)}
             color="info"
-            icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
-          />
-        </Grid>
-
-        <Grid xs={12} sm={6} md={3}>
-          <AnalyticsWidgetSummary
-            title="Pedidos (últimos 30 días)"
-            total={Number(overview?.monthlyOrdersCount ?? 0)}
-            color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
           />
         </Grid>
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Productos vendidos (histórico)"
-            total={Number(overview?.productsSold ?? 0)}
-            color="error"
+            title="Pedidos devueltos (histórico)"
+            total={Number(overview?.returnedOrders ?? 0)}
+            color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}
           />
         </Grid>
 
-        {/* ✅ Un solo gráfico con 2 funciones */}
+        <Grid xs={12} sm={6} md={3}>
+          <AnalyticsWidgetSummary
+            title="Productos vencidos (histórico)"
+            total={Number(overview?.expiredProducts ?? 0)}
+            color="error"
+            icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
+          />
+        </Grid>
+
+        {/* Gráfico combinado (si no hay datos, se mostrará vacío sin romper) */}
         <Grid xs={12} md={12}>
           <AnalyticsWebsiteVisits
             title="Ventas y pedidos por mes"
@@ -159,15 +154,39 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* 🥧 Top productos (porcentaje) */}
-        <Grid xs={12} md={6} lg={4}>
+        {/* NUEVOS BLOQUES */}
+        {/* Barras: Top 3 productos por unidades */}
+        <Grid xs={12} md={6} lg={6}>
+          <AnalyticsTopProductsBar data={overview?.topProductsBar || []} />
+        </Grid>
+
+        {/* Torta: productos vendidos vs vencidos */}
+        <Grid xs={12} md={6} lg={3}>
           <AnalyticsCurrentVisits
-            title="Top productos (porcentaje de unidades)"
-            chart={{ series: topProductsSeries }}
+            title="Productos: vendidos vs vencidos"
+            chart={{
+              series: [
+                { label: 'Vendidos', value: Number(overview?.pieProducts?.soldUnits ?? 0) },
+                { label: 'Vencidos', value: Number(overview?.pieProducts?.expiredUnits ?? 0) },
+              ],
+            }}
           />
         </Grid>
 
-        {/* Resto mockeado */}
+        {/* Torta: pedidos realizados vs reclamados */}
+        <Grid xs={12} md={6} lg={3}>
+          <AnalyticsCurrentVisits
+            title="Pedidos: realizados vs reclamados"
+            chart={{
+              series: [
+                { label: 'Realizados', value: Number(overview?.pieOrders?.completedOrders ?? 0) },
+                { label: 'Reclamados', value: Number(overview?.pieOrders?.claimedOrders ?? 0) },
+              ],
+            }}
+          />
+        </Grid>
+
+        {/* Resto mockeado (lo dejo igual que tenías) */}
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsConversionRates
             title="Conversion Rates"
