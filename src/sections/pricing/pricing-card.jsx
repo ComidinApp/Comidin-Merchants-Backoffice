@@ -7,6 +7,8 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 
 import { PlanFreeIcon, PlanStarterIcon, PlanPremiumIcon } from 'src/assets/icons';
 import Label from 'src/components/label';
@@ -14,6 +16,8 @@ import Iconify from 'src/components/iconify';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 const API_BASE = import.meta.env.VITE_API_COMIDIN || '';
+
+const Alert = MuiAlert; // alias corto
 
 export default function PricingCard({ card, sx, ...other }) {
   const {
@@ -38,6 +42,19 @@ export default function PricingCard({ card, sx, ...other }) {
   const [checkingSub, setCheckingSub] = useState(true);
   const [subscribedPlans, setSubscribedPlans] = useState(new Set());
 
+  // snackbar de éxito
+  const [snackOpen, setSnackOpen] = useState(false);
+  const [snackMsg, setSnackMsg] = useState('Suscripción exitosa');
+
+  const openSuccess = (msg) => {
+    setSnackMsg(msg || 'Suscripción exitosa');
+    setSnackOpen(true);
+  };
+  const closeSuccess = (_e, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackOpen(false);
+  };
+
   // flags rápidos
   const basic = subscription === 'Básica';
   const starter = subscription === 'Estándar';
@@ -45,6 +62,14 @@ export default function PricingCard({ card, sx, ...other }) {
 
   // si no hay ningún plan guardado → asumimos que está en Gratis
   const hasAnyPlan = subscribedPlans.size > 0;
+
+  const planName = (pid) => {
+    const n = Number(pid);
+    if (n === 1) return 'Plan Gratis';
+    if (n === 2) return 'Plan Estándar';
+    if (n === 3) return 'Plan Premium';
+    return 'Plan';
+  };
 
   // trae las subscripciones actuales del comercio
   const fetchSubscriptions = useCallback(async (abortSignal) => {
@@ -118,7 +143,9 @@ export default function PricingCard({ card, sx, ...other }) {
         // actualizamos UI y notificamos global
         setSubscribedPlans(new Set([1])); // quedás explícitamente en plan 1
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
-        alert('Pasaste al plan gratuito.');
+
+        // ✅ snackbar de éxito (reemplaza alert)
+        openSuccess('¡Listo! Cambiaste al Plan Gratis.');
         return;
       } catch (err) {
         console.error('Error al pasar a Free:', err);
@@ -272,6 +299,8 @@ export default function PricingCard({ card, sx, ...other }) {
           console.warn('No se pudo refrescar employee:', err);
         }
 
+        // ✅ snackbar de éxito al volver de MP
+        openSuccess(`¡Suscripción exitosa! ${planName(planIdLS)} activado.`);
         console.log('Suscripción confirmada', json.subscription, 'mp_status:', json?.mp_status, 'mp_id:', json?.mp_id);
       } catch (e) {
         console.error('Confirmación falló:', e);
@@ -361,48 +390,62 @@ export default function PricingCard({ card, sx, ...other }) {
   );
 
   return (
-    <Stack
-      spacing={5}
-      sx={{
-        p: 5,
-        borderRadius: 2,
-        boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
-        ...(starter && {
-          borderTopRightRadius: { md: 0 },
-          borderBottomRightRadius: { md: 0 },
-        }),
-        ...(starter || premium
-          ? {
-              boxShadow: (theme) => ({
-                xs: theme.customShadows.card,
-                md: `-40px 40px 80px 0px ${alpha(
-                  theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
-                  0.16
-                )}`,
-              }),
-            }
-          : {}),
-        ...sx,
-      }}
-      {...other}
-    >
-      {renderIcon}
-      {renderSubscription}
-      {renderPrice}
-      <Divider sx={{ borderStyle: 'dashed' }} />
-      {renderList}
-
-      <Button
-        fullWidth
-        size="large"
-        variant="contained"
-        disabled={disableSubscribe}
-        color={starter ? 'primary' : 'inherit'}
-        onClick={handleSubscribe}
+    <>
+      <Stack
+        spacing={5}
+        sx={{
+          p: 5,
+          borderRadius: 2,
+          boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
+          ...(starter && {
+            borderTopRightRadius: { md: 0 },
+            borderBottomRightRadius: { md: 0 },
+          }),
+          ...(starter || premium
+            ? {
+                boxShadow: (theme) => ({
+                  xs: theme.customShadows.card,
+                  md: `-40px 40px 80px 0px ${alpha(
+                    theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
+                    0.16
+                  )}`,
+                }),
+              }
+            : {}),
+          ...sx,
+        }}
+        {...other}
       >
-        {buttonLabel}
-      </Button>
-    </Stack>
+        {renderIcon}
+        {renderSubscription}
+        {renderPrice}
+        <Divider sx={{ borderStyle: 'dashed' }} />
+        {renderList}
+
+        <Button
+          fullWidth
+          size="large"
+          variant="contained"
+          disabled={disableSubscribe}
+          color={starter ? 'primary' : 'inherit'}
+          onClick={handleSubscribe}
+        >
+          {buttonLabel}
+        </Button>
+      </Stack>
+
+      {/* Snackbar de éxito común para los 3 planes */}
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={4000}
+        onClose={closeSuccess}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={closeSuccess} severity="success" variant="filled" elevation={3}>
+          {snackMsg}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
 
