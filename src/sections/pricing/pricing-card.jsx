@@ -1,3 +1,4 @@
+// src/sections/pricing/components/PricingCard.jsx
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
@@ -115,7 +116,7 @@ export default function PricingCard({ card, sx, ...other }) {
         if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
 
         // actualizamos UI y notificamos global
-        setSubscribedPlans(new Set([1])); // ← dejar explícito plan 1
+        setSubscribedPlans(new Set([1])); // quedás explícitamente en plan 1
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
         alert('Pasaste al plan gratuito.');
         return;
@@ -160,12 +161,12 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error(msg);
       }
 
-      // ✅ Si el backend devuelve preapproval directo, lo guardamos
+      // Si el backend devuelve preapproval directo, lo guardamos
       if (data?.id) {
         sessionStorage.setItem('mp_preapproval_id', String(data.id));
       }
 
-      // ✅ Soporte para modo fallback (plan_init_point_fallback)
+      // Soporte para modo fallback (plan_init_point_fallback)
       const url =
         data?.init_point ||
         data?.sandbox_init_point ||
@@ -179,10 +180,10 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error('No se recibió el link de suscripción.');
       }
 
-// guardamos contexto para confirmar al volver
-localStorage.setItem('pending_plan_id', String(planId));
-localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
-localStorage.setItem('pending_commerce_id', String(commerceId));
+      // guardamos contexto para confirmar al volver
+      localStorage.setItem('pending_plan_id', String(planId));
+      localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
+      localStorage.setItem('pending_commerce_id', String(commerceId));
 
       window.location.href = url; // redirect a MP
     } catch (err) {
@@ -216,7 +217,7 @@ localStorage.setItem('pending_commerce_id', String(commerceId));
 
     // Guard más fino:
     // - Con preapproval: único por preapproval_id
-    // - Por búsqueda: único por commerce + plan (permite cambiar de 3→2, 2→3, etc.)
+    // - Por búsqueda: único por commerce + plan (permite cambiar 3→2, 2→3, etc.)
     const guardKey = preapprovalId
       ? `confirmed:${preapprovalId}`
       : `confirmed:by-search:${commerceIdLS}:${planIdLS}`;
@@ -260,6 +261,16 @@ localStorage.setItem('pending_commerce_id', String(commerceId));
 
         // avisar global
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
+
+        // refrescar datos del empleado (sin caché)
+        try {
+          const ts = Date.now();
+          await fetch(`${API_BASE}/employee/email/${encodeURIComponent(userEmail)}?ts=${ts}`, {
+            cache: 'no-store',
+          });
+        } catch (err) {
+          console.warn('No se pudo refrescar employee:', err);
+        }
 
         console.log('Suscripción confirmada', json.subscription, 'mp_status:', json?.mp_status, 'mp_id:', json?.mp_id);
       } catch (e) {
