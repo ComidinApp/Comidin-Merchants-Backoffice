@@ -1,4 +1,3 @@
-// src/sections/pricing/components/PricingCard.jsx
 import PropTypes from 'prop-types';
 import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
@@ -116,7 +115,7 @@ export default function PricingCard({ card, sx, ...other }) {
         if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
 
         // actualizamos UI y notificamos global
-        setSubscribedPlans(new Set());
+        setSubscribedPlans(new Set([1])); // ← dejar explícito plan 1
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
         alert('Pasaste al plan gratuito.');
         return;
@@ -182,7 +181,7 @@ export default function PricingCard({ card, sx, ...other }) {
 
       // guardamos contexto para confirmar al volver
       localStorage.setItem('pending_plan_id', String(planId));
-      localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
+      localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com'));
       localStorage.setItem('pending_commerce_id', String(commerceId));
 
       window.location.href = url; // redirect a MP
@@ -215,8 +214,13 @@ export default function PricingCard({ card, sx, ...other }) {
       return;
     }
 
-    // Guard para no disparar 2 veces
-    const guardKey = preapprovalId ? `confirmed:${preapprovalId}` : `confirmed:by-search:${commerceIdLS}`;
+    // Guard más fino:
+    // - Con preapproval: único por preapproval_id
+    // - Por búsqueda: único por commerce + plan (permite cambiar de 3→2, 2→3, etc.)
+    const guardKey = preapprovalId
+      ? `confirmed:${preapprovalId}`
+      : `confirmed:by-search:${commerceIdLS}:${planIdLS}`;
+
     if (sessionStorage.getItem(guardKey)) return;
     sessionStorage.setItem(guardKey, '1');
 
@@ -224,7 +228,7 @@ export default function PricingCard({ card, sx, ...other }) {
       try {
         const payload = {
           plan_id: planIdLS || undefined,
-          payer_email: 'TEST_USER_1278385314@testuser.com', // el back no lo exige, pero no molesta
+          payer_email: 'TEST_USER_1278385314@testuser.com', // opcional
           commerce_id: commerceIdLS,
         };
         if (preapprovalId) payload.preapproval_id = preapprovalId;
@@ -251,8 +255,10 @@ export default function PricingCard({ card, sx, ...other }) {
           window.history.replaceState({}, '', url.toString());
         }
 
-        // actualizar estado local + avisar global
-        if (planIdLS) setSubscribedPlans((prev) => new Set([...prev, Number(planIdLS)]));
+        // actualizar estado local (reemplazar plan activo)
+        if (planIdLS) setSubscribedPlans(new Set([Number(planIdLS)]));
+
+        // avisar global
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
         console.log('Suscripción confirmada', json.subscription, 'mp_status:', json?.mp_status, 'mp_id:', json?.mp_id);
@@ -347,27 +353,26 @@ export default function PricingCard({ card, sx, ...other }) {
     <Stack
       spacing={5}
       sx={{
-  p: 5,
-  borderRadius: 2,
-  boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
-  ...(starter && {
-    borderTopRightRadius: { md: 0 },
-    borderBottomRightRadius: { md: 0 },
-  }),
-  ...(starter || premium
-    ? {
-        boxShadow: (theme) => ({
-          xs: theme.customShadows.card,
-          md: `-40px 40px 80px 0px ${alpha(
-            theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
-            0.16
-          )}`,
+        p: 5,
+        borderRadius: 2,
+        boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
+        ...(starter && {
+          borderTopRightRadius: { md: 0 },
+          borderBottomRightRadius: { md: 0 },
         }),
-      }
-    : {}),
-  ...sx,
-}}
-
+        ...(starter || premium
+          ? {
+              boxShadow: (theme) => ({
+                xs: theme.customShadows.card,
+                md: `-40px 40px 80px 0px ${alpha(
+                  theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
+                  0.16
+                )}`,
+              }),
+            }
+          : {}),
+        ...sx,
+      }}
       {...other}
     >
       {renderIcon}
