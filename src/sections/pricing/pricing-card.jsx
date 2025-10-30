@@ -179,10 +179,10 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error('No se recibió el link de suscripción.');
       }
 
-      // guardamos contexto para confirmar al volver
-      localStorage.setItem('pending_plan_id', String(planId));
-      localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com'));
-      localStorage.setItem('pending_commerce_id', String(commerceId));
+// guardamos contexto para confirmar al volver
+localStorage.setItem('pending_plan_id', String(planId));
+localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
+localStorage.setItem('pending_commerce_id', String(commerceId));
 
       window.location.href = url; // redirect a MP
     } catch (err) {
