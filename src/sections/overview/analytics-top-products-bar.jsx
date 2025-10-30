@@ -1,3 +1,4 @@
+// src/sections/overview/analytics-top-products-bar.jsx
 import PropTypes from 'prop-types';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
@@ -10,9 +11,21 @@ export default function AnalyticsTopProductsBar({ title = 'Top 3 productos (unid
 
   const chartOptions = useChart({
     chart: { stacked: false },
-    plotOptions: { bar: { columnWidth: '40%' } },
+    plotOptions: {
+      bar: {
+        horizontal: true,       // 👈 barras horizontales
+        barHeight: '60%',
+        borderRadius: 6,
+      },
+    },
     dataLabels: { enabled: true },
-    xaxis: { categories: labels },
+    xaxis: { categories: labels, labels: { show: true } },
+    yaxis: { labels: { show: true } },
+    tooltip: {
+      y: {
+        formatter: (val) => Number(val || 0).toLocaleString('es-AR'),
+      },
+    },
   });
 
   return (
@@ -24,7 +37,10 @@ export default function AnalyticsTopProductsBar({ title = 'Top 3 productos (unid
     </Card>
   );
 }
+
 AnalyticsTopProductsBar.propTypes = {
   title: PropTypes.string,
-  data: PropTypes.arrayOf(PropTypes.shape({ productName: PropTypes.string, units: PropTypes.number })),
+  data: PropTypes.arrayOf(
+    PropTypes.shape({ productName: PropTypes.string, units: PropTypes.number })
+  ),
 };
