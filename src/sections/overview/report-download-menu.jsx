@@ -3,7 +3,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Menu, MenuItem } from '@mui/material';
 import { downloadFile } from 'src/utils/download';
-import { API_BASE } from 'src/config-apis';
+import { API_BASE } from 'src/config-global';
 
 export default function ReportDownloadMenu({ period, commerceId, token }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -19,7 +19,7 @@ export default function ReportDownloadMenu({ period, commerceId, token }) {
     }
   };
 
-  // 👉 Ahora usa la base absoluta de API (api.comidin.com.ar)
+  // 👉 Usa base absoluta de API (api.comidin.com.ar o la que definas en env)
   const base = `${API_BASE}/api/analytics/report`;
   const q = `period=${encodeURIComponent(period)}&commerceId=${encodeURIComponent(
     commerceId
