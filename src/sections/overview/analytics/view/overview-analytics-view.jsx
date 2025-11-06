@@ -28,7 +28,10 @@ import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
 import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
 
-// 👉 NUEVO: Top 3 en barras (ruta relativa desde /overview/analytics/view/)
+// Nuevo: selector de período
+import PeriodSelector from '../../period-selector';
+
+// Barras top 3
 import AnalyticsTopProductsBar from '../../analytics-top-products-bar';
 
 // --- Helpers ---
@@ -53,6 +56,17 @@ function buildMonthlyChart(overview) {
   };
 }
 
+function subheaderFromPeriod(period) {
+  switch (period) {
+    case 'last1m': return 'Último mes';
+    case 'last3m': return 'Últimos 3 meses';
+    case 'last6m': return 'Últimos 6 meses';
+    case 'last12m': return 'Últimos 12 meses';
+    case 'all':    return 'Histórico (línea: últimos 12 meses)';
+    default: return 'Período';
+  }
+}
+
 // --- Page ---
 export default function OverviewAnalyticsView() {
   const auth = useAuthContext();
@@ -60,6 +74,9 @@ export default function OverviewAnalyticsView() {
 
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState('');
+
+  // ⭐ nuevo estado de período
+  const [period, setPeriod] = useState('last3m');
 
   const userCommerceId =
     auth?.user?.commerce?.id ??
@@ -77,14 +94,14 @@ export default function OverviewAnalyticsView() {
     }
 
     setError('');
-    fetchOverview('last30d', Number(userCommerceId))
+    fetchOverview(period, Number(userCommerceId))
       .then(setOverview)
       .catch((err) => {
         console.error('overview error', err);
         setOverview(null);
         setError(err?.message || 'No se pudieron cargar las métricas');
       });
-  }, [userCommerceId]);
+  }, [userCommerceId, period]); // 👈 vuelve a pedir cuando cambia el período
 
   const monthlyChart = useMemo(() => buildMonthlyChart(overview), [overview]);
 
@@ -103,13 +120,16 @@ export default function OverviewAnalyticsView() {
         </Grid>
       </Grid>
 
+      {/* Selector de período */}
+      <PeriodSelector value={period} onChange={setPeriod} />
+
       {!!error && <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>}
 
       <Grid container spacing={3}>
-        {/* KPIs nuevos */}
+        {/* KPIs (ya filtrados por back según período) */}
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Ingresos (histórico)"
+            title="Ingresos (período)"
             total={Number(overview?.totalRevenue ?? 0)}
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
           />
@@ -117,7 +137,7 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Pedidos realizados (histórico)"
+            title="Pedidos realizados (período)"
             total={Number(overview?.totalOrders ?? 0)}
             color="info"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
@@ -126,7 +146,7 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Pedidos devueltos (histórico)"
+            title="Pedidos devueltos (período)"
             total={Number(overview?.returnedOrders ?? 0)}
             color="warning"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}
@@ -135,32 +155,31 @@ export default function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Productos vencidos (histórico)"
+            title="Productos vencidos (período)"
             total={Number(overview?.expiredProducts ?? 0)}
             color="error"
             icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
           />
         </Grid>
 
-        {/* Gráfico combinado (si no hay datos, se mostrará vacío sin romper) */}
+        {/* Línea/Área (Pedidos + Ventas) */}
         <Grid xs={12} md={12}>
           <AnalyticsWebsiteVisits
             title="Ventas y pedidos por mes"
-            subheader="Últimos 12 meses"
+            subheader={subheaderFromPeriod(period)}
             chart={{
               labels: monthlyChart.labels,
-              series: monthlyChart.series, // [Pedidos(line), Ventas(area)]
+              series: monthlyChart.series,
             }}
           />
         </Grid>
 
-        {/* NUEVOS BLOQUES */}
-        {/* Barras: Top 3 productos por unidades */}
+        {/* Barras: Top 3 productos (período) */}
         <Grid xs={12} md={6} lg={6}>
           <AnalyticsTopProductsBar data={overview?.topProductsBar || []} />
         </Grid>
 
-        {/* Torta: productos vendidos vs vencidos */}
+        {/* Torta: productos vendidos vs vencidos (período) */}
         <Grid xs={12} md={6} lg={3}>
           <AnalyticsCurrentVisits
             title="Productos: vendidos vs vencidos"
@@ -173,7 +192,7 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-        {/* Torta: pedidos realizados vs reclamados */}
+        {/* Torta: pedidos realizados vs reclamados (período) */}
         <Grid xs={12} md={6} lg={3}>
           <AnalyticsCurrentVisits
             title="Pedidos: realizados vs reclamados"
@@ -186,7 +205,7 @@ export default function OverviewAnalyticsView() {
           />
         </Grid>
 
-
+        {/* Resto igual */}
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsNews title="News" list={_analyticPosts} />
         </Grid>
