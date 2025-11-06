@@ -27,7 +27,7 @@ import AnalyticsWidgetSummary from '../analytics-widget-summary';
 import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
 import AnalyticsCurrentSubject from '../analytics-current-subject';
 import AnalyticsConversionRates from '../analytics-conversion-rates';
-
+import ReportDownloadMenu from '../../report-download-menu';
 // Nuevo: selector de período
 import PeriodSelector from '../../period-selector';
 
@@ -85,6 +85,8 @@ export default function OverviewAnalyticsView() {
     auth?.commerce_id ??
     null;
 
+  const authToken = auth?.accessToken || auth?.token || localStorage.getItem('accessToken') || '';
+  
   useEffect(() => {
     if (userCommerceId == null) {
       console.warn('[Analytics] No se pudo obtener commerceId del usuario');
@@ -120,8 +122,16 @@ export default function OverviewAnalyticsView() {
         </Grid>
       </Grid>
 
-      {/* Selector de período */}
-      <PeriodSelector value={period} onChange={setPeriod} />
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '12px 0' }}>
+        <PeriodSelector value={period} onChange={setPeriod} />
+        {userCommerceId != null && (
+          <ReportDownloadMenu
+            period={period}
+            commerceId={Number(userCommerceId)}
+            token={authToken}
+          />
+        )}
+        </div>
 
       {!!error && <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>}
 
