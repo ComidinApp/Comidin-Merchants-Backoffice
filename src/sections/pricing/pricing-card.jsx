@@ -300,7 +300,7 @@ export default function PricingCard({ card, sx, ...other }) {
         }
 
         // ✅ snackbar de éxito al volver de MP
-        openSuccess(`¡Suscripción exitosa! ${planName(planIdLS)} activado.`);
+        openSuccess(`¡Suscripción exitosa! ${planName(planIdLS)} activada.`);
         console.log('Suscripción confirmada', json.subscription, 'mp_status:', json?.mp_status, 'mp_id:', json?.mp_id);
       } catch (e) {
         console.error('Confirmación falló:', e);
