@@ -1,3 +1,4 @@
+// src/config-global.js
 import { paths } from 'src/routes/paths';
 
 // API
@@ -5,8 +6,16 @@ import { paths } from 'src/routes/paths';
 
 export const HOST_API = import.meta.env.VITE_HOST_API;
 export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
-export const {VITE_S3_ASSETS_AVATAR} = import.meta.env;
+export const { VITE_S3_ASSETS_AVATAR } = import.meta.env;
 
+// (nuevo) si usás este parámetro en SSM para la API pública
+export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
+
+// ✅ BASE unificada para la API (prioriza VITE_API_COMIDIN, luego HOST_API)
+// Elimina barras finales para evitar // en las URLs
+export const API_BASE = (VITE_API_COMIDIN || HOST_API || '').replace(/\/+$/, '');
+
+// Otros servicios (sin cambios)
 export const FIREBASE_API = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
