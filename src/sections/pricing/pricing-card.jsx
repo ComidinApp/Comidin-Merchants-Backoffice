@@ -65,10 +65,10 @@ export default function PricingCard({ card, sx, ...other }) {
 
   const planName = (pid) => {
     const n = Number(pid);
-    if (n === 1) return 'Plan Gratis';
-    if (n === 2) return 'Plan Estándar';
-    if (n === 3) return 'Plan Premium';
-    return 'Plan';
+    if (n === 1) return 'Suscripción Gratis';
+    if (n === 2) return 'Suscripción Estándar';
+    if (n === 3) return 'Suscripción Premium';
+    return 'Suscripción';
   };
 
   // trae las subscripciones actuales del comercio
@@ -138,17 +138,17 @@ export default function PricingCard({ card, sx, ...other }) {
           }),
         });
         const json = await resp.json().catch(() => ({}));
-        if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a plan gratuito');
+        if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a suscripción gratuita');
 
         // actualizamos UI y notificamos global
         setSubscribedPlans(new Set([1])); // quedás explícitamente en plan 1
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
         // ✅ snackbar de éxito (reemplaza alert)
-        openSuccess('¡Listo! Cambiaste al Plan Gratis.');
+        openSuccess('¡Listo! Cambiaste a la Suscripción Gratuita.');
         return;
       } catch (err) {
-        console.error('Error al pasar a Free:', err);
+        console.error('Error al pasar a suscripción Gratuita:', err);
         alert(err.message || 'Ocurrió un error');
         return;
       } finally {
@@ -158,7 +158,7 @@ export default function PricingCard({ card, sx, ...other }) {
 
     // si ya tiene este plan, no dejamos repetir
     if (subscribedPlans.has(Number(planId))) {
-      alert('Ya tenés este plan.');
+      alert('Ya tenés esta suscripción.');
       return;
     }
 
@@ -315,9 +315,9 @@ export default function PricingCard({ card, sx, ...other }) {
 
   // label dinámico
   let buttonLabel = labelAction;
-  if (basic && !hasAnyPlan) buttonLabel = 'Plan Actual';
+  if (basic && !hasAnyPlan) buttonLabel = 'Suscripción Actual';
   else if (basic) buttonLabel = 'Elegir Gratis';
-  else if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés este plan';
+  else if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés esta suscripción';
   else if (loading) buttonLabel = 'Procesando...';
 
   // UI
