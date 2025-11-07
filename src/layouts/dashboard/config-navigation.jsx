@@ -171,7 +171,7 @@ export function useNavData() {
 
           // SUBCRIPCIONES
           {
-            title: t('subscripciones'),
+            title: t('suscripciones'),
             path: paths.dashboard.pricing,
             icon: ICONS.label,
             /* children: [
