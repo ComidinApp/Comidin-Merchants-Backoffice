@@ -5,7 +5,7 @@ import { Button, Menu, MenuItem } from '@mui/material';
 import { downloadFile } from 'src/utils/download';
 import { API_BASE } from 'src/config-global';
 
-export default function ReportDownloadMenu({ period, commerceId, token }) {
+export default function ReportDownloadMenu({ period, commerceId }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -15,15 +15,12 @@ export default function ReportDownloadMenu({ period, commerceId, token }) {
       await f();
     } catch (e) {
       console.error(e);
-      alert('No se pudo descargar.');
+      alert('No se pudo descargar el archivo.');
     }
   };
 
-  // 👉 Usa base absoluta de API (api.comidin.com.ar o la que definas en env)
   const base = `${API_BASE}/api/analytics/report`;
-  const q = `period=${encodeURIComponent(period)}&commerceId=${encodeURIComponent(
-    commerceId
-  )}&status=all`;
+  const q = `period=${encodeURIComponent(period)}&commerceId=${encodeURIComponent(commerceId)}&status=all`;
 
   return (
     <>
@@ -33,14 +30,14 @@ export default function ReportDownloadMenu({ period, commerceId, token }) {
       <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
         <MenuItem
           onClick={handle(() =>
-            downloadFile(`${base}/executive?${q}`, `informe-ejecutivo-${period}.pdf`, token)
+            downloadFile(`${base}/executive?${q}`, `informe-ejecutivo-${period}.pdf`)
           )}
         >
           PDF Ejecutivo
         </MenuItem>
         <MenuItem
           onClick={handle(() =>
-            downloadFile(`${base}/export?${q}`, `ordenes-${period}.xlsx`, token)
+            downloadFile(`${base}/export?${q}`, `ordenes-${period}.xlsx`)
           )}
         >
           Excel (Exportación completa)
@@ -53,5 +50,4 @@ export default function ReportDownloadMenu({ period, commerceId, token }) {
 ReportDownloadMenu.propTypes = {
   period: PropTypes.string.isRequired,
   commerceId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  token: PropTypes.string,
 };
