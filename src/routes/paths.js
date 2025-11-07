@@ -114,6 +114,7 @@ export const paths = {
     calendar: `${ROOTS.DASHBOARD}/calendar`,
     fileManager: `${ROOTS.DASHBOARD}/file-manager`,
     permission: `${ROOTS.DASHBOARD}/permission`,
+    reviews: `${ROOTS.DASHBOARD}/reviews`,
     general: {
       app: `${ROOTS.DASHBOARD}/app`,
       ecommerce: `${ROOTS.DASHBOARD}/ecommerce`,
@@ -123,7 +124,6 @@ export const paths = {
       file: `${ROOTS.DASHBOARD}/file`,
     },
     pricing: `${ROOTS.DASHBOARD}/pricing`,
-    reviews: `${ROOTS.DASHBOARD}/reviews`,
     user: {
       root: `${ROOTS.DASHBOARD}/user`,
       new: `${ROOTS.DASHBOARD}/user/new`,
