@@ -72,6 +72,8 @@ const KanbanPage = lazy(() => import('src/pages/dashboard/kanban'));
 const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission'));
 // BLANK PAGE
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
+// REVIEWS
+const ReviewsPage = lazy(() => import('src/pages/reviews'));
 
 // ----------------------------------------------------------------------
 
@@ -106,6 +108,7 @@ export const dashboardRoutes = [
           { path: 'account', element: <UserAccountPage /> },
         ],
       },
+      { path: 'reviews', element: <ReviewsPage /> },
       {
         path: 'product',
         children: [
