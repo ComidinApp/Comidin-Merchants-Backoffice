@@ -14,7 +14,7 @@ export default function PricingView() {
       </Typography>
 
       <Typography align="center" sx={{ color: 'text.secondary' }}>
-        Elegí tu plan y maximizá el alcance de tu negocio!
+        Elegí tu suscripción y maximizá el alcance de tu negocio!
       </Typography>
 
       <Box
