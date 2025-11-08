@@ -9,7 +9,7 @@ export default function PricingView() {
   return (
     <Container sx={{ pt: 15, pb: 10, minHeight: 1 }}>
       <Typography variant="h3" align="center" sx={{ mb: 2 }}>
-        Planes flexibles para el
+        Suscripciones flexibles para el
         <br /> tamaño y necesidades de tu comercio
       </Typography>
 
