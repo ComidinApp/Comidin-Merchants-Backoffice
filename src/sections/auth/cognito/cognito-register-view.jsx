@@ -5,7 +5,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
@@ -17,23 +16,29 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import FormHelperText from '@mui/material/FormHelperText';
+import Box from '@mui/material/Box';
 
 import { createCommerce } from 'src/api/commerce';
-import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-import { RouterLink } from 'src/routes/components';
 import { useAuthContext } from 'src/auth/hooks';
 import { Upload } from 'src/components/upload';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 import { useBoolean } from 'src/hooks/use-boolean';
-
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// ===== Helpers de validación/transformación =====
-const CUIT_REGEX = /^\d{2}-?\d{8}-?\d$/; // NN-NNNNNNNN-N, admite sin guiones
+// ===== Helpers =====
+const ONLY_DIGITS = /^\d+$/;
+const CUIT_DIGITS = /^\d{11}$/;          // 11 dígitos
+const DNI_DIGITS = /^\d{7,9}$/;          // 7 a 9 dígitos
+const PHONE_DIGITS = /^\d{7,15}$/;       // 7 a 15 dígitos
+const POSTAL_DIGITS = /^\d{3,10}$/;      // 3 a 10 dígitos
+const STREET_NUMBER_DIGITS = /^\d{1,10}$/;
+const DATA_URL_IMG = /^data:image\/(png|jpeg|jpg|webp);base64,/i;
+
 const MAX120 = 120;
 const MAX20 = 20;
 
@@ -62,25 +67,39 @@ function toHHmm(dateObj) {
 
 export default function CognitoRegisterView() {
   const { register } = useAuthContext();
+  const router = useRouter();
+  const password = useBoolean();
+  const assets_url = VITE_S3_ASSETS_AVATAR;
 
   const [openAt, setOpenAt] = useState(null);
   const [closeAt, setCloseAt] = useState(null);
-
   const [errorMsg, setErrorMsg] = useState('');
   const [step, setStep] = useState(0);
+  const [file, setFile] = useState(null);
+  const [commerce_categories, setCommerceCategories] = useState([]);
 
-  const router = useRouter();
-  const password = useBoolean();
-
-  const assets_url = VITE_S3_ASSETS_AVATAR;
-
-  // ===== Yup Schema alineado con el backend (imagen se deja como está: requerida y base64) =====
+  // ===== Yup Schema robusto =====
   const RegisterSchema = Yup.object()
     .shape({
-      name: Yup.string().trim().max(MAX120, `Máximo ${MAX120} caracteres`).required('El nombre del comercio es requerido'),
-      street_name: Yup.string().trim().max(MAX120, `Máximo ${MAX120} caracteres`).required('La dirección es requerida'),
-      number: Yup.string().trim().max(MAX20, `Máximo ${MAX20} caracteres`).required('La altura es requerida'),
-      postal_code: Yup.string().trim().max(MAX20, `Máximo ${MAX20} caracteres`).required('El código postal es requerido'),
+      name: Yup.string()
+        .trim()
+        .max(MAX120, `Máximo ${MAX120} caracteres`)
+        .required('El nombre del comercio es requerido'),
+
+      street_name: Yup.string()
+        .trim()
+        .max(MAX120, `Máximo ${MAX120} caracteres`)
+        .required('La dirección es requerida'),
+
+      number: Yup.string()
+        .trim()
+        .matches(STREET_NUMBER_DIGITS, 'Solo números (1 a 10 dígitos)')
+        .required('La altura es requerida'),
+
+      postal_code: Yup.string()
+        .trim()
+        .matches(POSTAL_DIGITS, 'Solo números (3 a 10 dígitos)')
+        .required('El código postal es requerido'),
 
       commerce_category_id: Yup.number()
         .typeError('La categoría debe ser un número')
@@ -90,7 +109,7 @@ export default function CognitoRegisterView() {
 
       commerce_national_id: Yup.string()
         .trim()
-        .matches(CUIT_REGEX, 'Formato de CUIT inválido (NN-NNNNNNNN-N)')
+        .matches(CUIT_DIGITS, 'CUIT inválido: deben ser 11 dígitos (solo números)')
         .required('El CUIT/CUIL es requerido'),
 
       open_at: Yup.date().typeError('Hora inválida').required('La hora de apertura es requerida'),
@@ -98,19 +117,29 @@ export default function CognitoRegisterView() {
 
       available_days: Yup.array()
         .of(Yup.string().oneOf(['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']))
-        .min(1, 'Debe seleccionar al menos un día de disponibilidad')
-        .required('Debe seleccionar los días disponibles'),
+        .min(1, 'Debes seleccionar al menos un día')
+        .required('Debes seleccionar los días disponibles'),
 
-      // Campos del responsable (se mantienen como estaban, con pequeñas mejoras)
-      first_name: Yup.string().trim().required('El nombre del encargado es requerido'),
-      last_name: Yup.string().trim().required('El apellido del encargado es requerido'),
+      first_name: Yup.string().trim().required('El nombre del responsable es requerido'),
+      last_name: Yup.string().trim().required('El apellido del responsable es requerido'),
+      national_id: Yup.string()
+        .trim()
+        .matches(DNI_DIGITS, 'DNI inválido: solo números (7 a 9 dígitos)')
+        .required('El DNI es requerido'),
+
       email: Yup.string().trim().email('Debe ser un email válido').required('El email es requerido'),
-      phone_number: Yup.string().trim().required('El teléfono es requerido'),
-      national_id: Yup.string().trim().required('El DNI es requerido'),
+
+      phone_number: Yup.string()
+        .trim()
+        .matches(PHONE_DIGITS, 'Teléfono inválido: solo números (7 a 15 dígitos)')
+        .required('El teléfono es requerido'),
+
       password: Yup.string().required('La contraseña es requerida').min(6, 'Mínimo 6 caracteres'),
 
-      // Imagen: se deja como hoy: requerida y cargada en image_url (data URL base64)
-      image_url: Yup.string().required('La imagen es requerida'),
+      // Imagen: se mantiene como hoy (base64 en image_url), ahora validada como data URL
+      image_url: Yup.string()
+        .matches(DATA_URL_IMG, 'Debes subir una imagen (PNG, JPG o WEBP)')
+        .required('La imagen es requerida'),
     })
     .test('horario-logico', 'La hora de cierre debe ser mayor a la de apertura', (values) => {
       const { open_at, close_at } = values || {};
@@ -140,23 +169,22 @@ export default function CognitoRegisterView() {
   const methods = useForm({
     resolver: yupResolver(RegisterSchema),
     defaultValues,
-    mode: 'all',
+    mode: 'all', // valida onChange, onBlur y onSubmit
   });
 
   const {
     reset,
     handleSubmit,
     trigger,
-    formState: { isSubmitting },
+    watch,
+    setValue,
+    formState: { isSubmitting, errors },
   } = methods;
 
-  const [file, setFile] = useState(null);
-
-  // ===== Upload: deja image_url como base64, tal como lo tenías =====
+  // ===== Subida de imagen en base64 (igual que antes) =====
   const handleDropSingleFile = useCallback(
     (acceptedFiles) => {
       const newFile = acceptedFiles[0];
-
       if (newFile) {
         const preview = URL.createObjectURL(newFile);
         const reader = new FileReader();
@@ -169,34 +197,25 @@ export default function CognitoRegisterView() {
             base64: base64String,
           });
 
-          methods.setValue('image_url', base64String);
-          methods.setValue('image_name', newFile.name);
+          setValue('image_url', base64String, { shouldValidate: true, shouldDirty: true });
+          setValue('image_name', newFile.name);
         };
-
         reader.readAsDataURL(newFile);
       }
     },
-    [methods]
+    [setValue]
   );
 
+  // ===== Submit =====
   const onSubmit = handleSubmit(async (data) => {
     try {
-      // 1) Días (español) -> CSV "0..6" para el backend
       data.available_days = mapDaysToCsv(data.available_days);
-
-      // 2) is_active (el back default a true, pero lo dejamos explícito si lo querés)
       data.is_active = true;
-
-      // 3) Horas Date -> "HH:mm"
       data.open_at = toHHmm(data.open_at);
       data.close_at = toHHmm(data.close_at);
 
-      // 4) Imagen: se deja como base64 en image_url (tal como pediste)
-      //    (sin cambios)
-
       const commerce = await createCommerce(data);
 
-      // Registro del responsable (como lo tenías)
       data.role_id = 6;
       data.commerce_id = commerce.id;
       data.avatar_url = `${assets_url}coffe.png`;
@@ -208,6 +227,7 @@ export default function CognitoRegisterView() {
     }
   });
 
+  // ===== Paso a paso con validación =====
   const handleNextStep = async () => {
     let isStepValid = false;
     if (step === 0) {
@@ -231,16 +251,18 @@ export default function CognitoRegisterView() {
         'password',
         'national_id',
       ]);
+    } else if (step === 2) {
+      isStepValid = await trigger(['image_url']);
     } else {
       isStepValid = true;
     }
 
-    if (isStepValid) {
-      setStep((prev) => prev + 1);
-    }
+    if (isStepValid) setStep((prev) => prev + 1);
   };
 
-  const [commerce_categories, setCommerceCategories] = useState([]);
+  const handlePrevStep = () => setStep((prev) => prev - 1);
+
+  // ===== Categorías =====
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
@@ -248,32 +270,36 @@ export default function CognitoRegisterView() {
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error fetching categories:', error);
       }
     };
     fetchCommerceCategories();
   }, []);
 
-  const handlePrevStep = () => setStep((prev) => prev - 1);
-
   const daysOfWeek = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
+  // ===== Render por pasos con helper texts claros =====
   const renderFormStep = () => {
     switch (step) {
       case 0:
         return (
           <Stack spacing={2.5}>
             <RHFTextField name="name" label="Nombre del Comercio" />
-            <RHFTextField name="commerce_national_id" label="CUIT/CUIL" />
+
+            <RHFTextField
+              name="commerce_national_id"
+              label="CUIT (solo números, 11 dígitos)"
+              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 11 }}
+              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11))}
+            />
+
             <RHFTextField
               select
               name="commerce_category_id"
               label="Categoría del Comercio"
-              SelectProps={{
-                native: true,
-              }}
+              SelectProps={{ native: true }}
               fullWidth
-              onChange={(e) => methods.setValue('commerce_category_id', Number(e.target.value || 0))}
+              onChange={(e) => setValue('commerce_category_id', Number(e.target.value || 0), { shouldValidate: true })}
             >
               <option value=""> </option>
               {commerce_categories.map((category) => (
@@ -282,43 +308,75 @@ export default function CognitoRegisterView() {
                 </option>
               ))}
             </RHFTextField>
+            {errors.commerce_category_id && (
+              <FormHelperText error>{errors.commerce_category_id.message}</FormHelperText>
+            )}
+
             <RHFTextField name="street_name" label="Dirección" />
+
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="number" label="Altura" />
-              <RHFTextField name="postal_code" label="Código Postal" />
+              <Box sx={{ flex: 1 }}>
+                <RHFTextField
+                  name="number"
+                  label="Altura (solo números)"
+                  inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                  onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10))}
+                />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <RHFTextField
+                  name="postal_code"
+                  label="Código Postal (solo números)"
+                  inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
+                  onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10))}
+                />
+              </Box>
             </Stack>
+
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TimePicker
-                name="open_at"
-                label="Horario de Apertura"
-                value={openAt}
-                onChange={(newValue) => {
-                  setOpenAt(newValue);
-                  methods.setValue('open_at', newValue);
-                }}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    margin: 'normal',
-                  },
-                }}
-              />
-              <TimePicker
-                name="close_at"
-                label="Horario de Cierre"
-                value={closeAt}
-                onChange={(newValue) => {
-                  setCloseAt(newValue);
-                  methods.setValue('close_at', newValue);
-                }}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    margin: 'normal',
-                  },
-                }}
-              />
+              <Box sx={{ flex: 1 }}>
+                <TimePicker
+                  name="open_at"
+                  label="Horario de Apertura"
+                  value={openAt}
+                  onChange={(newValue) => {
+                    setOpenAt(newValue);
+                    setValue('open_at', newValue, { shouldValidate: true });
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      margin: 'normal',
+                      error: !!errors.open_at,
+                      helperText: errors.open_at?.message,
+                    },
+                  }}
+                />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <TimePicker
+                  name="close_at"
+                  label="Horario de Cierre"
+                  value={closeAt}
+                  onChange={(newValue) => {
+                    setCloseAt(newValue);
+                    setValue('close_at', newValue, { shouldValidate: true });
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      margin: 'normal',
+                      error: !!errors.close_at,
+                      helperText: errors.close_at?.message,
+                    },
+                  }}
+                />
+              </Box>
             </Stack>
+            {/* Error lógico de horarios (del test de Yup) */}
+            {errors?.root?.horario && <FormHelperText error>{errors.root.horario.message}</FormHelperText>}
+            {errors?.[''] && <FormHelperText error>{errors[''].message}</FormHelperText>}
+
             <Typography variant="subtitle2">Días disponibles</Typography>
             <Grid container spacing={2}>
               {daysOfWeek.map((day) => (
@@ -328,12 +386,13 @@ export default function CognitoRegisterView() {
                       <Checkbox
                         name="available_days"
                         value={day}
-                        checked={methods.watch('available_days').includes(day)}
+                        checked={watch('available_days').includes(day)}
                         onChange={(event) => {
+                          const prev = watch('available_days');
                           const newValue = event.target.checked
-                            ? [...methods.watch('available_days'), day]
-                            : methods.watch('available_days').filter((d) => d !== day);
-                          methods.setValue('available_days', newValue);
+                            ? [...prev, day]
+                            : prev.filter((d) => d !== day);
+                          setValue('available_days', newValue, { shouldValidate: true });
                         }}
                       />
                     }
@@ -342,8 +401,12 @@ export default function CognitoRegisterView() {
                 </Grid>
               ))}
             </Grid>
+            {errors.available_days && (
+              <FormHelperText error>{errors.available_days.message}</FormHelperText>
+            )}
           </Stack>
         );
+
       case 1:
         return (
           <Stack spacing={2.5}>
@@ -351,9 +414,23 @@ export default function CognitoRegisterView() {
               <RHFTextField name="first_name" label="Nombre del Responsable" />
               <RHFTextField name="last_name" label="Apellido del Responsable" />
             </Stack>
-            <RHFTextField name="national_id" label="DNI del Responsable" />
+
+            <RHFTextField
+              name="national_id"
+              label="DNI (solo números)"
+              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 9 }}
+              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9))}
+            />
+
             <RHFTextField name="email" label="Email del Responsable" />
-            <RHFTextField name="phone_number" label="Teléfono del Responsable" />
+
+            <RHFTextField
+              name="phone_number"
+              label="Teléfono (solo números)"
+              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 15 }}
+              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 15))}
+            />
+
             <RHFTextField
               name="password"
               label="Contraseña"
@@ -367,18 +444,26 @@ export default function CognitoRegisterView() {
                   </InputAdornment>
                 ),
               }}
+              helperText="Mínimo 6 caracteres"
             />
           </Stack>
         );
+
       case 2:
         return (
           <Card>
-            <CardHeader title="Suelta aquí el logo de tu comercio" />
+            <CardHeader title="Subí el logo de tu comercio" />
             <CardContent>
               <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
+              {errors.image_url && (
+                <FormHelperText error sx={{ mt: 1 }}>
+                  {errors.image_url.message}
+                </FormHelperText>
+              )}
             </CardContent>
           </Card>
         );
+
       default:
         return null;
     }
