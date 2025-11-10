@@ -76,6 +76,7 @@ export default function CognitoRegisterView() {
   const [step, setStep] = useState(0);
   const [file, setFile] = useState(null);
   const [commerce_categories, setCommerceCategories] = useState([]);
+  const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
   // ===== Yup Schema robusto =====
   const RegisterSchema = Yup.object()
@@ -133,7 +134,13 @@ export default function CognitoRegisterView() {
         .matches(PHONE_DIGITS, 'Teléfono inválido: solo números (7 a 15 dígitos)')
         .required('El teléfono es requerido'),
 
-      password: Yup.string().required('La contraseña es requerida').min(6, 'Mínimo 6 caracteres'),
+      
+      // al menos 8, 1 minúscula, 1 mayúscula, 1 dígito y 1 símbolo
+
+      password: Yup.string()
+        .required('La contraseña es requerida')
+        .matches(PASSWORD_POLICY, 'Debe tener 8+ caracteres, mayúscula, minúscula, número y símbolo'),
+
 
       // Imagen: base64 en image_url (validada como data URL)
       image_url: Yup.string()
@@ -443,6 +450,7 @@ export default function CognitoRegisterView() {
             <RHFTextField
               name="password"
               label="Contraseña"
+              helperText="Mín. 8, con mayúscula, minúscula, número y símbolo"
               type={password.value ? 'text' : 'password'}
               InputProps={{
                 endAdornment: (
@@ -453,7 +461,7 @@ export default function CognitoRegisterView() {
                   </InputAdornment>
                 ),
               }}
-              helperText="Mínimo 6 caracteres"
+      
             />
           </Stack>
         );
