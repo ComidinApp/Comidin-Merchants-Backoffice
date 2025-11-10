@@ -31,7 +31,6 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 const { VITE_API_COMIDIN } = import.meta.env;
 
 // ===== Helpers =====
-const ONLY_DIGITS = /^\d+$/;
 const CUIT_DIGITS = /^\d{11}$/;          // 11 dígitos
 const DNI_DIGITS = /^\d{7,9}$/;          // 7 a 9 dígitos
 const PHONE_DIGITS = /^\d{7,15}$/;       // 7 a 15 dígitos
@@ -136,7 +135,7 @@ export default function CognitoRegisterView() {
 
       password: Yup.string().required('La contraseña es requerida').min(6, 'Mínimo 6 caracteres'),
 
-      // Imagen: se mantiene como hoy (base64 en image_url), ahora validada como data URL
+      // Imagen: base64 en image_url (validada como data URL)
       image_url: Yup.string()
         .matches(DATA_URL_IMG, 'Debes subir una imagen (PNG, JPG o WEBP)')
         .required('La imagen es requerida'),
@@ -169,7 +168,7 @@ export default function CognitoRegisterView() {
   const methods = useForm({
     resolver: yupResolver(RegisterSchema),
     defaultValues,
-    mode: 'all', // valida onChange, onBlur y onSubmit
+    mode: 'all',
   });
 
   const {
@@ -181,7 +180,7 @@ export default function CognitoRegisterView() {
     formState: { isSubmitting, errors },
   } = methods;
 
-  // ===== Subida de imagen en base64 (igual que antes) =====
+  // ===== Subida de imagen en base64 =====
   const handleDropSingleFile = useCallback(
     (acceptedFiles) => {
       const newFile = acceptedFiles[0];
@@ -218,7 +217,7 @@ export default function CognitoRegisterView() {
 
       data.role_id = 6;
       data.commerce_id = commerce.id;
-      data.avatar_url = `${assets_url}coffe.png`;
+      data.avatar_url = `${VITE_S3_ASSETS_AVATAR}coffe.png`;
       await register?.(data);
     } catch (error) {
       console.error('Error', error);
@@ -278,7 +277,7 @@ export default function CognitoRegisterView() {
 
   const daysOfWeek = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
-  // ===== Render por pasos con helper texts claros =====
+  // ===== Render =====
   const renderFormStep = () => {
     switch (step) {
       case 0:
@@ -290,7 +289,9 @@ export default function CognitoRegisterView() {
               name="commerce_national_id"
               label="CUIT (solo números, 11 dígitos)"
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 11 }}
-              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11))}
+              onInput={(e) => {
+                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 11);
+              }}
             />
 
             <RHFTextField
@@ -299,7 +300,10 @@ export default function CognitoRegisterView() {
               label="Categoría del Comercio"
               SelectProps={{ native: true }}
               fullWidth
-              onChange={(e) => setValue('commerce_category_id', Number(e.target.value || 0), { shouldValidate: true })}
+              onChange={(e) => {
+                const v = Number(e.target.value || 0);
+                setValue('commerce_category_id', v, { shouldValidate: true });
+              }}
             >
               <option value=""> </option>
               {commerce_categories.map((category) => (
@@ -320,7 +324,9 @@ export default function CognitoRegisterView() {
                   name="number"
                   label="Altura (solo números)"
                   inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
-                  onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
@@ -328,7 +334,9 @@ export default function CognitoRegisterView() {
                   name="postal_code"
                   label="Código Postal (solo números)"
                   inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 10 }}
-                  onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  }}
                 />
               </Box>
             </Stack>
@@ -373,9 +381,6 @@ export default function CognitoRegisterView() {
                 />
               </Box>
             </Stack>
-            {/* Error lógico de horarios (del test de Yup) */}
-            {errors?.root?.horario && <FormHelperText error>{errors.root.horario.message}</FormHelperText>}
-            {errors?.[''] && <FormHelperText error>{errors[''].message}</FormHelperText>}
 
             <Typography variant="subtitle2">Días disponibles</Typography>
             <Grid container spacing={2}>
@@ -419,7 +424,9 @@ export default function CognitoRegisterView() {
               name="national_id"
               label="DNI (solo números)"
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 9 }}
-              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9))}
+              onInput={(e) => {
+                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 9);
+              }}
             />
 
             <RHFTextField name="email" label="Email del Responsable" />
@@ -428,7 +435,9 @@ export default function CognitoRegisterView() {
               name="phone_number"
               label="Teléfono (solo números)"
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 15 }}
-              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, '').slice(0, 15))}
+              onInput={(e) => {
+                e.target.value = e.target.value.replace(/\D/g, '').slice(0, 15);
+              }}
             />
 
             <RHFTextField
