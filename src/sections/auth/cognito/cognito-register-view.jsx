@@ -17,6 +17,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+
 import { createCommerce } from 'src/api/commerce';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -28,16 +29,39 @@ import { useBoolean } from 'src/hooks/use-boolean';
 
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
-import { gridColumnGroupsLookupSelector } from '@mui/x-data-grid';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
+// ===== Helpers de validación/transformación =====
+const CUIT_REGEX = /^\d{2}-?\d{8}-?\d$/; // NN-NNNNNNNN-N, admite sin guiones
+const MAX120 = 120;
+const MAX20 = 20;
+
+const DAY_TO_INDEX = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miércoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sábado: 6,
+};
+
+function mapDaysToCsv(daysEsArray) {
+  return daysEsArray
+    .map((d) => DAY_TO_INDEX[d])
+    .filter((n) => n !== undefined)
+    .join(',');
+}
+
+function toHHmm(dateObj) {
+  const hh = String(dateObj.getHours()).padStart(2, '0');
+  const mm = String(dateObj.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
 export default function CognitoRegisterView() {
   const { register } = useAuthContext();
-
-  const [value, setValue] = useState(new Date());
-
-  const assets_url = VITE_S3_ASSETS_AVATAR;
 
   const [openAt, setOpenAt] = useState(null);
   const [closeAt, setCloseAt] = useState(null);
@@ -48,37 +72,51 @@ export default function CognitoRegisterView() {
   const router = useRouter();
   const password = useBoolean();
 
-  const RegisterSchema = Yup.object().shape({
-    name: Yup.string().required('El nombre del comercio es requerido'),
-    street_name: Yup.string().required('La dirección es requerida'),
-    open_at: Yup.date().required('La hora de apertura es requerida'),
-    close_at: Yup.date().required('La hora de cierre es requerida'),
-    number: Yup.string().required('El número de la calle es requerido'),
-    postal_code: Yup.string().required('El código postal es requerido'),
-    national_id: Yup.string().required('El DNI es requerido'),
-    commerce_national_id: Yup.string().required('El CUIT/CUIL es requerido'),
-    first_name: Yup.string().required('El nombre del encargado es requerido'),
-    last_name: Yup.string().required('El apellido del encargado es requerido'),
-    email: Yup.string().required('El email es requerido').email('Debe ser un email válido'),
-    phone_number: Yup.string().required('El teléfono es requerido'),
-    password: Yup.string().required('La contraseña es requerida'),
-    commerce_category_id: Yup.string().required('La categoría de comercio es requerida'),
-    image_url: Yup.string().required('La imagen es requerida'),
-    available_days: Yup.array()
-      .of(
-        Yup.string().oneOf([
-          'lunes',
-          'martes',
-          'miércoles',
-          'jueves',
-          'viernes',
-          'sábado',
-          'domingo',
-        ])
-      )
-      .min(1, 'Debe seleccionar al menos un día de disponibilidad')
-      .required('Debe seleccionar los días disponibles'),
-  });
+  const assets_url = VITE_S3_ASSETS_AVATAR;
+
+  // ===== Yup Schema alineado con el backend (imagen se deja como está: requerida y base64) =====
+  const RegisterSchema = Yup.object()
+    .shape({
+      name: Yup.string().trim().max(MAX120, `Máximo ${MAX120} caracteres`).required('El nombre del comercio es requerido'),
+      street_name: Yup.string().trim().max(MAX120, `Máximo ${MAX120} caracteres`).required('La dirección es requerida'),
+      number: Yup.string().trim().max(MAX20, `Máximo ${MAX20} caracteres`).required('La altura es requerida'),
+      postal_code: Yup.string().trim().max(MAX20, `Máximo ${MAX20} caracteres`).required('El código postal es requerido'),
+
+      commerce_category_id: Yup.number()
+        .typeError('La categoría debe ser un número')
+        .integer('La categoría debe ser un entero')
+        .positive('La categoría debe ser positiva')
+        .required('La categoría de comercio es requerida'),
+
+      commerce_national_id: Yup.string()
+        .trim()
+        .matches(CUIT_REGEX, 'Formato de CUIT inválido (NN-NNNNNNNN-N)')
+        .required('El CUIT/CUIL es requerido'),
+
+      open_at: Yup.date().typeError('Hora inválida').required('La hora de apertura es requerida'),
+      close_at: Yup.date().typeError('Hora inválida').required('La hora de cierre es requerida'),
+
+      available_days: Yup.array()
+        .of(Yup.string().oneOf(['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']))
+        .min(1, 'Debe seleccionar al menos un día de disponibilidad')
+        .required('Debe seleccionar los días disponibles'),
+
+      // Campos del responsable (se mantienen como estaban, con pequeñas mejoras)
+      first_name: Yup.string().trim().required('El nombre del encargado es requerido'),
+      last_name: Yup.string().trim().required('El apellido del encargado es requerido'),
+      email: Yup.string().trim().email('Debe ser un email válido').required('El email es requerido'),
+      phone_number: Yup.string().trim().required('El teléfono es requerido'),
+      national_id: Yup.string().trim().required('El DNI es requerido'),
+      password: Yup.string().required('La contraseña es requerida').min(6, 'Mínimo 6 caracteres'),
+
+      // Imagen: se deja como hoy: requerida y cargada en image_url (data URL base64)
+      image_url: Yup.string().required('La imagen es requerida'),
+    })
+    .test('horario-logico', 'La hora de cierre debe ser mayor a la de apertura', (values) => {
+      const { open_at, close_at } = values || {};
+      if (!(open_at instanceof Date) || !(close_at instanceof Date)) return true;
+      return close_at.getTime() > open_at.getTime();
+    });
 
   const defaultValues = {
     name: '',
@@ -114,13 +152,13 @@ export default function CognitoRegisterView() {
 
   const [file, setFile] = useState(null);
 
+  // ===== Upload: deja image_url como base64, tal como lo tenías =====
   const handleDropSingleFile = useCallback(
     (acceptedFiles) => {
       const newFile = acceptedFiles[0];
 
       if (newFile) {
         const preview = URL.createObjectURL(newFile);
-
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64String = reader.result;
@@ -141,46 +179,24 @@ export default function CognitoRegisterView() {
     [methods]
   );
 
-  function convertTime(hora12) {
-    const partes = hora12.split(' ');
-    const hora = parseInt(partes[0], 10); // Especificamos el radix 10
-    const periodo = partes[1].toUpperCase();
-
-    let hora24 = hora;
-    if (periodo === 'PM' && hora !== 12) {
-      hora24 += 12;
-    } else if (periodo === 'AM' && hora === 12) {
-      hora24 = 0;
-    }
-
-    const minutos = partes[0].split(':')[1];
-
-    return `${hora24.toString().padStart(2, '0')}:${minutos}`;
-  }
-
   const onSubmit = handleSubmit(async (data) => {
     try {
-      data.available_days = data.available_days.join(',');
+      // 1) Días (español) -> CSV "0..6" para el backend
+      data.available_days = mapDaysToCsv(data.available_days);
+
+      // 2) is_active (el back default a true, pero lo dejamos explícito si lo querés)
       data.is_active = true;
 
-      const formattedOpenAt = convertTime(
-        data.open_at.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      );
-      const formattedCloseAt = convertTime(
-        data.close_at.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      );
+      // 3) Horas Date -> "HH:mm"
+      data.open_at = toHHmm(data.open_at);
+      data.close_at = toHHmm(data.close_at);
 
-      data.open_at = formattedOpenAt;
-      data.close_at = formattedCloseAt;
-      console.log(data);
+      // 4) Imagen: se deja como base64 en image_url (tal como pediste)
+      //    (sin cambios)
 
       const commerce = await createCommerce(data);
+
+      // Registro del responsable (como lo tenías)
       data.role_id = 6;
       data.commerce_id = commerce.id;
       data.avatar_url = `${assets_url}coffe.png`;
@@ -257,6 +273,7 @@ export default function CognitoRegisterView() {
                 native: true,
               }}
               fullWidth
+              onChange={(e) => methods.setValue('commerce_category_id', Number(e.target.value || 0))}
             >
               <option value=""> </option>
               {commerce_categories.map((category) => (
@@ -356,7 +373,7 @@ export default function CognitoRegisterView() {
       case 2:
         return (
           <Card>
-            <CardHeader title="Suelta aqui el logo de tu comercio" />
+            <CardHeader title="Suelta aquí el logo de tu comercio" />
             <CardContent>
               <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
             </CardContent>
