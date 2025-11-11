@@ -30,11 +30,11 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// === Endpoint para chequear email existente ===
+// Endpoint check email
 const EMAIL_EXISTS_ENDPOINT = (email) =>
   `${VITE_API_COMIDIN}/employee/exists?email=${encodeURIComponent(email)}`;
 
-// Política de contraseña (Cognito)
+// Política Cognito: 8+ con mayúscula, minúscula, número y símbolo
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export default function CognitoRegisterView() {
@@ -60,7 +60,7 @@ export default function CognitoRegisterView() {
     'domingo',
   ];
 
-  // ==== Validación Yup (sin remota) ====
+  // ====== Validación Yup ======
   const RegisterSchema = Yup.object().shape({
     name: Yup.string().required('El nombre del comercio es requerido'),
     street_name: Yup.string().required('La dirección es requerida'),
@@ -68,7 +68,7 @@ export default function CognitoRegisterView() {
     close_at: Yup.date().required('La hora de cierre es requerida'),
     number: Yup.string()
       .required('El número de la calle es requerido')
-      // ✅ quitamos el escape innecesario de "/"
+      // no escapar "/" dentro de clase de caracteres
       .matches(/^\d+[A-Za-z0-9-/]*$/, 'Solo números y/o sufijos válidos'),
     postal_code: Yup.string()
       .required('El código postal es requerido')
@@ -145,21 +145,20 @@ export default function CognitoRegisterView() {
     formState: { isSubmitting },
   } = methods;
 
-  // ======== Imagen (deja como estaba) ========
+  // ======== Imagen (dejar como estaba) ========
   const handleDropSingleFile = useCallback((acceptedFiles) => {
-    const newFile = acceptedFiles[0];
-    if (!newFile) return;
-
-    const preview = URL.createObjectURL(newFile);
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result;
-      setFile({ ...newFile, preview, base64: base64String });
-      setValue('image_url', base64String);
-      setValue('image_name', newFile.name);
-    };
-    reader.readAsDataURL(newFile);
+    const newFile = acceptedFiles?.[0];
+    if (newFile) {
+      const preview = URL.createObjectURL(newFile);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setFile({ ...newFile, preview, base64: base64String });
+        setValue('image_url', base64String);
+        setValue('image_name', newFile.name);
+      };
+      reader.readAsDataURL(newFile);
+    }
   }, [setValue]);
 
   // ======== Conversor de hora 12h a 24h ========
@@ -167,9 +166,11 @@ export default function CognitoRegisterView() {
     const partes = hora12.split(' ');
     const hora = parseInt(partes[0], 10);
     const periodo = (partes[1] || '').toUpperCase();
+
     let hora24 = hora;
     if (periodo === 'PM' && hora !== 12) hora24 += 12;
     if (periodo === 'AM' && hora === 12) hora24 = 0;
+
     const minutos = partes[0].split(':')[1] || '00';
     return `${hora24.toString().padStart(2, '0')}:${minutos}`;
   }
@@ -179,11 +180,12 @@ export default function CognitoRegisterView() {
   const [emailStatus, setEmailStatus] = useState('idle'); // idle | checking | available | exists | invalid
   const debounceRef = useRef(null);
 
-  // helpers para evitar ternarios anidados en JSX
+  // helpers sin ternarios anidados
   const emailHelperText = () => {
     if (emailStatus === 'exists') return 'Este email ya está en uso. Ingresá otro.';
     if (emailStatus === 'available') return 'Email disponible';
     if (emailStatus === 'checking') return 'Verificando...';
+    if (emailStatus === 'invalid') return 'Debe ser un email válido';
     return ' ';
   };
 
@@ -192,64 +194,69 @@ export default function CognitoRegisterView() {
     if (emailStatus === 'available') return <Iconify icon="solar:check-circle-bold" width={20} />;
     if (emailStatus === 'exists') return <Iconify icon="solar:danger-bold" width={20} />;
     return null;
-  };
+    };
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const isValid = !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!isValid) {
       setEmailStatus(email ? 'invalid' : 'idle');
       if (email) {
         setError('email', { type: 'manual', message: 'Debe ser un email válido' });
       }
-      return; // <-- no devolvemos ningún valor (solo cortamos la ejecución)
+    } else {
+      setEmailStatus('checking');
+      clearErrors('email');
+
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const res = await fetch(EMAIL_EXISTS_ENDPOINT(email), { method: 'GET' });
+          if (!res.ok) {
+            setEmailStatus('available');
+            clearErrors('email');
+          } else {
+            const data = await res.json();
+            if (data?.exists) {
+              setEmailStatus('exists');
+              setError('email', {
+                type: 'manual',
+                message: 'Este email ya está en uso. Por favor ingresá otro.',
+              });
+            } else {
+              setEmailStatus('available');
+              clearErrors('email');
+            }
+          }
+        } catch (_e) {
+          setEmailStatus('available');
+          clearErrors('email');
+        }
+      }, 600);
     }
 
-    setEmailStatus('checking');
-    clearErrors('email');
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(EMAIL_EXISTS_ENDPOINT(email), { method: 'GET' });
-        if (!res.ok) {
-          setEmailStatus('available');
-          clearErrors('email');
-          return;
-        }
-        const data = await res.json();
-        if (data?.exists) {
-          setEmailStatus('exists');
-          setError('email', {
-            type: 'manual',
-            message: 'Este email ya está en uso. Por favor ingresá otro.',
-          });
-        } else {
-          setEmailStatus('available');
-          clearErrors('email');
-        }
-      } catch (_e) {
-        setEmailStatus('available');
-        clearErrors('email');
-      }
-    }, 600);
-
+    // cleanup del debounce
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [email, clearErrors, setError]);
 
-  const isEmailBusy = emailStatus === 'checking' || emailStatus === 'exists';
+  const isEmailBusy = emailStatus === 'checking' || emailStatus === 'exists' || emailStatus === 'invalid';
 
   // ======== Submit ========
   const onSubmit = handleSubmit(async (data) => {
     try {
-      if (emailStatus === 'exists') {
+      if (emailStatus === 'exists' || emailStatus === 'invalid') {
         setError('email', {
           type: 'manual',
-          message: 'Este email ya está en uso. Por favor ingresá otro.',
+          message: emailStatus === 'exists'
+            ? 'Este email ya está en uso. Por favor ingresá otro.'
+            : 'Debe ser un email válido',
         });
         return;
       }
+
       data.available_days = data.available_days.join(',');
       data.is_active = true;
 
@@ -277,7 +284,7 @@ export default function CognitoRegisterView() {
     }
   });
 
-  // ======== Paso a paso ========
+  // ======== Paso a paso (bloquea si email inválido/ocupado en step 1) ========
   const handleNextStep = async () => {
     let isStepValid = false;
 
@@ -302,13 +309,20 @@ export default function CognitoRegisterView() {
         'password',
         'national_id',
       ]);
-      if (isEmailBusy || emailStatus === 'invalid') {
+
+      if (isEmailBusy) {
         isStepValid = false;
       }
       if (emailStatus === 'exists') {
         setError('email', {
           type: 'manual',
           message: 'Este email ya está en uso. Por favor ingresá otro.',
+        });
+      }
+      if (emailStatus === 'invalid') {
+        setError('email', {
+          type: 'manual',
+          message: 'Debe ser un email válido',
         });
       }
     } else {
@@ -487,7 +501,7 @@ export default function CognitoRegisterView() {
               size="large"
               variant="contained"
               onClick={handleNextStep}
-              disabled={isEmailBusy && step === 1}
+              disabled={step === 1 && isEmailBusy}
             >
               Siguiente
             </LoadingButton>
