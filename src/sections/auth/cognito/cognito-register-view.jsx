@@ -1,6 +1,6 @@
 // src/sections/auth/cognito/cognito-register-view.jsx
 import * as Yup from 'yup';
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
@@ -25,17 +25,16 @@ import { useAuthContext } from 'src/auth/hooks';
 import { Upload } from 'src/components/upload';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 import { useBoolean } from 'src/hooks/use-boolean';
-
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// === Ajustá esto si tu backend expone otra ruta ===
+// === Endpoint para chequear email existente ===
 const EMAIL_EXISTS_ENDPOINT = (email) =>
   `${VITE_API_COMIDIN}/employee/exists?email=${encodeURIComponent(email)}`;
 
-// Política de contraseña (Cognito suele exigir símbolo, número, mayúscula, minúscula, min 8)
+// Política de contraseña (Cognito)
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export default function CognitoRegisterView() {
@@ -61,7 +60,7 @@ export default function CognitoRegisterView() {
     'domingo',
   ];
 
-  // ===== Yup base (sin la verificación remota del email) =====
+  // ==== Validación Yup (sin remota) ====
   const RegisterSchema = Yup.object().shape({
     name: Yup.string().required('El nombre del comercio es requerido'),
     street_name: Yup.string().required('La dirección es requerida'),
@@ -69,7 +68,8 @@ export default function CognitoRegisterView() {
     close_at: Yup.date().required('La hora de cierre es requerida'),
     number: Yup.string()
       .required('El número de la calle es requerido')
-      .matches(/^\d+[A-Za-z0-9\-\/]*$/, 'Solo números y/o sufijos válidos'),
+      // ✅ quitamos el escape innecesario de "/"
+      .matches(/^\d+[A-Za-z0-9-/]*$/, 'Solo números y/o sufijos válidos'),
     postal_code: Yup.string()
       .required('El código postal es requerido')
       .matches(/^[A-Za-z0-9\- ]{3,10}$/, 'Código postal inválido'),
@@ -81,9 +81,7 @@ export default function CognitoRegisterView() {
       .matches(/^\d{11}$/, 'CUIT/CUIL debe tener 11 dígitos'),
     first_name: Yup.string().required('El nombre del encargado es requerido'),
     last_name: Yup.string().required('El apellido del encargado es requerido'),
-    email: Yup.string()
-      .required('El email es requerido')
-      .email('Debe ser un email válido'),
+    email: Yup.string().required('El email es requerido').email('Debe ser un email válido'),
     phone_number: Yup.string()
       .required('El teléfono es requerido')
       .matches(/^\+?\d{7,15}$/, 'Teléfono inválido'),
@@ -147,25 +145,22 @@ export default function CognitoRegisterView() {
     formState: { isSubmitting },
   } = methods;
 
-  // ======== Imagen (dejamos como estaba) ========
-  const handleDropSingleFile = useCallback(
-    (acceptedFiles) => {
-      const newFile = acceptedFiles[0];
-      if (!newFile) return;
+  // ======== Imagen (deja como estaba) ========
+  const handleDropSingleFile = useCallback((acceptedFiles) => {
+    const newFile = acceptedFiles[0];
+    if (!newFile) return;
 
-      const preview = URL.createObjectURL(newFile);
+    const preview = URL.createObjectURL(newFile);
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setFile({ ...newFile, preview, base64: base64String });
-        setValue('image_url', base64String);
-        setValue('image_name', newFile.name);
-      };
-      reader.readAsDataURL(newFile);
-    },
-    [setValue]
-  );
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      setFile({ ...newFile, preview, base64: base64String });
+      setValue('image_url', base64String);
+      setValue('image_name', newFile.name);
+    };
+    reader.readAsDataURL(newFile);
+  }, [setValue]);
 
   // ======== Conversor de hora 12h a 24h ========
   function convertTime(hora12) {
@@ -179,26 +174,37 @@ export default function CognitoRegisterView() {
     return `${hora24.toString().padStart(2, '0')}:${minutos}`;
   }
 
-  // ======== Chequeo en vivo de email (debounced) ========
+  // ======== Chequeo remoto de email (debounced) ========
   const email = watch('email');
   const [emailStatus, setEmailStatus] = useState('idle'); // idle | checking | available | exists | invalid
   const debounceRef = useRef(null);
 
+  // helpers para evitar ternarios anidados en JSX
+  const emailHelperText = () => {
+    if (emailStatus === 'exists') return 'Este email ya está en uso. Ingresá otro.';
+    if (emailStatus === 'available') return 'Email disponible';
+    if (emailStatus === 'checking') return 'Verificando...';
+    return ' ';
+  };
+
+  const emailAdornment = () => {
+    if (emailStatus === 'checking') return <CircularProgress size={18} />;
+    if (emailStatus === 'available') return <Iconify icon="solar:check-circle-bold" width={20} />;
+    if (emailStatus === 'exists') return <Iconify icon="solar:danger-bold" width={20} />;
+    return null;
+  };
+
   useEffect(() => {
-    // limpiar debounce previo
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    // si no hay email o el formato es inválido, no consultar
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailStatus(email ? 'invalid' : 'idle');
-      // solo mostramos error si tiene formato inválido
-      if (email && emailStatus !== 'invalid') {
+      if (email) {
         setError('email', { type: 'manual', message: 'Debe ser un email válido' });
       }
-      return;
+      return; // <-- no devolvemos ningún valor (solo cortamos la ejecución)
     }
 
-    // debounce de 600ms
     setEmailStatus('checking');
     clearErrors('email');
 
@@ -206,7 +212,6 @@ export default function CognitoRegisterView() {
       try {
         const res = await fetch(EMAIL_EXISTS_ENDPOINT(email), { method: 'GET' });
         if (!res.ok) {
-          // si el endpoint no existe o responde 404/500, no bloquear el flujo
           setEmailStatus('available');
           clearErrors('email');
           return;
@@ -223,7 +228,6 @@ export default function CognitoRegisterView() {
           clearErrors('email');
         }
       } catch (_e) {
-        // en error de red no bloqueamos, pero avisamos visualmente como disponible
         setEmailStatus('available');
         clearErrors('email');
       }
@@ -232,15 +236,13 @@ export default function CognitoRegisterView() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email]);
+  }, [email, clearErrors, setError]);
 
   const isEmailBusy = emailStatus === 'checking' || emailStatus === 'exists';
 
   // ======== Submit ========
   const onSubmit = handleSubmit(async (data) => {
     try {
-      // si el email está ocupado, prevenimos el submit
       if (emailStatus === 'exists') {
         setError('email', {
           type: 'manual',
@@ -267,7 +269,6 @@ export default function CognitoRegisterView() {
       data.avatar_url = `${assets_url}coffe.png`;
 
       await registerCognito?.(data);
-      // Opcional: redirigir a una pantalla de éxito
       // router.push('/gracias');
     } catch (error) {
       console.error('Error', error);
@@ -279,6 +280,7 @@ export default function CognitoRegisterView() {
   // ======== Paso a paso ========
   const handleNextStep = async () => {
     let isStepValid = false;
+
     if (step === 0) {
       isStepValid = await trigger([
         'name',
@@ -300,8 +302,9 @@ export default function CognitoRegisterView() {
         'password',
         'national_id',
       ]);
-      // bloque extra: si el email está ocupado, no avanzar
-      if (isEmailBusy || emailStatus === 'invalid') isStepValid = false;
+      if (isEmailBusy || emailStatus === 'invalid') {
+        isStepValid = false;
+      }
       if (emailStatus === 'exists') {
         setError('email', {
           type: 'manual',
@@ -312,15 +315,19 @@ export default function CognitoRegisterView() {
       isStepValid = true;
     }
 
-    if (isStepValid) setStep((prev) => prev + 1);
+    if (isStepValid) {
+      setStep((prev) => prev + 1);
+    }
   };
 
-  const handlePrevStep = () => setStep((prev) => prev - 1);
+  const handlePrevStep = () => {
+    setStep((prev) => prev - 1);
+  };
 
-  // ======= Carga de categorías (igual que antes) =======
+  // ======= Carga de categorías =======
   const [commerce_categories, setCommerceCategories] = useState([]);
   useEffect(() => {
-    const fetchCommerceCategories = async () => {
+    (async () => {
       try {
         const response = await fetch(`${VITE_API_COMIDIN}/commerceCategory`);
         const data = await response.json();
@@ -328,147 +335,129 @@ export default function CognitoRegisterView() {
       } catch (error) {
         console.error('Error fetching roles:', error);
       }
-    };
-    fetchCommerceCategories();
+    })();
   }, []);
 
   const renderFormStep = () => {
-    switch (step) {
-      case 0:
-        return (
-          <Stack spacing={2.5}>
-            <RHFTextField name="name" label="Nombre del Comercio" />
-            <RHFTextField name="commerce_national_id" label="CUIT/CUIL" />
-            <RHFTextField
-              select
-              name="commerce_category_id"
-              label="Categoría del Comercio"
-              SelectProps={{ native: true }}
-              fullWidth
-            >
-              <option value=""> </option>
-              {commerce_categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </RHFTextField>
-            <RHFTextField name="street_name" label="Dirección" />
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="number" label="Altura" />
-              <RHFTextField name="postal_code" label="Código Postal" />
-            </Stack>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TimePicker
-                name="open_at"
-                label="Horario de Apertura"
-                value={openAt}
-                onChange={(newValue) => {
-                  setOpenAt(newValue);
-                  methods.setValue('open_at', newValue);
-                }}
-                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-              />
-              <TimePicker
-                name="close_at"
-                label="Horario de Cierre"
-                value={closeAt}
-                onChange={(newValue) => {
-                  setCloseAt(newValue);
-                  methods.setValue('close_at', newValue);
-                }}
-                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-              />
-            </Stack>
-            <Typography variant="subtitle2">Días disponibles</Typography>
-            <Grid container spacing={2}>
-              {daysOfWeek.map((day) => (
-                <Grid item xs={12} sm={4} key={day}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        name="available_days"
-                        value={day}
-                        checked={methods.watch('available_days').includes(day)}
-                        onChange={(event) => {
-                          const newValue = event.target.checked
-                            ? [...methods.watch('available_days'), day]
-                            : methods.watch('available_days').filter((d) => d !== day);
-                          methods.setValue('available_days', newValue);
-                        }}
-                      />
-                    }
-                    label={day.charAt(0).toUpperCase() + day.slice(1)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
+    if (step === 0) {
+      return (
+        <Stack spacing={2.5}>
+          <RHFTextField name="name" label="Nombre del Comercio" />
+          <RHFTextField name="commerce_national_id" label="CUIT/CUIL" />
+          <RHFTextField
+            select
+            name="commerce_category_id"
+            label="Categoría del Comercio"
+            SelectProps={{ native: true }}
+            fullWidth
+          >
+            <option value=""> </option>
+            {commerce_categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </RHFTextField>
+          <RHFTextField name="street_name" label="Dirección" />
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <RHFTextField name="number" label="Altura" />
+            <RHFTextField name="postal_code" label="Código Postal" />
           </Stack>
-        );
-      case 1:
-        return (
-          <Stack spacing={2.5}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <RHFTextField name="first_name" label="Nombre del Responsable" />
-              <RHFTextField name="last_name" label="Apellido del Responsable" />
-            </Stack>
-            <RHFTextField name="national_id" label="DNI del Responsable" />
-            <RHFTextField
-              name="email"
-              label="Email del Responsable"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {emailStatus === 'checking' && <CircularProgress size={18} />}
-                    {emailStatus === 'available' && (
-                      <Iconify icon="solar:check-circle-bold" width={20} />
-                    )}
-                    {emailStatus === 'exists' && (
-                      <Iconify icon="solar:danger-bold" width={20} />
-                    )}
-                  </InputAdornment>
-                ),
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TimePicker
+              name="open_at"
+              label="Horario de Apertura"
+              value={openAt}
+              onChange={(newValue) => {
+                setOpenAt(newValue);
+                methods.setValue('open_at', newValue);
               }}
-              helperText={
-                emailStatus === 'exists'
-                  ? 'Este email ya está en uso. Ingresá otro.'
-                  : emailStatus === 'available'
-                  ? 'Email disponible'
-                  : emailStatus === 'checking'
-                  ? 'Verificando...'
-                  : ' '
-              }
+              slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
             />
-            <RHFTextField name="phone_number" label="Teléfono del Responsable" />
-            <RHFTextField
-              name="password"
-              label="Contraseña"
-              type={password.value ? 'text' : 'password'}
-              helperText="Mín. 8, con mayúscula, minúscula, número y símbolo"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={password.onToggle} edge="end">
-                      <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
-                    </IconButton>
-                  </InputAdornment>
-                ),
+            <TimePicker
+              name="close_at"
+              label="Horario de Cierre"
+              value={closeAt}
+              onChange={(newValue) => {
+                setCloseAt(newValue);
+                methods.setValue('close_at', newValue);
               }}
+              slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
             />
           </Stack>
-        );
-      case 2:
-        return (
-          <Card>
-            <CardHeader title="Suelta aquí el logo de tu comercio" />
-            <CardContent>
-              <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
-            </CardContent>
-          </Card>
-        );
-      default:
-        return null;
+          <Typography variant="subtitle2">Días disponibles</Typography>
+          <Grid container spacing={2}>
+            {daysOfWeek.map((day) => (
+              <Grid item xs={12} sm={4} key={day}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="available_days"
+                      value={day}
+                      checked={methods.watch('available_days').includes(day)}
+                      onChange={(event) => {
+                        const current = methods.watch('available_days');
+                        const newValue = event.target.checked
+                          ? [...current, day]
+                          : current.filter((d) => d !== day);
+                        methods.setValue('available_days', newValue);
+                      }}
+                    />
+                  }
+                  label={day.charAt(0).toUpperCase() + day.slice(1)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </Stack>
+      );
     }
+
+    if (step === 1) {
+      return (
+        <Stack spacing={2.5}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <RHFTextField name="first_name" label="Nombre del Responsable" />
+            <RHFTextField name="last_name" label="Apellido del Responsable" />
+          </Stack>
+          <RHFTextField name="national_id" label="DNI del Responsable" />
+          <RHFTextField
+            name="email"
+            label="Email del Responsable"
+            InputProps={{
+              endAdornment: <InputAdornment position="end">{emailAdornment()}</InputAdornment>,
+            }}
+            helperText={emailHelperText()}
+          />
+          <RHFTextField name="phone_number" label="Teléfono del Responsable" />
+          <RHFTextField
+            name="password"
+            label="Contraseña"
+            type={password.value ? 'text' : 'password'}
+            helperText="Mín. 8, con mayúscula, minúscula, número y símbolo"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={password.onToggle} edge="end">
+                    <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Stack>
+      );
+    }
+
+    // step === 2
+    return (
+      <Card>
+        <CardHeader title="Suelta aquí el logo de tu comercio" />
+        <CardContent>
+          <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -498,7 +487,7 @@ export default function CognitoRegisterView() {
               size="large"
               variant="contained"
               onClick={handleNextStep}
-              disabled={isEmailBusy && step === 1} // bloquea cuando está chequeando o ya existe
+              disabled={isEmailBusy && step === 1}
             >
               Siguiente
             </LoadingButton>
@@ -511,7 +500,7 @@ export default function CognitoRegisterView() {
               type="submit"
               variant="contained"
               loading={isSubmitting}
-              disabled={isEmailBusy} // bloquea submit también
+              disabled={isEmailBusy}
             >
               Enviar solicitud
             </LoadingButton>
