@@ -50,15 +50,15 @@ export default function CognitoRegisterView() {
   const assets_url = VITE_S3_ASSETS_AVATAR;
   const password = useBoolean();
 
-  const daysOfWeek = [
-    'lunes',
-    'martes',
-    'miércoles',
-    'jueves',
-    'viernes',
-    'sábado',
-    'domingo',
-  ];
+const daysOfWeek = [
+  { value: 0, label: 'Lunes' },
+  { value: 1, label: 'Martes' },
+  { value: 2, label: 'Miércoles' },
+  { value: 3, label: 'Jueves' },
+  { value: 4, label: 'Viernes' },
+  { value: 5, label: 'Sábado' },
+  { value: 6, label: 'Domingo' },
+];
 
   // ====== Validación Yup ======
   const RegisterSchema = Yup.object().shape({
@@ -93,20 +93,14 @@ export default function CognitoRegisterView() {
       ),
     commerce_category_id: Yup.string().required('La categoría de comercio es requerida'),
     image_url: Yup.string().required('La imagen es requerida'),
-    available_days: Yup.array()
-      .of(
-        Yup.string().oneOf([
-          'lunes',
-          'martes',
-          'miércoles',
-          'jueves',
-          'viernes',
-          'sábado',
-          'domingo',
-        ])
-      )
-      .min(1, 'Debe seleccionar al menos un día de disponibilidad')
-      .required('Debe seleccionar los días disponibles'),
+available_days: Yup.array()
+    .of(
+      Yup.number()
+        .min(0, 'Día inválido')
+        .max(6, 'Día inválido')
+    )
+    .min(1, 'Debe seleccionar al menos un día de disponibilidad')
+    .required('Debe seleccionar los días disponibles'),
   });
 
   const defaultValues = {
@@ -399,30 +393,35 @@ export default function CognitoRegisterView() {
               slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
             />
           </Stack>
-          <Typography variant="subtitle2">Días disponibles</Typography>
-          <Grid container spacing={2}>
-            {daysOfWeek.map((day) => (
-              <Grid item xs={12} sm={4} key={day}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      name="available_days"
-                      value={day}
-                      checked={methods.watch('available_days').includes(day)}
-                      onChange={(event) => {
-                        const current = methods.watch('available_days');
-                        const newValue = event.target.checked
-                          ? [...current, day]
-                          : current.filter((d) => d !== day);
-                        methods.setValue('available_days', newValue);
-                      }}
-                    />
-                  }
-                  label={day.charAt(0).toUpperCase() + day.slice(1)}
-                />
-              </Grid>
-            ))}
-          </Grid>
+<Typography variant="subtitle2">Días disponibles</Typography>
+<Grid container spacing={2}>
+  {daysOfWeek.map((day) => (
+    <Grid item xs={12} sm={4} key={day.value}>
+      <FormControlLabel
+        control={
+          <Checkbox
+            name="available_days"
+            checked={(methods.watch('available_days') || []).includes(day.value)}
+            onChange={(event) => {
+              const current = methods.watch('available_days') || [];
+              let newValue;
+
+              if (event.target.checked) {
+                newValue = [...current, day.value];
+              } else {
+                newValue = current.filter((v) => v !== day.value);
+              }
+
+              methods.setValue('available_days', newValue, { shouldValidate: true });
+            }}
+          />
+        }
+        label={day.label}
+      />
+    </Grid>
+  ))}
+</Grid>
+
         </Stack>
       );
     }
