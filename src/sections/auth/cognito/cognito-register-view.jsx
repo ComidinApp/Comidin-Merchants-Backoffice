@@ -282,9 +282,8 @@ export default function CognitoRegisterView() {
       }, 600);
     }
 
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    // 👇 SIN return de cleanup por el rule del build
+    // (igual limpiamos el timeout al inicio cuando cambia el email)
   }, [email, clearErrors, setError]);
 
   const isEmailBusy =
