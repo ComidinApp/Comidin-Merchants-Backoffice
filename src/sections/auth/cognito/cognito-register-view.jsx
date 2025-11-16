@@ -20,7 +20,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { createCommerce } from 'src/api/commerce';
-import { useRouter } from 'src/routes/hooks';
 import { useAuthContext } from 'src/auth/hooks';
 import { Upload } from 'src/components/upload';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
@@ -58,50 +57,78 @@ const daysOfWeek = [
 
 // ====== Validación Yup ======
 const RegisterSchema = Yup.object().shape({
-  name: Yup.string().required('El nombre del comercio es requerido'),
-  street_name: Yup.string().required('La dirección es requerida'),
+  name: Yup.string()
+    .nullable()
+    .required('El nombre del comercio es requerido'),
+
+  street_name: Yup.string()
+    .nullable()
+    .required('La dirección es requerida'),
 
   open_at: Yup.date()
+    .nullable()
     .typeError('La hora de apertura es requerida')
     .required('La hora de apertura es requerida'),
 
+  // close_at debe ser estrictamente mayor que open_at
   close_at: Yup.date()
+    .nullable()
     .typeError('La hora de cierre es requerida')
     .required('La hora de cierre es requerida')
-    .when('open_at', (open_at, schema) => {
-      if (!open_at) return schema;
-      // fuerza que close_at sea igual o posterior a open_at
-      return schema.min(open_at, 'La hora de cierre debe ser posterior a la hora de apertura');
-    }),
+    .test(
+      'is-later-than-open',
+      'La hora de cierre debe ser posterior a la hora de apertura',
+      function (value) {
+        const { open_at } = this.parent;
+        if (!open_at || !value) return true;
+        try {
+          return value.getTime() > open_at.getTime(); // estrictamente mayor
+        } catch (_e) {
+          return true;
+        }
+      }
+    ),
 
   number: Yup.string()
+    .nullable()
     .required('El número de la calle es requerido')
     .matches(/^[0-9]{1,6}$/, 'El número debe ser numérico y razonable'),
 
   postal_code: Yup.string()
+    .nullable()
     .required('El código postal es requerido')
     .matches(/^[0-9]{3,10}$/, 'El código postal debe ser numérico'),
 
   national_id: Yup.string()
+    .nullable()
     .required('El DNI es requerido')
     .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'),
 
   commerce_national_id: Yup.string()
+    .nullable()
     .required('El CUIT/CUIL es requerido')
     .matches(CUIL_REGEX, 'El CUIT/CUIL debe tener 11 números, sin guiones ni puntos'),
 
-  first_name: Yup.string().required('El nombre del responsable es requerido'),
-  last_name: Yup.string().required('El apellido del responsable es requerido'),
+  first_name: Yup.string()
+    .nullable()
+    .required('El nombre del responsable es requerido'),
+
+  last_name: Yup.string()
+    .nullable()
+    .required('El apellido del responsable es requerido'),
 
   email: Yup.string()
+    .nullable()
     .required('El email es requerido')
     .email('Debe ser un email válido'),
 
   phone_number: Yup.string()
+    .nullable()
     .required('El teléfono es requerido')
     .matches(PHONE_REGEX, 'El teléfono solo puede contener números, espacios, + y -'),
 
   password: Yup.string()
+    .nullable()
     .required('La contraseña es requerida')
     .matches(
       PASSWORD_POLICY,
@@ -109,12 +136,16 @@ const RegisterSchema = Yup.object().shape({
     ),
 
   commerce_category_id: Yup.string()
+    .nullable()
     .required('La categoría de comercio es requerida')
     .matches(/^[0-9]+$/, 'La categoría seleccionada no es válida'),
 
-  image_url: Yup.string().required('La imagen es requerida'),
+  image_url: Yup.string()
+    .nullable()
+    .required('La imagen es requerida'),
 
   available_days: Yup.array()
+    .nullable()
     .of(
       Yup.number()
         .min(0, 'Día inválido')
@@ -146,7 +177,6 @@ const defaultValues = {
 
 export default function CognitoRegisterView() {
   const { register: registerCognito } = useAuthContext();
-  const router = useRouter();
 
   const [openAt, setOpenAt] = useState(null);
   const [closeAt, setCloseAt] = useState(null);
@@ -282,8 +312,8 @@ export default function CognitoRegisterView() {
       }, 600);
     }
 
-    // 👇 SIN return de cleanup por el rule del build
-    // (igual limpiamos el timeout al inicio cuando cambia el email)
+    // sin return de cleanup (el build no quiere arrow con return aquí);
+    // igual limpiamos el timeout al inicio.
   }, [email, clearErrors, setError]);
 
   const isEmailBusy =
@@ -329,13 +359,33 @@ export default function CognitoRegisterView() {
       data.avatar_url = `${assets_url}coffe.png`;
 
       await registerCognito?.(data);
-      // router.push('/gracias');
+      // router.push('/gracias'); // si en algún momento querés redirigir
     } catch (error) {
       console.error('Error', error);
-      reset(defaultValues);
-      setOpenAt(null);
-      setCloseAt(null);
-      setErrorMsg(typeof error === 'string' ? error : error.message);
+
+      // Intentamos mapear error del backend a campo específico
+      const backendErrors = error?.response?.data?.errors;
+      const closeAtError = Array.isArray(backendErrors)
+        ? backendErrors.find((e) =>
+            typeof e?.msg === 'string' &&
+            e.msg.toLowerCase().includes('close_at must be later than open_at'.toLowerCase())
+          )
+        : null;
+
+      if (closeAtError) {
+        setStep(0); // volvemos al paso de horarios
+        setError('close_at', {
+          type: 'server',
+          message: 'La hora de cierre debe ser posterior a la hora de apertura',
+        });
+        setErrorMsg('La hora de cierre debe ser posterior a la hora de apertura.');
+      } else {
+        setErrorMsg(
+          typeof error === 'string'
+            ? error
+            : error?.message || 'Ocurrió un error al registrar el comercio.'
+        );
+      }
     }
   };
 
