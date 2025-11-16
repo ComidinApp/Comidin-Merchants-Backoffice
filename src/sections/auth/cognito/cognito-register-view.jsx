@@ -62,38 +62,37 @@ const daysOfWeek = [
 
   // ====== Validación Yup ======
   const RegisterSchema = Yup.object().shape({
-    name: Yup.string().required('El nombre del comercio es requerido'),
-    street_name: Yup.string().required('La dirección es requerida'),
-    open_at: Yup.date().required('La hora de apertura es requerida'),
-    close_at: Yup.date().required('La hora de cierre es requerida'),
-    number: Yup.string()
-      .required('El número de la calle es requerido')
-      // no escapar "/" dentro de clase de caracteres
-      .matches(/^\d+[A-Za-z0-9-/]*$/, 'Solo números y/o sufijos válidos'),
-    postal_code: Yup.string()
-      .required('El código postal es requerido')
-      .matches(/^[A-Za-z0-9\- ]{3,10}$/, 'Código postal inválido'),
-    national_id: Yup.string()
-      .required('El DNI es requerido')
-      .matches(/^\d{6,10}$/, 'DNI inválido'),
-    commerce_national_id: Yup.string()
-      .required('El CUIT/CUIL es requerido')
-      .matches(/^\d{11}$/, 'CUIT/CUIL debe tener 11 dígitos'),
-    first_name: Yup.string().required('El nombre del encargado es requerido'),
-    last_name: Yup.string().required('El apellido del encargado es requerido'),
-    email: Yup.string().required('El email es requerido').email('Debe ser un email válido'),
-    phone_number: Yup.string()
-      .required('El teléfono es requerido')
-      .matches(/^\+?\d{7,15}$/, 'Teléfono inválido'),
-    password: Yup.string()
-      .required('La contraseña es requerida')
-      .matches(
-        PASSWORD_POLICY,
-        'Debe tener 8+ caracteres, mayúscula, minúscula, número y símbolo'
-      ),
-    commerce_category_id: Yup.string().required('La categoría de comercio es requerida'),
-    image_url: Yup.string().required('La imagen es requerida'),
-available_days: Yup.array()
+  name: Yup.string().required('El nombre del comercio es requerido'),
+  street_name: Yup.string().required('La dirección es requerida'),
+  open_at: Yup.date()
+    .typeError('La hora de apertura es requerida')
+    .required('La hora de apertura es requerida'),
+  close_at: Yup.date()
+    .typeError('La hora de cierre es requerida')
+    .required('La hora de cierre es requerida')
+    .test(
+      'is-after-open',
+      'La hora de cierre debe ser posterior a la hora de apertura',
+      function (value) {
+        const { open_at } = this.parent;
+
+        if (!open_at || !value) return true; // ya se validan como "required"
+
+        return value > open_at; // comparamos los Date directamente
+      }
+    ),
+  number: Yup.string().required('El número de la calle es requerido'),
+  postal_code: Yup.string().required('El código postal es requerido'),
+  national_id: Yup.string().required('El DNI es requerido'),
+  commerce_national_id: Yup.string().required('El CUIT/CUIL es requerido'),
+  first_name: Yup.string().required('El nombre del encargado es requerido'),
+  last_name: Yup.string().required('El apellido del encargado es requerido'),
+  email: Yup.string().required('El email es requerido').email('Debe ser un email válido'),
+  phone_number: Yup.string().required('El teléfono es requerido'),
+  password: Yup.string().required('La contraseña es requerida'),
+  commerce_category_id: Yup.string().required('La categoría de comercio es requerida'),
+  image_url: Yup.string().required('La imagen es requerida'),
+  available_days: Yup.array()
     .of(
       Yup.number()
         .min(0, 'Día inválido')
@@ -101,7 +100,8 @@ available_days: Yup.array()
     )
     .min(1, 'Debe seleccionar al menos un día de disponibilidad')
     .required('Debe seleccionar los días disponibles'),
-  });
+});
+
 
   const defaultValues = {
     name: '',
@@ -372,27 +372,44 @@ available_days: Yup.array()
             <RHFTextField name="postal_code" label="Código Postal" />
           </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TimePicker
-              name="open_at"
-              label="Horario de Apertura"
-              value={openAt}
-              onChange={(newValue) => {
-                setOpenAt(newValue);
-                methods.setValue('open_at', newValue);
-              }}
-              slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-            />
-            <TimePicker
-              name="close_at"
-              label="Horario de Cierre"
-              value={closeAt}
-              onChange={(newValue) => {
-                setCloseAt(newValue);
-                methods.setValue('close_at', newValue);
-              }}
-              slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-            />
-          </Stack>
+  <TimePicker
+    name="open_at"
+    label="Horario de Apertura"
+    value={openAt}
+    onChange={(newValue) => {
+      setOpenAt(newValue);
+      methods.setValue('open_at', newValue, { shouldValidate: true });
+    }}
+    slotProps={{
+      textField: {
+        fullWidth: true,
+        margin: 'normal',
+      },
+    }}
+  />
+  <TimePicker
+    name="close_at"
+    label="Horario de Cierre"
+    value={closeAt}
+    onChange={(newValue) => {
+      setCloseAt(newValue);
+      methods.setValue('close_at', newValue, { shouldValidate: true });
+    }}
+    slotProps={{
+      textField: {
+        fullWidth: true,
+        margin: 'normal',
+      },
+    }}
+  />
+</Stack>
+
+{methods.formState.errors.close_at && (
+  <Typography variant="caption" color="error">
+    {methods.formState.errors.close_at.message}
+  </Typography>
+)}
+
 <Typography variant="subtitle2">Días disponibles</Typography>
 <Grid container spacing={2}>
   {daysOfWeek.map((day) => (
