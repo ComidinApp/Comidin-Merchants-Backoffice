@@ -30,25 +30,21 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// Endpoint check email
+// Endpoint para chequear email de empleado existente
 const EMAIL_EXISTS_ENDPOINT = (email) =>
   `${VITE_API_COMIDIN}/employee/exists?email=${encodeURIComponent(email)}`;
 
 // Política Cognito: 8+ con mayúscula, minúscula, número y símbolo
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
-export default function CognitoRegisterView() {
-  const { register: registerCognito } = useAuthContext();
-  const router = useRouter();
+// DNI: solo números, 7–8 dígitos
+const DNI_REGEX = /^[0-9]{7,8}$/;
 
-  const [openAt, setOpenAt] = useState(null);
-  const [closeAt, setCloseAt] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [step, setStep] = useState(0);
-  const [file, setFile] = useState(null);
+// CUIT/CUIL: solo números, 11 dígitos
+const CUIL_REGEX = /^[0-9]{11}$/;
 
-  const assets_url = VITE_S3_ASSETS_AVATAR;
-  const password = useBoolean();
+// Teléfono sencillo: números, espacios, + y -
+const PHONE_REGEX = /^[0-9+\s-]{6,20}$/;
 
 const daysOfWeek = [
   { value: 0, label: 'Lunes' },
@@ -60,8 +56,8 @@ const daysOfWeek = [
   { value: 6, label: 'Domingo' },
 ];
 
-  // ====== Validación Yup ======
-  const RegisterSchema = Yup.object().shape({
+// ====== Validación Yup ======
+const RegisterSchema = Yup.object().shape({
   name: Yup.string().required('El nombre del comercio es requerido'),
   street_name: Yup.string().required('La dirección es requerida'),
 
@@ -78,50 +74,93 @@ const daysOfWeek = [
       return schema.min(open_at, 'La hora de cierre debe ser posterior a la hora de apertura');
     }),
 
-  number: Yup.string().required('El número de la calle es requerido'),
-  postal_code: Yup.string().required('El código postal es requerido'),
-  national_id: Yup.string().required('El DNI es requerido'),
-  commerce_national_id: Yup.string().required('El CUIT/CUIL es requerido'),
-  first_name: Yup.string().required('El nombre del encargado es requerido'),
-  last_name: Yup.string().required('El apellido del encargado es requerido'),
-  email: Yup.string().required('El email es requerido').email('Debe ser un email válido'),
-  phone_number: Yup.string().required('El teléfono es requerido'),
-  password: Yup.string().required('La contraseña es requerida'),
-  commerce_category_id: Yup.string().required('La categoría de comercio es requerida'),
+  number: Yup.string()
+    .required('El número de la calle es requerido')
+    .matches(/^[0-9]{1,6}$/, 'El número debe ser numérico y razonable'),
+
+  postal_code: Yup.string()
+    .required('El código postal es requerido')
+    .matches(/^[0-9]{3,10}$/, 'El código postal debe ser numérico'),
+
+  national_id: Yup.string()
+    .required('El DNI es requerido')
+    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'),
+
+  commerce_national_id: Yup.string()
+    .required('El CUIT/CUIL es requerido')
+    .matches(CUIL_REGEX, 'El CUIT/CUIL debe tener 11 números, sin guiones ni puntos'),
+
+  first_name: Yup.string().required('El nombre del responsable es requerido'),
+  last_name: Yup.string().required('El apellido del responsable es requerido'),
+
+  email: Yup.string()
+    .required('El email es requerido')
+    .email('Debe ser un email válido'),
+
+  phone_number: Yup.string()
+    .required('El teléfono es requerido')
+    .matches(PHONE_REGEX, 'El teléfono solo puede contener números, espacios, + y -'),
+
+  password: Yup.string()
+    .required('La contraseña es requerida')
+    .matches(
+      PASSWORD_POLICY,
+      'Debe tener al menos 8 caracteres, con mayúscula, minúscula, número y símbolo'
+    ),
+
+  commerce_category_id: Yup.string()
+    .required('La categoría de comercio es requerida')
+    .matches(/^[0-9]+$/, 'La categoría seleccionada no es válida'),
+
   image_url: Yup.string().required('La imagen es requerida'),
+
   available_days: Yup.array()
     .of(
       Yup.number()
         .min(0, 'Día inválido')
         .max(6, 'Día inválido')
     )
-    .min(1, 'Debe seleccionar al menos un día de disponibilidad')
+    .min(1, 'Debe seleccionar al menos un día disponible')
     .required('Debe seleccionar los días disponibles'),
 });
 
-  const defaultValues = {
-    name: '',
-    street_name: '',
-    number: '',
-    open_at: '',
-    close_at: '',
-    postal_code: '',
-    national_id: '',
-    commerce_national_id: '',
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone_number: '',
-    commerce_category_id: '',
-    password: '',
-    image_url: '',
-    available_days: [],
-  };
+const defaultValues = {
+  name: '',
+  street_name: '',
+  number: '',
+  open_at: null,
+  close_at: null,
+  postal_code: '',
+  national_id: '',
+  commerce_national_id: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone_number: '',
+  commerce_category_id: '',
+  password: '',
+  image_url: '',
+  image_name: '',
+  available_days: [],
+};
+
+export default function CognitoRegisterView() {
+  const { register: registerCognito } = useAuthContext();
+  const router = useRouter();
+
+  const [openAt, setOpenAt] = useState(null);
+  const [closeAt, setCloseAt] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [step, setStep] = useState(0);
+  const [file, setFile] = useState(null);
+
+  const assets_url = VITE_S3_ASSETS_AVATAR;
+  const password = useBoolean();
 
   const methods = useForm({
     resolver: yupResolver(RegisterSchema),
     defaultValues,
-    mode: 'all',
+    mode: 'all', // valida en change + blur => feedback en tiempo real
   });
 
   const {
@@ -132,36 +171,45 @@ const daysOfWeek = [
     handleSubmit,
     trigger,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = methods;
 
-  // ======== Imagen (dejar como estaba) ========
-  const handleDropSingleFile = useCallback((acceptedFiles) => {
-    const newFile = acceptedFiles?.[0];
-    if (newFile) {
-      const preview = URL.createObjectURL(newFile);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setFile({ ...newFile, preview, base64: base64String });
-        setValue('image_url', base64String);
-        setValue('image_name', newFile.name);
-      };
-      reader.readAsDataURL(newFile);
-    }
-  }, [setValue]);
+  // ======== Imagen ========
+  const handleDropSingleFile = useCallback(
+    (acceptedFiles) => {
+      const newFile = acceptedFiles?.[0];
+      if (newFile) {
+        const preview = URL.createObjectURL(newFile);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result;
+          setFile({ ...newFile, preview, base64: base64String });
+          setValue('image_url', base64String, { shouldValidate: true });
+          setValue('image_name', newFile.name, { shouldValidate: false });
+        };
+        reader.readAsDataURL(newFile);
+      }
+    },
+    [setValue]
+  );
 
   // ======== Conversor de hora 12h a 24h ========
   function convertTime(hora12) {
+    if (!hora12) return null;
     const partes = hora12.split(' ');
-    const hora = parseInt(partes[0], 10);
+    const horaMin = partes[0] || '';
     const periodo = (partes[1] || '').toUpperCase();
+
+    const [hStr, mStr] = horaMin.split(':');
+    let hora = parseInt(hStr, 10);
+    const minutos = mStr || '00';
+
+    if (Number.isNaN(hora)) return null;
 
     let hora24 = hora;
     if (periodo === 'PM' && hora !== 12) hora24 += 12;
     if (periodo === 'AM' && hora === 12) hora24 = 0;
 
-    const minutos = partes[0].split(':')[1] || '00';
     return `${hora24.toString().padStart(2, '0')}:${minutos}`;
   }
 
@@ -170,8 +218,8 @@ const daysOfWeek = [
   const [emailStatus, setEmailStatus] = useState('idle'); // idle | checking | available | exists | invalid
   const debounceRef = useRef(null);
 
-  // helpers sin ternarios anidados
   const emailHelperText = () => {
+    if (errors.email?.message) return errors.email.message;
     if (emailStatus === 'exists') return 'Este email ya está en uso. Ingresá otro.';
     if (emailStatus === 'available') return 'Email disponible';
     if (emailStatus === 'checking') return 'Verificando...';
@@ -183,56 +231,64 @@ const daysOfWeek = [
     if (emailStatus === 'checking') return <CircularProgress size={18} />;
     if (emailStatus === 'available') return <Iconify icon="solar:check-circle-bold" width={20} />;
     if (emailStatus === 'exists') return <Iconify icon="solar:danger-bold" width={20} />;
+    if (emailStatus === 'invalid') return <Iconify icon="solar:danger-bold" width={20} />;
     return null;
-    };
+  };
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    const isValid = !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    if (!isValid) {
-      setEmailStatus(email ? 'invalid' : 'idle');
-      if (email) {
-        setError('email', { type: 'manual', message: 'Debe ser un email válido' });
-      }
+    if (!email) {
+      setEmailStatus('idle');
+      clearErrors('email');
     } else {
+      const isValidFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (!isValidFormat) {
+        setEmailStatus('invalid');
+        setError('email', { type: 'manual', message: 'Debe ser un email válido' });
+        return;
+      }
+
       setEmailStatus('checking');
       clearErrors('email');
 
       debounceRef.current = setTimeout(async () => {
         try {
           const res = await fetch(EMAIL_EXISTS_ENDPOINT(email), { method: 'GET' });
+
           if (!res.ok) {
+            // Si el endpoint falla, no bloqueamos el registro manualmente
             setEmailStatus('available');
             clearErrors('email');
+            return;
+          }
+
+          const data = await res.json();
+          if (data?.exists) {
+            setEmailStatus('exists');
+            setError('email', {
+              type: 'manual',
+              message: 'Este email ya está en uso. Por favor ingresá otro.',
+            });
           } else {
-            const data = await res.json();
-            if (data?.exists) {
-              setEmailStatus('exists');
-              setError('email', {
-                type: 'manual',
-                message: 'Este email ya está en uso. Por favor ingresá otro.',
-              });
-            } else {
-              setEmailStatus('available');
-              clearErrors('email');
-            }
+            setEmailStatus('available');
+            clearErrors('email');
           }
         } catch (_e) {
+          // Error de red, no bloqueamos pero marcamos como "disponible"
           setEmailStatus('available');
           clearErrors('email');
         }
       }, 600);
     }
 
-    // cleanup del debounce
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [email, clearErrors, setError]);
 
-  const isEmailBusy = emailStatus === 'checking' || emailStatus === 'exists' || emailStatus === 'invalid';
+  const isEmailBusy =
+    emailStatus === 'checking' || emailStatus === 'exists' || emailStatus === 'invalid';
 
   // ======== Submit ========
   const onSubmit = handleSubmit(async (data) => {
@@ -240,41 +296,52 @@ const daysOfWeek = [
       if (emailStatus === 'exists' || emailStatus === 'invalid') {
         setError('email', {
           type: 'manual',
-          message: emailStatus === 'exists'
-            ? 'Este email ya está en uso. Por favor ingresá otro.'
-            : 'Debe ser un email válido',
+          message:
+            emailStatus === 'exists'
+              ? 'Este email ya está en uso. Por favor ingresá otro.'
+              : 'Debe ser un email válido',
         });
         return;
       }
 
+      // formatea días como CSV "0,1,2"
       data.available_days = data.available_days.join(',');
       data.is_active = true;
 
-      const formattedOpenAt = convertTime(
-        data.open_at.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      );
-      const formattedCloseAt = convertTime(
-        data.close_at.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-      );
+      // Formateo de horarios a HH:mm
+      if (data.open_at instanceof Date) {
+        const formattedOpenAt = convertTime(
+          data.open_at.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        );
+        data.open_at = formattedOpenAt;
+      }
 
-      data.open_at = formattedOpenAt;
-      data.close_at = formattedCloseAt;
+      if (data.close_at instanceof Date) {
+        const formattedCloseAt = convertTime(
+          data.close_at.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        );
+        data.close_at = formattedCloseAt;
+      }
 
       const commerce = await createCommerce(data);
+
       data.role_id = 6;
       data.commerce_id = commerce.id;
       data.avatar_url = `${assets_url}coffe.png`;
 
       await registerCognito?.(data);
+      // Si después quieren redirigir:
       // router.push('/gracias');
     } catch (error) {
       console.error('Error', error);
-      reset();
+      reset(defaultValues);
+      setOpenAt(null);
+      setCloseAt(null);
       setErrorMsg(typeof error === 'string' ? error : error.message);
     }
   });
 
-  // ======== Paso a paso (bloquea si email inválido/ocupado en step 1) ========
+  // ======== Paso a paso ========
   const handleNextStep = async () => {
     let isStepValid = false;
 
@@ -303,18 +370,6 @@ const daysOfWeek = [
       if (isEmailBusy) {
         isStepValid = false;
       }
-      if (emailStatus === 'exists') {
-        setError('email', {
-          type: 'manual',
-          message: 'Este email ya está en uso. Por favor ingresá otro.',
-        });
-      }
-      if (emailStatus === 'invalid') {
-        setError('email', {
-          type: 'manual',
-          message: 'Debe ser un email válido',
-        });
-      }
     } else {
       isStepValid = true;
     }
@@ -337,17 +392,25 @@ const daysOfWeek = [
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error fetching commerce categories:', error);
       }
     })();
   }, []);
 
   const renderFormStep = () => {
     if (step === 0) {
+      const selectedDays = watch('available_days') || [];
+
       return (
         <Stack spacing={2.5}>
           <RHFTextField name="name" label="Nombre del Comercio" />
-          <RHFTextField name="commerce_national_id" label="CUIT/CUIL" />
+
+          <RHFTextField
+            name="commerce_national_id"
+            label="CUIT/CUIL"
+            helperText={errors.commerce_national_id?.message || 'Sólo números, sin puntos ni guiones'}
+          />
+
           <RHFTextField
             select
             name="commerce_category_id"
@@ -355,86 +418,91 @@ const daysOfWeek = [
             SelectProps={{ native: true }}
             fullWidth
           >
-            <option value=""> </option>
+            <option value="">Seleccioná una categoría</option>
             {commerce_categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
               </option>
             ))}
           </RHFTextField>
+
           <RHFTextField name="street_name" label="Dirección" />
+
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <RHFTextField name="number" label="Altura" />
             <RHFTextField name="postal_code" label="Código Postal" />
           </Stack>
+
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-  <TimePicker
-    name="open_at"
-    label="Horario de Apertura"
-    value={openAt}
-    onChange={(newValue) => {
-      setOpenAt(newValue);
-      methods.setValue('open_at', newValue, { shouldValidate: true });
-    }}
-    slotProps={{
-      textField: {
-        fullWidth: true,
-        margin: 'normal',
-      },
-    }}
-  />
-  <TimePicker
-    name="close_at"
-    label="Horario de Cierre"
-    value={closeAt}
-    onChange={(newValue) => {
-      setCloseAt(newValue);
-      methods.setValue('close_at', newValue, { shouldValidate: true });
-    }}
-    slotProps={{
-      textField: {
-        fullWidth: true,
-        margin: 'normal',
-      },
-    }}
-  />
-</Stack>
+            <TimePicker
+              name="open_at"
+              label="Horario de Apertura"
+              value={openAt}
+              onChange={(newValue) => {
+                setOpenAt(newValue);
+                setValue('open_at', newValue, { shouldValidate: true });
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  margin: 'normal',
+                  error: !!errors.open_at,
+                  helperText: errors.open_at?.message,
+                },
+              }}
+            />
+            <TimePicker
+              name="close_at"
+              label="Horario de Cierre"
+              value={closeAt}
+              onChange={(newValue) => {
+                setCloseAt(newValue);
+                setValue('close_at', newValue, { shouldValidate: true });
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  margin: 'normal',
+                  error: !!errors.close_at,
+                  helperText: errors.close_at?.message,
+                },
+              }}
+            />
+          </Stack>
 
-{methods.formState.errors.close_at && (
-  <Typography variant="caption" color="error">
-    {methods.formState.errors.close_at.message}
-  </Typography>
-)}
+          <Typography variant="subtitle2">Días disponibles</Typography>
+          <Grid container spacing={1}>
+            {daysOfWeek.map((day) => (
+              <Grid item xs={12} sm={4} key={day.value}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="available_days"
+                      checked={selectedDays.includes(day.value)}
+                      onChange={(event) => {
+                        const current = selectedDays;
+                        let newValue;
 
-<Typography variant="subtitle2">Días disponibles</Typography>
-<Grid container spacing={2}>
-  {daysOfWeek.map((day) => (
-    <Grid item xs={12} sm={4} key={day.value}>
-      <FormControlLabel
-        control={
-          <Checkbox
-            name="available_days"
-            checked={(methods.watch('available_days') || []).includes(day.value)}
-            onChange={(event) => {
-              const current = methods.watch('available_days') || [];
-              let newValue;
+                        if (event.target.checked) {
+                          newValue = [...current, day.value];
+                        } else {
+                          newValue = current.filter((v) => v !== day.value);
+                        }
 
-              if (event.target.checked) {
-                newValue = [...current, day.value];
-              } else {
-                newValue = current.filter((v) => v !== day.value);
-              }
-
-              methods.setValue('available_days', newValue, { shouldValidate: true });
-            }}
-          />
-        }
-        label={day.label}
-      />
-    </Grid>
-  ))}
-</Grid>
-
+                        setValue('available_days', newValue, { shouldValidate: true });
+                      }}
+                    />
+                  }
+                  label={day.label}
+                />
+              </Grid>
+            ))}
+          </Grid>
+          {errors.available_days && (
+            <Typography variant="caption" color="error">
+              {errors.available_days.message}
+            </Typography>
+          )}
         </Stack>
       );
     }
@@ -446,7 +514,13 @@ const daysOfWeek = [
             <RHFTextField name="first_name" label="Nombre del Responsable" />
             <RHFTextField name="last_name" label="Apellido del Responsable" />
           </Stack>
-          <RHFTextField name="national_id" label="DNI del Responsable" />
+
+          <RHFTextField
+            name="national_id"
+            label="DNI del Responsable"
+            helperText={errors.national_id?.message || 'Sólo números, sin puntos ni espacios'}
+          />
+
           <RHFTextField
             name="email"
             label="Email del Responsable"
@@ -455,17 +529,31 @@ const daysOfWeek = [
             }}
             helperText={emailHelperText()}
           />
-          <RHFTextField name="phone_number" label="Teléfono del Responsable" />
+
+          <RHFTextField
+            name="phone_number"
+            label="Teléfono del Responsable"
+            helperText={
+              errors.phone_number?.message ||
+              'Sólo números, espacios, + y - (ej: +54 11 1234-5678)'
+            }
+          />
+
           <RHFTextField
             name="password"
             label="Contraseña"
             type={password.value ? 'text' : 'password'}
-            helperText="Mín. 8, con mayúscula, minúscula, número y símbolo"
+            helperText={
+              errors.password?.message ||
+              'Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo'
+            }
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={password.onToggle} edge="end">
-                    <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
+                    <Iconify
+                      icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'}
+                    />
                   </IconButton>
                 </InputAdornment>
               ),
@@ -478,9 +566,14 @@ const daysOfWeek = [
     // step === 2
     return (
       <Card>
-        <CardHeader title="Suelta aquí el logo de tu comercio" />
+        <CardHeader title="Subí el logo de tu comercio" />
         <CardContent>
           <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
+          {errors.image_url && (
+            <Typography variant="caption" color="error">
+              {errors.image_url.message}
+            </Typography>
+          )}
         </CardContent>
       </Card>
     );
@@ -507,6 +600,7 @@ const daysOfWeek = [
               Volver
             </LoadingButton>
           )}
+
           {step < 2 && (
             <LoadingButton
               fullWidth
@@ -518,6 +612,7 @@ const daysOfWeek = [
               Siguiente
             </LoadingButton>
           )}
+
           {step === 2 && (
             <LoadingButton
               fullWidth
@@ -538,13 +633,13 @@ const daysOfWeek = [
         component="div"
         sx={{ mt: 2.5, textAlign: 'center', typography: 'caption', color: 'text.secondary' }}
       >
-        {'By signing up, I agree to '}
+        {'Al registrarte aceptás los '}
         <Link underline="always" color="text.primary">
-          Terms of Service
+          Términos y Condiciones
         </Link>
-        {' and '}
+        {' y la '}
         <Link underline="always" color="text.primary">
-          Privacy Policy
+          Política de Privacidad
         </Link>
         .
       </Typography>
