@@ -201,7 +201,7 @@ export default function CognitoRegisterView() {
     const periodo = (partes[1] || '').toUpperCase();
 
     const [hStr, mStr] = horaMin.split(':');
-    let hora = parseInt(hStr, 10);
+    const hora = parseInt(hStr, 10); // <- const en lugar de let
     const minutos = mStr || '00';
 
     if (Number.isNaN(hora)) return null;
@@ -236,6 +236,7 @@ export default function CognitoRegisterView() {
   };
 
   useEffect(() => {
+    // limpiamos cualquier timeout previo antes de programar uno nuevo
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (!email) {
@@ -281,10 +282,7 @@ export default function CognitoRegisterView() {
         }
       }, 600);
     }
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    // NOTA: quitamos el return de cleanup para evitar el error de lint
   }, [email, clearErrors, setError]);
 
   const isEmailBusy =
@@ -408,7 +406,9 @@ export default function CognitoRegisterView() {
           <RHFTextField
             name="commerce_national_id"
             label="CUIT/CUIL"
-            helperText={errors.commerce_national_id?.message || 'Sólo números, sin puntos ni guiones'}
+            helperText={
+              errors.commerce_national_id?.message || 'Sólo números, sin puntos ni guiones'
+            }
           />
 
           <RHFTextField
