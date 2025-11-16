@@ -64,23 +64,20 @@ const daysOfWeek = [
   const RegisterSchema = Yup.object().shape({
   name: Yup.string().required('El nombre del comercio es requerido'),
   street_name: Yup.string().required('La dirección es requerida'),
+
   open_at: Yup.date()
     .typeError('La hora de apertura es requerida')
     .required('La hora de apertura es requerida'),
+
   close_at: Yup.date()
     .typeError('La hora de cierre es requerida')
     .required('La hora de cierre es requerida')
-    .test(
-      'is-after-open',
-      'La hora de cierre debe ser posterior a la hora de apertura',
-      function (value) {
-        const { open_at } = this.parent;
+    .when('open_at', (open_at, schema) => {
+      if (!open_at) return schema;
+      // fuerza que close_at sea igual o posterior a open_at
+      return schema.min(open_at, 'La hora de cierre debe ser posterior a la hora de apertura');
+    }),
 
-        if (!open_at || !value) return true; // ya se validan como "required"
-
-        return value > open_at; // comparamos los Date directamente
-      }
-    ),
   number: Yup.string().required('El número de la calle es requerido'),
   postal_code: Yup.string().required('El código postal es requerido'),
   national_id: Yup.string().required('El DNI es requerido'),
@@ -101,7 +98,6 @@ const daysOfWeek = [
     .min(1, 'Debe seleccionar al menos un día de disponibilidad')
     .required('Debe seleccionar los días disponibles'),
 });
-
 
   const defaultValues = {
     name: '',
