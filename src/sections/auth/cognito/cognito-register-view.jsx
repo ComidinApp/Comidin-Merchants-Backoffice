@@ -201,7 +201,7 @@ export default function CognitoRegisterView() {
     const periodo = (partes[1] || '').toUpperCase();
 
     const [hStr, mStr] = horaMin.split(':');
-    const hora = parseInt(hStr, 10); // <- const en lugar de let
+    const hora = parseInt(hStr, 10); // const: nunca se reasigna
     const minutos = mStr || '00';
 
     if (Number.isNaN(hora)) return null;
@@ -236,7 +236,6 @@ export default function CognitoRegisterView() {
   };
 
   useEffect(() => {
-    // limpiamos cualquier timeout previo antes de programar uno nuevo
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (!email) {
@@ -282,14 +281,17 @@ export default function CognitoRegisterView() {
         }
       }, 600);
     }
-    // NOTA: quitamos el return de cleanup para evitar el error de lint
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [email, clearErrors, setError]);
 
   const isEmailBusy =
     emailStatus === 'checking' || emailStatus === 'exists' || emailStatus === 'invalid';
 
   // ======== Submit ========
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data) => {
     try {
       if (emailStatus === 'exists' || emailStatus === 'invalid') {
         setError('email', {
@@ -328,7 +330,6 @@ export default function CognitoRegisterView() {
       data.avatar_url = `${assets_url}coffe.png`;
 
       await registerCognito?.(data);
-      // Si después quieren redirigir:
       // router.push('/gracias');
     } catch (error) {
       console.error('Error', error);
@@ -337,7 +338,7 @@ export default function CognitoRegisterView() {
       setCloseAt(null);
       setErrorMsg(typeof error === 'string' ? error : error.message);
     }
-  });
+  };
 
   // ======== Paso a paso ========
   const handleNextStep = async () => {
@@ -591,7 +592,7 @@ export default function CognitoRegisterView() {
         </Alert>
       )}
 
-      <FormProvider methods={methods} onSubmit={onSubmit}>
+      <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
         {renderFormStep()}
 
         <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
