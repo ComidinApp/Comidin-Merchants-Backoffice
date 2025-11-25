@@ -2,6 +2,7 @@ import * as Yup from 'yup';
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import axios from 'axios';
 
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
@@ -26,17 +27,18 @@ import FormProvider, { RHFCode, RHFTextField } from 'src/components/hook-form';
 // ----------------------------------------------------------------------
 
 export default function CognitoNewPasswordView() {
-  const { confirmPassword, resendConfirmationCode } = useAuthContext();
+  // Seguimos usando confirmPassword de Cognito SOLO para confirmar la nueva contraseña
+  const { confirmPassword } = useAuthContext();
 
   const router = useRouter();
-
   const searchParams = useSearchParams();
 
   const email = searchParams.get('email');
 
   const password = useBoolean();
-
   const { countdown, counting, startCountdown } = useCountdownSeconds(60);
+
+  const API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
 
   const VerifySchema = Yup.object().shape({
     code: Yup.string().min(6, 'Code must be at least 6 characters').required('Code is required'),
@@ -70,24 +72,30 @@ export default function CognitoNewPasswordView() {
 
   const values = watch();
 
+  // Enviar nueva contraseña a Cognito (función ya existente)
   const onSubmit = handleSubmit(async (data) => {
     try {
       await confirmPassword?.(data.email, data.code, data.password);
-
       router.push(paths.auth.cognito.login);
     } catch (error) {
       console.error(error);
     }
   });
 
+  // 🚀 AHORA usamos TU backend para reenviar el código
   const handleResendCode = useCallback(async () => {
     try {
       startCountdown();
-      await resendConfirmationCode?.(values.email);
+
+      await axios.post(`${API_COMIDIN}/employee/send-verification-code`, {
+        email: values.email,
+      });
+
+      console.log('Código reenviado correctamente');
     } catch (error) {
-      console.error(error);
+      console.error('Error reenviando código:', error);
     }
-  }, [resendConfirmationCode, startCountdown, values.email]);
+  }, [startCountdown, values.email, API_COMIDIN]);
 
   const renderForm = (
     <Stack spacing={3} alignItems="center">
