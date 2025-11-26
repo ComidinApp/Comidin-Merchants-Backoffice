@@ -22,12 +22,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { createCommerce } from 'src/api/commerce';
 import { useAuthContext } from 'src/auth/hooks';
 import { Upload } from 'src/components/upload';
-import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
+import { VITE_API_COMIDIN, VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 import { useBoolean } from 'src/hooks/use-boolean';
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
-
-const { VITE_API_COMIDIN } = import.meta.env;
 
 // Endpoint para chequear email de empleado existente
 const EMAIL_EXISTS_ENDPOINT = (email) =>
@@ -57,13 +55,9 @@ const daysOfWeek = [
 
 // ====== Validación Yup ======
 const RegisterSchema = Yup.object().shape({
-  name: Yup.string()
-    .nullable()
-    .required('El nombre del comercio es requerido'),
+  name: Yup.string().nullable().required('El nombre del comercio es requerido'),
 
-  street_name: Yup.string()
-    .nullable()
-    .required('La dirección es requerida'),
+  street_name: Yup.string().nullable().required('La dirección es requerida'),
 
   open_at: Yup.date()
     .nullable()
@@ -109,18 +103,11 @@ const RegisterSchema = Yup.object().shape({
     .required('El CUIT/CUIL es requerido')
     .matches(CUIL_REGEX, 'El CUIT/CUIL debe tener 11 números, sin guiones ni puntos'),
 
-  first_name: Yup.string()
-    .nullable()
-    .required('El nombre del responsable es requerido'),
+  first_name: Yup.string().nullable().required('El nombre del responsable es requerido'),
 
-  last_name: Yup.string()
-    .nullable()
-    .required('El apellido del responsable es requerido'),
+  last_name: Yup.string().nullable().required('El apellido del responsable es requerido'),
 
-  email: Yup.string()
-    .nullable()
-    .required('El email es requerido')
-    .email('Debe ser un email válido'),
+  email: Yup.string().nullable().required('El email es requerido').email('Debe ser un email válido'),
 
   phone_number: Yup.string()
     .nullable()
@@ -140,9 +127,7 @@ const RegisterSchema = Yup.object().shape({
     .required('La categoría de comercio es requerida')
     .matches(/^[0-9]+$/, 'La categoría seleccionada no es válida'),
 
-  image_url: Yup.string()
-    .nullable()
-    .required('La imagen es requerida'),
+  image_url: Yup.string().nullable().required('La imagen es requerida'),
 
   available_days: Yup.array()
     .nullable()
@@ -231,7 +216,7 @@ export default function CognitoRegisterView() {
     const periodo = (partes[1] || '').toUpperCase();
 
     const [hStr, mStr] = horaMin.split(':');
-    const hora = parseInt(hStr, 10); // const: nunca se reasigna
+    const hora = parseInt(hStr, 10);
     const minutos = mStr || '00';
 
     if (Number.isNaN(hora)) return null;
@@ -312,8 +297,7 @@ export default function CognitoRegisterView() {
       }, 600);
     }
 
-    // sin return de cleanup (el build no quiere arrow con return aquí);
-    // igual limpiamos el timeout al inicio.
+    // limpiamos el timeout al inicio del efecto, no hace falta return aquí
   }, [email, clearErrors, setError]);
 
   const isEmailBusy =
@@ -433,10 +417,12 @@ export default function CognitoRegisterView() {
 
   // ======= Carga de categorías =======
   const [commerce_categories, setCommerceCategories] = useState([]);
+
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch(`${VITE_API_COMIDIN}/commerceCategory`);
+        // 🔴 CAMBIO IMPORTANTE: agregamos /api aquí
+        const response = await fetch(`${VITE_API_COMIDIN}/api/commerceCategory`);
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
@@ -601,9 +587,7 @@ export default function CognitoRegisterView() {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={password.onToggle} edge="end">
-                    <Iconify
-                      icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'}
-                    />
+                    <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
                   </IconButton>
                 </InputAdornment>
               ),
