@@ -131,12 +131,15 @@ export default function PublicationListView() {
       try {
         await deletePublication(id);
 
-        // Sacamos de la tabla actual
+        // 1) Actualizamos la tabla local
         setTableData((prev) => prev.filter((row) => row.id !== id));
 
-        // Forzamos a SWR a revalidar contra el backend
+        // 2) Actualizamos también la caché de SWR
         if (typeof mutatePublications === 'function') {
-          mutatePublications();
+          mutatePublications(
+            (current) => (current || []).filter((row) => row.id !== id),
+            { revalidate: false }
+          );
         }
 
         enqueueSnackbar('¡Publicación eliminada con éxito!', { variant: 'success' });
@@ -158,10 +161,16 @@ export default function PublicationListView() {
     try {
       await Promise.all(selectedRowIds.map((id) => deletePublication(id)));
 
+      // 1) Actualizamos tabla local
       setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
 
+      // 2) Actualizamos caché de SWR
       if (typeof mutatePublications === 'function') {
-        mutatePublications();
+        mutatePublications(
+          (current) =>
+            (current || []).filter((row) => !selectedRowIds.includes(row.id)),
+          { revalidate: false }
+        );
       }
 
       enqueueSnackbar('¡Publicaciones eliminadas con éxito!', { variant: 'success' });
