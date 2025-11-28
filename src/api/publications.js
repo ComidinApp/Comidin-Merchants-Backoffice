@@ -22,7 +22,7 @@ export function useGetPublications(commerceId) {
     isLoading,
     error,
     isValidating,
-    mutate, // 👈 importante para refrescar la caché
+    mutate, // 👈 importante, lo devolvemos para refrescar desde el listado
   } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
@@ -32,7 +32,7 @@ export function useGetPublications(commerceId) {
       publicationsError: error,
       publicationsValidating: isValidating,
       publicationsEmpty: !isLoading && !data,
-      mutatePublications: mutate, // 👈 lo exponemos al resto del front
+      mutatePublications: mutate,
     }),
     [data, error, isLoading, isValidating, mutate]
   );
@@ -63,7 +63,7 @@ export function useGetPublication(publicationId) {
 }
 
 // ----------------------------------------------------------------------
-// HOOK: Buscar publicaciones (si lo usás)
+// HOOK: Buscar publicaciones (si lo usás en algún lado)
 // ----------------------------------------------------------------------
 
 export function useSearchPublications(query) {
@@ -116,7 +116,7 @@ export async function deletePublication(id) {
 
   try {
     return rawText ? JSON.parse(rawText) : {};
-  } catch {
+  } catch (_e) {
     return {};
   }
 }

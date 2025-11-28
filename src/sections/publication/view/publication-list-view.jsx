@@ -22,7 +22,6 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-// 👇 ahora usamos también deletePublication
 import {
   useGetPublications,
   deletePublication,
@@ -83,7 +82,6 @@ export default function PublicationListView() {
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
 
-  // 👇 ahora traemos también mutatePublications
   const {
     publications,
     publicationsLoading,
@@ -133,10 +131,10 @@ export default function PublicationListView() {
       try {
         await deletePublication(id);
 
-        // Actualizamos la tabla local para que desaparezca al instante
+        // Sacamos de la tabla actual
         setTableData((prev) => prev.filter((row) => row.id !== id));
 
-        // Y revalidamos el SWR para que la caché se actualice
+        // Forzamos a SWR a revalidar contra el backend
         if (typeof mutatePublications === 'function') {
           mutatePublications();
         }
