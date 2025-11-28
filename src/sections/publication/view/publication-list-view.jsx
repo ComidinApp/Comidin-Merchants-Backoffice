@@ -22,7 +22,9 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+// Ojo: acá seguís usando tu hook existente
 import { useGetPublications } from 'src/api/publications';
+
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
@@ -63,6 +65,8 @@ const HIDE_COLUMNS = {
 
 const HIDE_COLUMNS_TOGGLABLE = ['category', 'actions'];
 
+const { VITE_API_COMIDIN } = import.meta.env;
+
 // ----------------------------------------------------------------------
 
 export default function PublicationListView() {
@@ -90,6 +94,8 @@ export default function PublicationListView() {
   useEffect(() => {
     if (Array.isArray(publications) && publications.length) {
       setTableData(publications);
+    } else {
+      setTableData([]);
     }
   }, [publications]);
 
@@ -111,24 +117,92 @@ export default function PublicationListView() {
     setFilters(defaultFilters);
   }, []);
 
+  // ----------------------------------------------------------------------
+  // BORRADO INDIVIDUAL (ahora sí pega al backend)
+  // ----------------------------------------------------------------------
+
   const handleDeleteRow = useCallback(
-    (id) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
+    async (id) => {
+      try {
+        const url = `${VITE_API_COMIDIN}/publication/${id}`;
 
-      enqueueSnackbar('Delete success!');
+        const response = await fetch(url, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-      setTableData(deleteRow);
+        const rawText = await response.text();
+
+        if (!response.ok) {
+          console.error('Error al eliminar publicación. Respuesta cruda:', rawText);
+          throw new Error(
+            `Error al eliminar publicación (status ${response.status}): ${
+              rawText || 'Sin detalles'
+            }`
+          );
+        }
+
+        setTableData((prev) => prev.filter((row) => row.id !== id));
+
+        enqueueSnackbar('¡Publicación eliminada con éxito!', { variant: 'success' });
+      } catch (error) {
+        console.error('Error al eliminar la publicación:', error);
+        enqueueSnackbar('No se pudo eliminar la publicación.', { variant: 'error' });
+      }
     },
-    [enqueueSnackbar, tableData]
+    [enqueueSnackbar]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !selectedRowIds.includes(row.id));
+  // ----------------------------------------------------------------------
+  // BORRADO MÚLTIPLE (seleccionadas)
+  // ----------------------------------------------------------------------
 
-    enqueueSnackbar('Delete success!');
+  const handleDeleteRows = useCallback(async () => {
+    if (!selectedRowIds.length) return;
 
-    setTableData(deleteRows);
-  }, [enqueueSnackbar, selectedRowIds, tableData]);
+    try {
+      // Ejecuta todos los DELETE en paralelo
+      await Promise.all(
+        selectedRowIds.map(async (id) => {
+          const url = `${VITE_API_COMIDIN}/publication/${id}`;
+
+          const response = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const rawText = await response.text();
+
+          if (!response.ok) {
+            console.error(
+              `Error al eliminar publicación ${id}. Respuesta cruda:`,
+              rawText
+            );
+            throw new Error(
+              `Error al eliminar publicación ${id} (status ${response.status}): ${
+                rawText || 'Sin detalles'
+              }`
+            );
+          }
+        })
+      );
+
+      setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
+
+      enqueueSnackbar('¡Publicaciones eliminadas con éxito!', { variant: 'success' });
+      setSelectedRowIds([]);
+    } catch (error) {
+      console.error('Error al eliminar publicaciones seleccionadas:', error);
+      enqueueSnackbar(
+        'No se pudieron eliminar las publicaciones seleccionadas.',
+        { variant: 'error' }
+      );
+    }
+  }, [enqueueSnackbar, selectedRowIds]);
 
   const handleEditRow = useCallback(
     (id) => {
@@ -147,12 +221,12 @@ export default function PublicationListView() {
   const columns = [
     {
       field: 'category',
-      headerName: 'Category',
+      headerName: 'Categoría',
       filterable: false,
     },
     {
       field: 'name',
-      headerName: 'Publicacion',
+      headerName: 'Publicación',
       flex: 1,
       minWidth: 360,
       hideable: false,
@@ -171,7 +245,7 @@ export default function PublicationListView() {
       : []),
     {
       field: 'expiration_date',
-      headerName: 'Fecha Expiracion',
+      headerName: 'Fecha de vencimiento',
       width: 160,
       renderCell: (params) => <RenderCellCreatedAt params={params} />,
     },
@@ -227,19 +301,19 @@ export default function PublicationListView() {
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:eye-bold" />}
-          label="View"
+          label="Ver"
           onClick={() => handleViewRow(params.row.id)}
         />,
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:pen-bold" />}
-          label="Edit"
+          label="Editar"
           onClick={() => handleEditRow(params.row.id)}
         />,
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:trash-bin-trash-bold" />}
-          label="Delete"
+          label="Eliminar"
           onClick={() => {
             handleDeleteRow(params.row.id);
           }}
@@ -338,7 +412,7 @@ export default function PublicationListView() {
                           startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
                           onClick={confirmRows.onTrue}
                         >
-                          Delete ({selectedRowIds.length})
+                          Borrar ({selectedRowIds.length})
                         </Button>
                       )}
 
@@ -359,8 +433,10 @@ export default function PublicationListView() {
                   )}
                 </>
               ),
-              noRowsOverlay: () => <EmptyContent title="No Data" />,
-              noResultsOverlay: () => <EmptyContent title="No results found" />,
+              noRowsOverlay: () => <EmptyContent title="Sin datos" />,
+              noResultsOverlay: () => (
+                <EmptyContent title="No se encontraron resultados" />
+              ),
             }}
             slotProps={{
               columnsPanel: {
@@ -374,22 +450,24 @@ export default function PublicationListView() {
       <ConfirmDialog
         open={confirmRows.value}
         onClose={confirmRows.onFalse}
-        title="Delete"
+        title="Eliminar publicaciones"
         content={
           <>
-            Are you sure want to delete <strong> {selectedRowIds.length} </strong> items?
+            ¿Estás seguro de que querés eliminar{' '}
+            <strong>{selectedRowIds.length}</strong>{' '}
+            {selectedRowIds.length === 1 ? 'publicación?' : 'publicaciones?'}
           </>
         }
         action={
           <Button
             variant="contained"
             color="error"
-            onClick={() => {
-              handleDeleteRows();
+            onClick={async () => {
+              await handleDeleteRows();
               confirmRows.onFalse();
             }}
           >
-            Delete
+            Borrar
           </Button>
         }
       />
@@ -403,11 +481,15 @@ function applyFilter({ inputData, filters }) {
   const { stock, publish } = filters;
 
   if (stock.length) {
-    inputData = inputData.filter((publication) => stock.includes(publication.inventoryType));
+    inputData = inputData.filter((publication) =>
+      stock.includes(publication.inventoryType)
+    );
   }
 
   if (publish.length) {
-    inputData = inputData.filter((publication) => publish.includes(publication.publish));
+    inputData = inputData.filter((publication) =>
+      publish.includes(publication.publish)
+    );
   }
 
   return inputData;
