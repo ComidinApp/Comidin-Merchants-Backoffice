@@ -165,7 +165,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     reset,
     watch,
     setValue,
-    handleSubmit,
+    handleSubmit,            // 👈 IMPORTANTE: lo usamos para envolver onSubmit
     formState: { isSubmitting },
   } = methods;
 
@@ -299,7 +299,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       console.log('Respuesta cruda del backend:', text);
 
       if (!response.ok) {
-        throw new Error(`El backend respondió ${response.status}: ${text}`);
+        throw new Error(`Backend respondió ${response.status}: ${text}`);
       }
 
       const responseData = text ? JSON.parse(text) : {};
