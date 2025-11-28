@@ -1,13 +1,15 @@
 // src/api/publication.js
+
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
+
 const { VITE_API_COMIDIN } = import.meta.env;
 
 // ----------------------------------------------------------------------
-// Hooks de lectura
+// HOOK: Obtener todas las publicaciones (global o por comercio)
 // ----------------------------------------------------------------------
 
 export function useGetPublications(commerceId) {
@@ -16,7 +18,6 @@ export function useGetPublications(commerceId) {
     : `${VITE_API_COMIDIN}/publication`;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
-  console.log(data);
 
   const memoizedValue = useMemo(
     () => ({
@@ -28,15 +29,16 @@ export function useGetPublications(commerceId) {
     }),
     [data, error, isLoading, isValidating]
   );
-  console.log(memoizedValue);
 
   return memoizedValue;
 }
 
 // ----------------------------------------------------------------------
+// HOOK: Obtener una publicación por ID
+// ----------------------------------------------------------------------
 
 export function useGetPublication(publicationId) {
-  const URL = publicationId ? `${VITE_API_COMIDIN}/publication/${publicationId}` : '';
+  const URL = publicationId ? `${VITE_API_COMIDIN}/publication/${publicationId}` : null;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
 
@@ -50,15 +52,15 @@ export function useGetPublication(publicationId) {
     [data, error, isLoading, isValidating]
   );
 
-  console.log(memoizedValue);
-
   return memoizedValue;
 }
 
 // ----------------------------------------------------------------------
+// HOOK: Buscar publicaciones (si se usa)
+// ----------------------------------------------------------------------
 
 export function useSearchPublications(query) {
-  const URL = query ? [endpoints.product.search, { params: { query } }] : '';
+  const URL = query ? [endpoints.product.search, { params: { query } }] : null;
 
   const { data, isLoading, error, isValidating } = useSWR(URL, fetcher, {
     keepPreviousData: true,
@@ -79,14 +81,9 @@ export function useSearchPublications(query) {
 }
 
 // ----------------------------------------------------------------------
-// ACCIONES (crear/editar/eliminar) – ahora sí hablamos con el backend
+// ACCIÓN: Eliminar una publicación por ID (llama al backend)
 // ----------------------------------------------------------------------
 
-/**
- * Elimina una publicación por ID llamando al backend.
- *
- * DELETE `${VITE_API_COMIDIN}/publication/:id`
- */
 export async function deletePublication(id) {
   if (!id && id !== 0) {
     throw new Error('ID de publicación inválido');
@@ -104,15 +101,12 @@ export async function deletePublication(id) {
   const rawText = await response.text();
 
   if (!response.ok) {
-    // Log útil para debug
-    console.error('Error al eliminar publicación. Respuesta cruda:', rawText);
+    console.error('Error al eliminar publicación. Respuesta del backend:', rawText);
     throw new Error(
-      `Error al eliminar la publicación (status ${response.status}): ${rawText || 'Sin cuerpo'}`
+      `Error al eliminar la publicación (status ${response.status}): ${rawText || 'Sin detalles'}`
     );
   }
 
-  // El backend devuelve { message: 'Publicación eliminada correctamente' }
-  // pero por las dudas parseamos y caemos a objeto vacío si no es JSON
   try {
     return rawText ? JSON.parse(rawText) : {};
   } catch {
