@@ -6,7 +6,6 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
@@ -34,19 +33,12 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { useGetProducts } from 'src/api/product';
 
 import Iconify from 'src/components/iconify';
-
-import { _tags } from 'src/_mock';
-
 import { useSnackbar } from 'src/components/snackbar';
+
 import FormProvider, {
-  RHFSelect,
   RHFEditor,
   RHFUpload,
-  RHFSwitch,
   RHFTextField,
-  RHFMultiSelect,
-  RHFAutocomplete,
-  RHFMultiCheckbox,
 } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
@@ -54,28 +46,22 @@ const { VITE_API_COMIDIN } = import.meta.env;
 
 export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
-
   const authUser = useAuthContext();
-
   const dialog = useBoolean();
-
   const mdUp = useResponsive('up', 'md');
-
   const { enqueueSnackbar } = useSnackbar();
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
   const { products } = useGetProducts(commerceId);
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
-
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [price, setPrice] = useState(currentPublication?.price || 0);
   const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || 0);
-
   const [selectedValue, setSelectedValue] = useState();
 
   // ----------------------------------------------------------------------
-  // Esquema de validación en tiempo real (Yup)
+  // Validaciones (Yup) - todo en español
   // ----------------------------------------------------------------------
 
   const NewPublicationSchema = Yup.object().shape({
@@ -174,7 +160,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
     reset,
     watch,
     setValue,
-    handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
@@ -187,7 +172,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   }, [currentPublication, setValue]);
 
   // ----------------------------------------------------------------------
-  // Selección de producto en el diálogo
+  // Selección de producto
   // ----------------------------------------------------------------------
 
   const handleClose = useCallback(
@@ -204,7 +189,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   );
 
   // ----------------------------------------------------------------------
-  // Manejo de precios y descuentos (en tiempo real)
+  // Manejo de precio / descuento
   // ----------------------------------------------------------------------
 
   const handlePriceChange = (event) => {
@@ -218,13 +203,14 @@ export default function PublicationNewEditForm({ currentPublication }) {
       shouldDirty: true,
     });
 
-    // recalcular precio con descuento si ya hay descuento cargado
     if (discount) {
-      const discounted = (numeric || 0) - ((numeric || 0) * discount) / 100;
-      setValue('discounted_price', Number.isNaN(discounted) ? 0 : Number(discounted.toFixed(2)), {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
+      const basePrice = Number(numeric || 0);
+      const discounted = basePrice - (basePrice * discount) / 100;
+      setValue(
+        'discounted_price',
+        Number.isNaN(discounted) ? 0 : Number(discounted.toFixed(2)),
+        { shouldValidate: true, shouldDirty: true }
+      );
     }
   };
 
@@ -244,21 +230,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
     setValue(
       'discounted_price',
       Number.isNaN(calculatedDiscountedPrice) ? 0 : Number(calculatedDiscountedPrice.toFixed(2)),
-      {
-        shouldValidate: true,
-        shouldDirty: true,
-      }
+      { shouldValidate: true, shouldDirty: true }
     );
-  };
-
-  const handleDiscountPriceChange = (event) => {
-    const raw = event.target.value;
-    const numeric = raw === '' ? '' : Number(raw);
-
-    setValue('discounted_price', numeric === '' ? '' : numeric, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
   };
 
   const calculateDiscountedPrice = () => {
@@ -271,8 +244,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
     return Number.isNaN(result) ? 0 : Number(result.toFixed(2));
   };
 
-  // ----------------------------------------------------------------------
-
   useEffect(() => {
     if (currentPublication) {
       reset(defaultValues);
@@ -280,11 +251,13 @@ export default function PublicationNewEditForm({ currentPublication }) {
   }, [currentPublication, defaultValues, reset]);
 
   // ----------------------------------------------------------------------
-  // Submit
+  // SUBMIT: acá ahora recibe directamente `data`
+  // (handleSubmit se aplica adentro de tu FormProvider custom)
   // ----------------------------------------------------------------------
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = async (data) => {
     try {
+      // pequeña espera para mostrar loading
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const url = currentPublication
@@ -293,9 +266,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
       const method = currentPublication ? 'PUT' : 'POST';
 
-      // Aseguramos que la fecha sea ISO completa (fecha + hora)
       if (data.expiration_date instanceof Date && !Number.isNaN(data.expiration_date.getTime())) {
-        data.expiration_date = data.expiration_date.toISOString(); // ejemplo: 2025-11-27T22:15:00.000Z
+        data.expiration_date = data.expiration_date.toISOString();
       }
 
       const response = await fetch(url, {
@@ -328,10 +300,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
       console.error(error);
       enqueueSnackbar('Ocurrió un error al guardar la publicación.', { variant: 'error' });
     }
-  });
+  };
 
   // ----------------------------------------------------------------------
-  // Manejo de imágenes
+  // Imágenes
   // ----------------------------------------------------------------------
 
   const handleDrop = useCallback(
@@ -453,7 +425,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
               <DateTimePicker
                 label="Fecha y hora de vencimiento"
                 value={values.expiration_date}
-                onChange={(newValue) => setValue('expiration_date', newValue, { shouldValidate: true })}
+                onChange={(newValue) =>
+                  setValue('expiration_date', newValue, { shouldValidate: true })
+                }
                 slotProps={{ textField: { fullWidth: true } }}
               />
 
@@ -531,7 +505,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
               type="number"
               InputLabelProps={{ shrink: true }}
               value={calculateDiscountedPrice()}
-              onChange={handleDiscountPriceChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
