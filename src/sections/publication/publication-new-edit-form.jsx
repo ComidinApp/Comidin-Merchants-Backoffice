@@ -166,6 +166,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     reset,
     watch,
     setValue,
+    handleSubmit,            // 👈 IMPORTANTE: lo usamos para envolver onSubmit
     formState: { isSubmitting },
   } = methods;
 
@@ -573,7 +574,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   // ----------------------------------------------------------------------
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
+    <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={3}>
         {/* Podrías reactivar Details si querés más campos de texto */}
         {/* {renderDetails} */}
