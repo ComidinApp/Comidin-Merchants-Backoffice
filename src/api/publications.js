@@ -1,4 +1,4 @@
-// src/api/publication.js
+// src/api/publications.js
 
 import useSWR from 'swr';
 import { useMemo } from 'react';
@@ -17,7 +17,13 @@ export function useGetPublications(commerceId) {
     ? `${VITE_API_COMIDIN}/publication/commerce/${commerceId}`
     : `${VITE_API_COMIDIN}/publication`;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
+  const {
+    data,
+    isLoading,
+    error,
+    isValidating,
+    mutate, // 👈 importante para refrescar la caché
+  } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
@@ -26,8 +32,9 @@ export function useGetPublications(commerceId) {
       publicationsError: error,
       publicationsValidating: isValidating,
       publicationsEmpty: !isLoading && !data,
+      mutatePublications: mutate, // 👈 lo exponemos al resto del front
     }),
-    [data, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating, mutate]
   );
 
   return memoizedValue;
@@ -56,7 +63,7 @@ export function useGetPublication(publicationId) {
 }
 
 // ----------------------------------------------------------------------
-// HOOK: Buscar publicaciones (si se usa)
+// HOOK: Buscar publicaciones (si lo usás)
 // ----------------------------------------------------------------------
 
 export function useSearchPublications(query) {

@@ -22,8 +22,11 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-// Ojo: acá seguís usando tu hook existente
-import { useGetPublications } from 'src/api/publications';
+// 👇 ahora usamos también deletePublication
+import {
+  useGetPublications,
+  deletePublication,
+} from 'src/api/publications';
 
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 
@@ -65,8 +68,6 @@ const HIDE_COLUMNS = {
 
 const HIDE_COLUMNS_TOGGLABLE = ['category', 'actions'];
 
-const { VITE_API_COMIDIN } = import.meta.env;
-
 // ----------------------------------------------------------------------
 
 export default function PublicationListView() {
@@ -81,7 +82,13 @@ export default function PublicationListView() {
   const settings = useSettingsContext();
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
-  const { publications, publicationsLoading } = useGetPublications(commerceId);
+
+  // 👇 ahora traemos también mutatePublications
+  const {
+    publications,
+    publicationsLoading,
+    mutatePublications,
+  } = useGetPublications(commerceId);
 
   const [tableData, setTableData] = useState([]);
 
@@ -118,33 +125,21 @@ export default function PublicationListView() {
   }, []);
 
   // ----------------------------------------------------------------------
-  // BORRADO INDIVIDUAL (ahora sí pega al backend)
+  // BORRADO INDIVIDUAL
   // ----------------------------------------------------------------------
 
   const handleDeleteRow = useCallback(
     async (id) => {
       try {
-        const url = `${VITE_API_COMIDIN}/publication/${id}`;
+        await deletePublication(id);
 
-        const response = await fetch(url, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const rawText = await response.text();
-
-        if (!response.ok) {
-          console.error('Error al eliminar publicación. Respuesta cruda:', rawText);
-          throw new Error(
-            `Error al eliminar publicación (status ${response.status}): ${
-              rawText || 'Sin detalles'
-            }`
-          );
-        }
-
+        // Actualizamos la tabla local para que desaparezca al instante
         setTableData((prev) => prev.filter((row) => row.id !== id));
+
+        // Y revalidamos el SWR para que la caché se actualice
+        if (typeof mutatePublications === 'function') {
+          mutatePublications();
+        }
 
         enqueueSnackbar('¡Publicación eliminada con éxito!', { variant: 'success' });
       } catch (error) {
@@ -152,46 +147,24 @@ export default function PublicationListView() {
         enqueueSnackbar('No se pudo eliminar la publicación.', { variant: 'error' });
       }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, mutatePublications]
   );
 
   // ----------------------------------------------------------------------
-  // BORRADO MÚLTIPLE (seleccionadas)
+  // BORRADO MÚLTIPLE
   // ----------------------------------------------------------------------
 
   const handleDeleteRows = useCallback(async () => {
     if (!selectedRowIds.length) return;
 
     try {
-      // Ejecuta todos los DELETE en paralelo
-      await Promise.all(
-        selectedRowIds.map(async (id) => {
-          const url = `${VITE_API_COMIDIN}/publication/${id}`;
-
-          const response = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          const rawText = await response.text();
-
-          if (!response.ok) {
-            console.error(
-              `Error al eliminar publicación ${id}. Respuesta cruda:`,
-              rawText
-            );
-            throw new Error(
-              `Error al eliminar publicación ${id} (status ${response.status}): ${
-                rawText || 'Sin detalles'
-              }`
-            );
-          }
-        })
-      );
+      await Promise.all(selectedRowIds.map((id) => deletePublication(id)));
 
       setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
+
+      if (typeof mutatePublications === 'function') {
+        mutatePublications();
+      }
 
       enqueueSnackbar('¡Publicaciones eliminadas con éxito!', { variant: 'success' });
       setSelectedRowIds([]);
@@ -202,7 +175,7 @@ export default function PublicationListView() {
         { variant: 'error' }
       );
     }
-  }, [enqueueSnackbar, selectedRowIds]);
+  }, [enqueueSnackbar, selectedRowIds, mutatePublications]);
 
   const handleEditRow = useCallback(
     (id) => {
@@ -274,7 +247,7 @@ export default function PublicationListView() {
     {
       field: 'discounted_price',
       headerName: 'Precio con descuento',
-      width: 140,
+      width: 160,
       editable: true,
       renderCell: (params) => <RenderCellDiscountedPrice params={params} />,
     },
