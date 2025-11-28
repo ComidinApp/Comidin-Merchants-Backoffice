@@ -1,9 +1,17 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
+import axios from 'axios'; // 👈 agregamos axios
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
+
+// Instancia simple para operaciones direccionales (DELETE, POST, etc.) sobre el backend
+const axiosInstance = axios.create({
+  baseURL: VITE_API_COMIDIN,
+});
+
+// ----------------------------------------------------------------------
 
 export function useGetProductss() {
   const URL = endpoints.product.list;
@@ -48,6 +56,7 @@ export function useGetProducts(commerceId) {
 
   return memoizedValue;
 }
+
 // ----------------------------------------------------------------------
 
 export function useGetProduct(productId) {
@@ -90,4 +99,20 @@ export function useSearchProducts(query) {
   );
 
   return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+// 🔥 NUEVO: funciones para borrar productos
+// ----------------------------------------------------------------------
+
+export async function deleteProduct(id) {
+  // Backend: DELETE /product/:id (según tu router)
+  const res = await axiosInstance.delete(`/product/${id}`);
+  return res.data;
+}
+
+export async function deleteProducts(ids) {
+  // Borramos todos en paralelo
+  const promises = ids.map((id) => axiosInstance.delete(`/product/${id}`));
+  await Promise.all(promises);
 }

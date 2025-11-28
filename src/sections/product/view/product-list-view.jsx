@@ -22,7 +22,7 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { useGetProducts } from 'src/api/product';
+import { useGetProducts, deleteProduct, deleteProducts } from 'src/api/product';
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
 
 import Iconify from 'src/components/iconify';
@@ -111,24 +111,38 @@ export default function ProductListView() {
     setFilters(defaultFilters);
   }, []);
 
-  const handleDeleteRow = useCallback(
-    (id) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
+const handleDeleteRow = useCallback(
+  async (id) => {
+    try {
+      await deleteProduct(id); 
 
-      enqueueSnackbar('Delete success!');
+      setTableData((prev) => prev.filter((row) => row.id !== id));
 
-      setTableData(deleteRow);
-    },
-    [enqueueSnackbar, tableData]
-  );
+      enqueueSnackbar('Producto eliminado correctamente');
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
+    }
+  },
+  [enqueueSnackbar]
+);
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !selectedRowIds.includes(row.id));
+const handleDeleteRows = useCallback(
+  async () => {
+    try {
+      await deleteProducts(selectedRowIds); 
 
-    enqueueSnackbar('Delete success!');
+      setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
 
-    setTableData(deleteRows);
-  }, [enqueueSnackbar, selectedRowIds, tableData]);
+      enqueueSnackbar('Productos eliminados correctamente');
+      setSelectedRowIds([]);
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Error al eliminar los productos seleccionados', { variant: 'error' });
+    }
+  },
+  [enqueueSnackbar, selectedRowIds]
+);
 
   const handleEditRow = useCallback(
     (id) => {
