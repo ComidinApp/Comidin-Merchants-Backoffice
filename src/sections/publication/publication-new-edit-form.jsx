@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
@@ -20,7 +21,7 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemButton from '@mui/material/ListItemButton';
 import DialogContent from '@mui/material/DialogContent';
@@ -34,13 +35,7 @@ import { useGetProducts } from 'src/api/product';
 
 import Iconify from 'src/components/iconify';
 
-import {
-  _tags,
-  PRODUCT_SIZE_OPTIONS,
-  PRODUCT_GENDER_OPTIONS,
-  PRODUCT_COLOR_NAME_OPTIONS,
-  PRODUCT_CATEGORY_GROUP_OPTIONS,
-} from 'src/_mock';
+import { _tags } from 'src/_mock';
 
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
@@ -56,6 +51,7 @@ import FormProvider, {
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
+
 export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
 
@@ -68,7 +64,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
-  const { products, productsLoading } = useGetProducts(commerceId);
+  const { products } = useGetProducts(commerceId);
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
@@ -76,69 +72,76 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const [price, setPrice] = useState(currentPublication?.price || 0);
   const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || 0);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (currentPublication?.product_id) {
-        try {
-          const response = await fetch(
-            `${VITE_API_COMIDIN}/product/${currentPublication.product_id}`
-          );
-          if (response.ok) {
-            const product = await response.json();
-            setSelectedProduct(product);
-          }
-        } catch (error) {
-          console.error('Error fetching product:', error);
-        }
-      }
-    };
-    fetchProduct();
-  }, [currentPublication?.product_id]);
-
   const [selectedValue, setSelectedValue] = useState();
 
- const NewPublicationSchema = Yup.object().shape({
-  commerce_id: Yup.number().required('Commerce is required'),
+  // ----------------------------------------------------------------------
+  // Esquema de validación en tiempo real (Yup)
+  // ----------------------------------------------------------------------
 
-  product_id: Yup.number().required('Product is required'),
+  const NewPublicationSchema = Yup.object().shape({
+    commerce_id: Yup.number()
+      .typeError('Debes seleccionar un comercio')
+      .required('El comercio es obligatorio'),
 
-  price: Yup.number()
-    .required('Price is required')
-    .moreThan(0, 'Price should be greater than 0'),
+    product_id: Yup.number()
+      .typeError('Debes seleccionar un producto')
+      .required('El producto es obligatorio'),
 
-  discount_percentaje: Yup.number()
-    .min(0, 'Discount cannot be negative')
-    .max(100, 'Discount should be between 0 and 100'),
+    price: Yup.number()
+      .transform((value, original) => (original === '' ? undefined : value))
+      .typeError('El precio debe ser un número')
+      .required('El precio es obligatorio')
+      .moreThan(0, 'El precio debe ser mayor a 0'),
 
-  discounted_price: Yup.number()
-    .required('Discounted price is required')
-    .test(
-      'discounted-price-check',
-      'Discounted price does not match discount percentage',
-      // ✅ sin `this` y sin sombrear `price`
-      (value, ctx) => {
-        const { price: formPrice, discount_percentaje } = ctx?.parent || {};
-        if (typeof formPrice !== 'number' || typeof discount_percentaje !== 'number') return true;
-        const expected = formPrice - (formPrice * (discount_percentaje / 100));
-        return Math.abs((value ?? 0) - expected) < 0.01; // tolerancia centavos
-      }
-    ),
+    discount_percentaje: Yup.number()
+      .transform((value, original) => (original === '' ? 0 : value))
+      .typeError('El descuento debe ser un número')
+      .min(0, 'El descuento no puede ser negativo')
+      .max(100, 'El descuento debe estar entre 0 y 100'),
 
-  available_stock: Yup.number()
-    .required('Stock is required')
-    .integer('Stock must be an integer')
-    .min(0, 'Stock cannot be negative'),
+    discounted_price: Yup.number()
+      .transform((value, original) => (original === '' ? undefined : value))
+      .typeError('El precio con descuento debe ser un número')
+      .required('El precio con descuento es obligatorio')
+      .moreThan(0, 'El precio con descuento debe ser mayor a 0')
+      .test(
+        'discounted-price-check',
+        'El precio con descuento no coincide con el porcentaje de descuento',
+        (value, ctx) => {
+          const { price: formPrice, discount_percentaje } = ctx?.parent || {};
+          if (
+            typeof formPrice !== 'number' ||
+            Number.isNaN(formPrice) ||
+            typeof discount_percentaje !== 'number' ||
+            Number.isNaN(discount_percentaje)
+          ) {
+            return true; // si falta info, no validamos esta regla
+          }
+          const expected = formPrice - formPrice * (discount_percentaje / 100);
+          return Math.abs((value ?? 0) - expected) < 0.01; // tolerancia centavos
+        }
+      ),
 
-  is_active: Yup.string()
-    .required('Status is required')
-    .oneOf(['active', 'inactive'], 'Invalid status'),
+    available_stock: Yup.number()
+      .transform((value, original) => (original === '' ? undefined : value))
+      .typeError('El stock debe ser un número')
+      .required('El stock es obligatorio')
+      .integer('El stock debe ser un número entero')
+      .min(0, 'El stock no puede ser negativo'),
 
-  expiration_date: Yup.date()
-    .required('Expiration date is required')
-    .min(new Date(), 'Expiration date cannot be in the past'),
-});
+    is_active: Yup.string()
+      .required('El estado es obligatorio')
+      .oneOf(['active', 'inactive'], 'Estado inválido'),
 
+    expiration_date: Yup.date()
+      .typeError('La fecha de vencimiento es obligatoria')
+      .required('La fecha de vencimiento es obligatoria')
+      .min(new Date(), 'La fecha de vencimiento no puede estar en el pasado'),
+  });
 
+  // ----------------------------------------------------------------------
+  // Valores por defecto
+  // ----------------------------------------------------------------------
 
   const defaultValues = useMemo(
     () => ({
@@ -148,15 +151,23 @@ export default function PublicationNewEditForm({ currentPublication }) {
       discount_percentaje: currentPublication?.discount_percentaje || 0,
       discounted_price: currentPublication?.discounted_price || 0,
       available_stock: currentPublication?.available_stock || 0,
-      expiration_date: new Date(currentPublication?.expiration_date) || null,
+      expiration_date: currentPublication?.expiration_date
+        ? new Date(currentPublication.expiration_date)
+        : null,
       is_active: currentPublication?.is_active || 'active',
     }),
     [currentPublication]
   );
 
+  // ----------------------------------------------------------------------
+  // React Hook Form
+  // ----------------------------------------------------------------------
+
   const methods = useForm({
     resolver: yupResolver(NewPublicationSchema),
     defaultValues,
+    mode: 'onChange',
+    reValidateMode: 'onChange',
   });
 
   const {
@@ -175,41 +186,92 @@ export default function PublicationNewEditForm({ currentPublication }) {
     }
   }, [currentPublication, setValue]);
 
+  // ----------------------------------------------------------------------
+  // Selección de producto en el diálogo
+  // ----------------------------------------------------------------------
+
   const handleClose = useCallback(
-    (value, product) => {
+    (value) => {
       dialog.onFalse();
+      if (!value) return;
+
       setSelectedValue(value);
       setSelectedProduct(value);
-      setValue('commerce_id', value.commerce_id);
-      setValue('product_id', value.id);
+      setValue('commerce_id', value.commerce_id, { shouldValidate: true });
+      setValue('product_id', value.id, { shouldValidate: true });
     },
     [dialog, setValue]
   );
 
+  // ----------------------------------------------------------------------
+  // Manejo de precios y descuentos (en tiempo real)
+  // ----------------------------------------------------------------------
+
   const handlePriceChange = (event) => {
-    setPrice(event.target.value);
-    setValue('price', event.target.value, { shouldValidate: true });
+    const raw = event.target.value;
+    const numeric = raw === '' ? '' : Number(raw);
+
+    setPrice(numeric || 0);
+
+    setValue('price', numeric === '' ? '' : numeric, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+
+    // recalcular precio con descuento si ya hay descuento cargado
+    if (discount) {
+      const discounted = (numeric || 0) - ((numeric || 0) * discount) / 100;
+      setValue('discounted_price', Number.isNaN(discounted) ? 0 : Number(discounted.toFixed(2)), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
   };
 
   const handleDiscountChange = (event) => {
-    const newDiscount = parseFloat(event.target.value);
+    const raw = event.target.value;
+    const newDiscount = raw === '' ? 0 : Number(raw);
+
     setDiscount(newDiscount);
 
-    const calculatedDiscountedPrice = price - (price * newDiscount) / 100;
-    setValue('discount_percentaje', newDiscount, { shouldValidate: true });
-    setValue('discounted_price', calculatedDiscountedPrice.toFixed(2), { shouldValidate: true });
+    const basePrice = Number(price) || 0;
+    const calculatedDiscountedPrice = basePrice - (basePrice * newDiscount) / 100;
+
+    setValue('discount_percentaje', newDiscount, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue(
+      'discounted_price',
+      Number.isNaN(calculatedDiscountedPrice) ? 0 : Number(calculatedDiscountedPrice.toFixed(2)),
+      {
+        shouldValidate: true,
+        shouldDirty: true,
+      }
+    );
   };
 
   const handleDiscountPriceChange = (event) => {
-    setValue('discounted_price', event.target.value, { shouldValidate: true });
+    const raw = event.target.value;
+    const numeric = raw === '' ? '' : Number(raw);
+
+    setValue('discounted_price', numeric === '' ? '' : numeric, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   const calculateDiscountedPrice = () => {
-    if (discount) {
-      return (price - (price * discount) / 100).toFixed(2);
-    }
-    return price;
+    const basePrice = Number(price) || 0;
+    const d = Number(discount) || 0;
+
+    if (!d) return basePrice;
+
+    const result = basePrice - (basePrice * d) / 100;
+    return Number.isNaN(result) ? 0 : Number(result.toFixed(2));
   };
+
+  // ----------------------------------------------------------------------
 
   useEffect(() => {
     if (currentPublication) {
@@ -217,17 +279,24 @@ export default function PublicationNewEditForm({ currentPublication }) {
     }
   }, [currentPublication, defaultValues, reset]);
 
+  // ----------------------------------------------------------------------
+  // Submit
+  // ----------------------------------------------------------------------
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const url = currentPublication
         ? `${VITE_API_COMIDIN}/publication/${currentPublication.id}`
         : `${VITE_API_COMIDIN}/publication`;
 
       const method = currentPublication ? 'PUT' : 'POST';
-      /* data.is_active = data.is_active === true ? 'active' : 'inactive'; */
-      data.expiration_date = data.expiration_date.toISOString().split('T')[0];
+
+      // Aseguramos que la fecha sea ISO completa (fecha + hora)
+      if (data.expiration_date instanceof Date && !Number.isNaN(data.expiration_date.getTime())) {
+        data.expiration_date = data.expiration_date.toISOString(); // ejemplo: 2025-11-27T22:15:00.000Z
+      }
 
       const response = await fetch(url, {
         method,
@@ -238,6 +307,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
       });
 
       if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Error del backend:', errorBody);
         throw new Error('Error al enviar los datos');
       }
 
@@ -245,13 +316,23 @@ export default function PublicationNewEditForm({ currentPublication }) {
       console.log('Respuesta del servidor:', responseData);
 
       reset();
-      enqueueSnackbar(currentPublication ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(
+        currentPublication
+          ? '¡Publicación actualizada con éxito!'
+          : '¡Publicación creada con éxito!',
+        { variant: 'success' }
+      );
       router.push(paths.dashboard.publication.root);
-      console.info('DATA', data);
+      console.info('DATA ENVIADA', data);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar('Ocurrió un error al guardar la publicación.', { variant: 'error' });
     }
   });
+
+  // ----------------------------------------------------------------------
+  // Manejo de imágenes
+  // ----------------------------------------------------------------------
 
   const handleDrop = useCallback(
     (acceptedFiles) => {
@@ -270,7 +351,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const handleRemoveFile = useCallback(
     (inputFile) => {
-      const filtered = values.images && values.images?.filter((file) => file !== inputFile);
+      const filtered = values.images && values.images.filter((file) => file !== inputFile);
       setValue('images', filtered);
     },
     [setValue, values.images]
@@ -284,51 +365,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
     setIncludeTaxes(event.target.checked);
   }, []);
 
-  const renderDetails = (
-    <>
-      {mdUp && (
-        <Grid md={4}>
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Details
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Title, short description, image...
-          </Typography>
-        </Grid>
-      )}
-
-      <Grid xs={12} md={8}>
-        <Card>
-          {!mdUp && <CardHeader title="Details" />}
-
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label="Publication Name" />
-
-            <RHFTextField name="subDescription" label="Sub Description" multiline rows={4} />
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Content</Typography>
-              <RHFEditor simple name="description" />
-            </Stack>
-
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Images</Typography>
-              <RHFUpload
-                multiple
-                thumbnail
-                name="images"
-                maxSize={3145728}
-                onDrop={handleDrop}
-                onRemove={handleRemoveFile}
-                onRemoveAll={handleRemoveAllFiles}
-                onUpload={() => console.info('ON UPLOAD')}
-              />
-            </Stack>
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
+  // ----------------------------------------------------------------------
+  // Renders
+  // ----------------------------------------------------------------------
 
   const renderProperties = (
     <>
@@ -337,15 +376,12 @@ export default function PublicationNewEditForm({ currentPublication }) {
           <Typography variant="h6" sx={{ mb: 0.5 }}>
             Propiedades
           </Typography>
-          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Additional functions and attributes...
-          </Typography> */}
         </Grid>
       )}
 
       <Grid xs={12} md={8}>
         <Card>
-          {!mdUp && <CardHeader title="Properties" />}
+          {!mdUp && <CardHeader title="Propiedades" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <Box
@@ -368,7 +404,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                     {selectedProduct.name}
                   </>
                 ) : (
-                  'Seleccionar Producto'
+                  'Seleccionar producto'
                 )}
               </Button>
 
@@ -383,8 +419,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 <DialogContent sx={{ p: 0 }}>
                   <List
                     sx={{
-                      maxHeight: '400px', // Altura máxima del diálogo
-                      overflow: 'auto', // Agregar scroll si se excede la altura
+                      maxHeight: '400px',
+                      overflow: 'auto',
                     }}
                   >
                     {products.map((product) => (
@@ -395,7 +431,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                           typography: 'subtitle1',
                         }}
                         onClick={() => handleClose(product)}
-                        key={product.id} // Se recomienda usar una propiedad única como 'id'
+                        key={product.id}
                       >
                         <Avatar alt={product.name} src={product.image_url} sx={{ mr: 2 }}>
                           <Iconify icon="solar:user-rounded-bold" />
@@ -408,93 +444,27 @@ export default function PublicationNewEditForm({ currentPublication }) {
                       <Avatar sx={{ mr: 2 }}>
                         <Iconify icon="mingcute:add-line" />
                       </Avatar>
-                      <ListItemText primary="Agregar Producto" />
+                      <ListItemText primary="Agregar producto" />
                     </ListItemButton>
                   </List>
                 </DialogContent>
               </Dialog>
 
-              <DatePicker
-                label="Fecha de vencimiento"
+              <DateTimePicker
+                label="Fecha y hora de vencimiento"
                 value={values.expiration_date}
-                onChange={(newValue) => setValue('expiration_date', newValue)}
+                onChange={(newValue) => setValue('expiration_date', newValue, { shouldValidate: true })}
                 slotProps={{ textField: { fullWidth: true } }}
               />
-              {/* <RHFTextField name="code" label="Publication Code" /> */}
-
-              {/* <RHFTextField name="sku" label="Publication SKU" /> */}
 
               <RHFTextField
                 name="available_stock"
-                label="Stock"
+                label="Stock disponible"
                 placeholder="0"
                 type="number"
                 InputLabelProps={{ shrink: true }}
               />
-
-              {/* <RHFMultiSelect
-                checkbox
-                name="colors"
-                label="Colors"
-                options={PRODUCT_COLOR_NAME_OPTIONS}
-              /> */}
-
-              {/* <RHFMultiSelect checkbox name="sizes" label="Sizes" options={PRODUCT_SIZE_OPTIONS} /> */}
             </Box>
-
-            {/* <RHFAutocomplete
-              name="tags"
-              label="Tags"
-              placeholder="+ Tags"
-              multiple
-              freeSolo
-              options={_tags.map((option) => option)}
-              getOptionLabel={(option) => option}
-              renderOption={(props, option) => (
-                <li {...props} key={option}>
-                  {option}
-                </li>
-              )}
-              renderTags={(selected, getTagProps) =>
-                selected.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={option}
-                    size="small"
-                    color="info"
-                    variant="soft"
-                  />
-                ))
-              }
-            /> */}
-
-            {/* <Stack spacing={1}>
-              <Typography variant="subtitle2">Gender</Typography>
-              <RHFMultiCheckbox row name="gender" spacing={2} options={PRODUCT_GENDER_OPTIONS} />
-            </Stack> */}
-
-            {/* <Divider sx={{ borderStyle: 'dashed' }} />
-
-            <Stack direction="row" alignItems="center" spacing={3}>
-              <RHFSwitch name="saleLabel.enabled" label={null} sx={{ m: 0 }} />
-              <RHFTextField
-                name="saleLabel.content"
-                label="Sale Label"
-                fullWidth
-                disabled={!values.saleLabel.enabled}
-              />
-            </Stack>
-
-            <Stack direction="row" alignItems="center" spacing={3}>
-              <RHFSwitch name="newLabel.enabled" label={null} sx={{ m: 0 }} />
-              <RHFTextField
-                name="newLabel.content"
-                label="New Label"
-                fullWidth
-                disabled={!values.newLabel.enabled}
-              />
-            </Stack> */}
           </Stack>
         </Card>
       </Grid>
@@ -508,18 +478,17 @@ export default function PublicationNewEditForm({ currentPublication }) {
           <Typography variant="h6" sx={{ mb: 0.5 }}>
             Precios
           </Typography>
-          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}></Typography> */}
         </Grid>
       )}
 
       <Grid xs={12} md={8}>
         <Card>
-          {!mdUp && <CardHeader title="Pricing" />}
+          {!mdUp && <CardHeader title="Precios" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <RHFTextField
               name="price"
-              label="Precio Regular"
+              label="Precio regular"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
@@ -538,7 +507,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
             <RHFTextField
               name="discount_percentaje"
-              label="Descuento"
+              label="Descuento (%)"
               placeholder="0"
               type="number"
               InputLabelProps={{ shrink: true }}
@@ -557,7 +526,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
             <RHFTextField
               name="discounted_price"
-              label="Precio con Descuento"
+              label="Precio con descuento"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
@@ -571,33 +540,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
                     </Box>
                   </InputAdornment>
                 ),
-                readOnly: true, // Evita que el usuario edite el campo
+                readOnly: true,
               }}
             />
-
-            {/* <FormControlLabel
-              control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
-              label="Price includes taxes"
-            />
-
-            {!includeTaxes && (
-              <RHFTextField
-                name="taxes"
-                label="Tax (%)"
-                placeholder="0.00"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        %
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )} */}
           </Stack>
         </Card>
       </Grid>
@@ -621,17 +566,17 @@ export default function PublicationNewEditForm({ currentPublication }) {
         />
 
         <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
-          {!currentPublication ? 'Create Publication' : 'Save Changes'}
+          {!currentPublication ? 'Crear publicación' : 'Guardar cambios'}
         </LoadingButton>
       </Grid>
     </>
   );
 
+  // ----------------------------------------------------------------------
+
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
-        {/* {renderDetails} */}
-
         {renderProperties}
 
         {renderPricing}
