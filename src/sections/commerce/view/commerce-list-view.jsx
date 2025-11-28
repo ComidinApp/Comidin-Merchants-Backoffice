@@ -50,8 +50,8 @@ import {
 // ----------------------------------------------------------------------
 
 const PUBLISH_OPTIONS = [
-  { value: 'published', label: 'Published' },
-  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Publicado' },
+  { value: 'draft', label: 'Borrador' },
 ];
 
 const STATUS_COMMERCE_OPTIONS = [
@@ -113,9 +113,9 @@ export default function CommerceListView() {
             commerce.id === id ? { ...commerce, is_active: !commerce.is_active } : commerce
           )
         );
-        enqueueSnackbar('Comercio activado/desactivado con exito', { variant: 'success' });
+        enqueueSnackbar('Comercio activado/desactivado con éxito', { variant: 'success' });
       } catch (error) {
-        console.error('Error activating commerce:', error);
+        console.error('Error activando comercio:', error);
         enqueueSnackbar('No se pudo activar/desactivar el comercio', { variant: 'error' });
       }
     },
@@ -157,7 +157,7 @@ export default function CommerceListView() {
     (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar('¡Eliminado con éxito!', { variant: 'success' });
 
       setTableData(deleteRow);
     },
@@ -167,7 +167,7 @@ export default function CommerceListView() {
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !selectedRowIds.includes(row.id));
 
-    enqueueSnackbar('Delete success!');
+    enqueueSnackbar('¡Eliminados con éxito!', { variant: 'success' });
 
     setTableData(deleteRows);
   }, [enqueueSnackbar, selectedRowIds, tableData]);
@@ -189,12 +189,12 @@ export default function CommerceListView() {
   const columns = [
     {
       field: 'category',
-      headerName: 'Category',
+      headerName: 'Categoría',
       filterable: false,
     },
     {
       field: 'name',
-      headerName: 'Commerce',
+      headerName: 'Comercio',
       flex: 1,
       minWidth: 360,
       hideable: false,
@@ -202,13 +202,13 @@ export default function CommerceListView() {
     },
     /* {
       field: 'createdAt',
-      headerName: 'Create at',
+      headerName: 'Creado el',
       width: 160,
       renderCell: (params) => <RenderCellCreatedAt params={params} />,
     }, */
     {
       field: 'address',
-      headerName: 'Direccion',
+      headerName: 'Dirección',
       width: 140,
       editable: false,
       renderCell: (params) => <RenderCellAddress params={params} />,
@@ -222,7 +222,7 @@ export default function CommerceListView() {
     },
     {
       field: 'commerce_category',
-      headerName: 'Categoria',
+      headerName: 'Categoría',
       width: 140,
       editable: false,
       renderCell: (params) => <RenderCellCommerceCategory params={params} />,
@@ -230,7 +230,7 @@ export default function CommerceListView() {
     {
       field: 'status',
       headerName: 'Estado',
-      width: 160, // Aumenta el ancho aquí según sea necesario
+      width: 160,
       editable: true,
       renderCell: (params) => (
         <FormControl fullWidth>
@@ -268,37 +268,6 @@ export default function CommerceListView() {
         />
       ),
     },
-    /* {
-      field: 'commerce',
-      headerName: 'Comercio',
-      width: 140,
-      editable: true,
-      renderCell: (params) => <RenderCellCommerce params={params} />,
-    }, */
-    /* {
-      field: 'inventoryType',
-      headerName: 'Stock',
-      width: 160,
-      type: 'singleSelect',
-      valueOptions: COMMERCE_STOCK_OPTIONS,
-      renderCell: (params) => <RenderCellStock params={params} />,
-    },
-    {
-      field: 'price',
-      headerName: 'Price',
-      width: 140,
-      editable: true,
-      renderCell: (params) => <RenderCellPrice params={params} />,
-    },
-    {
-      field: 'publish',
-      headerName: 'Publish',
-      width: 110,
-      type: 'singleSelect',
-      editable: true,
-      valueOptions: PUBLISH_OPTIONS,
-      renderCell: (params) => <RenderCellPublish params={params} />,
-    }, */
     {
       type: 'actions',
       field: 'actions',
@@ -313,19 +282,19 @@ export default function CommerceListView() {
         /*        <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:eye-bold" />}
-          label="View"
+          label="Ver"
           onClick={() => handleViewRow(params.row.id)}
         />, */
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:pen-bold" />}
-          label="Edit"
+          label="Editar"
           onClick={() => handleEditRow(params.row.id)}
         />,
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:trash-bin-trash-bold" />}
-          label="Delete"
+          label="Eliminar"
           onClick={() => {
             handleDeleteRow(params.row.id);
           }}
@@ -449,8 +418,8 @@ export default function CommerceListView() {
                   )}
                 </>
               ),
-              noRowsOverlay: () => <EmptyContent title="No Data" />,
-              noResultsOverlay: () => <EmptyContent title="No results found" />,
+              noRowsOverlay: () => <EmptyContent title="Sin datos" />,
+              noResultsOverlay: () => <EmptyContent title="No se encontraron resultados" />,
             }}
             slotProps={{
               columnsPanel: {
@@ -464,10 +433,12 @@ export default function CommerceListView() {
       <ConfirmDialog
         open={confirmRows.value}
         onClose={confirmRows.onFalse}
-        title="Delete"
+        title="Eliminar"
         content={
           <>
-            Are you sure want to delete <strong> {selectedRowIds.length} </strong> items?
+            ¿Estás seguro de que querés eliminar{' '}
+            <strong>{selectedRowIds.length}</strong>{' '}
+            {selectedRowIds.length === 1 ? 'ítem?' : 'ítems?'}
           </>
         }
         action={
