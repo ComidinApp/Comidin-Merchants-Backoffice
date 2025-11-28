@@ -1,3 +1,4 @@
+// src/sections/publication/PublicationNewEditForm.jsx
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
@@ -61,7 +62,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const [selectedValue, setSelectedValue] = useState();
 
   // ----------------------------------------------------------------------
-  // Validaciones (Yup) - todo en español
+  // Validaciones Yup
   // ----------------------------------------------------------------------
 
   const NewPublicationSchema = Yup.object().shape({
@@ -101,10 +102,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
             typeof discount_percentaje !== 'number' ||
             Number.isNaN(discount_percentaje)
           ) {
-            return true; // si falta info, no validamos esta regla
+            return true;
           }
           const expected = formPrice - formPrice * (discount_percentaje / 100);
-          return Math.abs((value ?? 0) - expected) < 0.01; // tolerancia centavos
+          return Math.abs((value ?? 0) - expected) < 0.01;
         }
       ),
 
@@ -141,6 +142,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
         ? new Date(currentPublication.expiration_date)
         : null,
       is_active: currentPublication?.is_active || 'active',
+      // Campos de texto opcionales
+      name: currentPublication?.name || '',
+      subDescription: currentPublication?.subDescription || '',
+      description: currentPublication?.description || '',
+      images: [],
     }),
     [currentPublication]
   );
@@ -189,7 +195,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   );
 
   // ----------------------------------------------------------------------
-  // Manejo de precio / descuento
+  // Manejo de precios / descuentos
   // ----------------------------------------------------------------------
 
   const handlePriceChange = (event) => {
@@ -251,13 +257,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
   }, [currentPublication, defaultValues, reset]);
 
   // ----------------------------------------------------------------------
-  // SUBMIT: acá ahora recibe directamente `data`
-  // (handleSubmit se aplica adentro de tu FormProvider custom)
+  // SUBMIT (este sí le pega al backend)
   // ----------------------------------------------------------------------
 
   const onSubmit = async (data) => {
     try {
-      // pequeña espera para mostrar loading
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const url = currentPublication
@@ -266,9 +270,21 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
       const method = currentPublication ? 'PUT' : 'POST';
 
-      if (data.expiration_date instanceof Date && !Number.isNaN(data.expiration_date.getTime())) {
-        data.expiration_date = data.expiration_date.toISOString();
+      // Normalizar fecha/hora de vencimiento
+      if (data.expiration_date) {
+        const dateObj = new Date(data.expiration_date);
+
+        if (Number.isNaN(dateObj.getTime())) {
+          enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
+          console.error('expiration_date inválida en el payload:', data.expiration_date);
+          return;
+        }
+
+        data.expiration_date = dateObj.toISOString();
       }
+
+      console.log('URL al backend:', url);
+      console.log('Payload que se envía al backend:', data);
 
       const response = await fetch(url, {
         method,
@@ -278,14 +294,16 @@ export default function PublicationNewEditForm({ currentPublication }) {
         body: JSON.stringify(data),
       });
 
+      const text = await response.text();
+      console.log('Status backend:', response.status);
+      console.log('Respuesta cruda del backend:', text);
+
       if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Error del backend:', errorBody);
-        throw new Error('Error al enviar los datos');
+        throw new Error(`Backend respondió ${response.status}: ${text}`);
       }
 
-      const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
+      const responseData = text ? JSON.parse(text) : {};
+      console.log('Respuesta parseada:', responseData);
 
       reset();
       enqueueSnackbar(
@@ -295,9 +313,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
         { variant: 'success' }
       );
       router.push(paths.dashboard.publication.root);
-      console.info('DATA ENVIADA', data);
     } catch (error) {
-      console.error(error);
+      console.error('Error al guardar publicación:', error);
       enqueueSnackbar('Ocurrió un error al guardar la publicación.', { variant: 'error' });
     }
   };
@@ -338,7 +355,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   }, []);
 
   // ----------------------------------------------------------------------
-  // Renders
+  // Sección Propiedades
   // ----------------------------------------------------------------------
 
   const renderProperties = (
@@ -445,6 +462,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
     </>
   );
 
+  // ----------------------------------------------------------------------
+  // Sección Precios
+  // ----------------------------------------------------------------------
+
   const renderPricing = (
     <>
       {mdUp && (
@@ -522,6 +543,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
     </>
   );
 
+  // ----------------------------------------------------------------------
+  // Acciones (switch activo + botón submit)
+  // ----------------------------------------------------------------------
+
   const renderActions = (
     <>
       {mdUp && <Grid md={4} />}
@@ -550,6 +575,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
+        {/* Podrías reactivar Details si querés más campos de texto */}
+        {/* {renderDetails} */}
+
         {renderProperties}
 
         {renderPricing}
