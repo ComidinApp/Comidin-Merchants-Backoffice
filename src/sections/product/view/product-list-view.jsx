@@ -114,46 +114,58 @@ export default function ProductListView() {
     setFilters(defaultFilters);
   }, []);
 
-  const handleDeleteRow = useCallback(
-    async (id) => {
-      try {
-        await deleteProduct(id); // 🔥 borra en backend
+const handleDeleteRow = useCallback(
+  async (id) => {
+    try {
+      await deleteProduct(id); // backend ✅
 
-        // Actualizamos estado local para feedback inmediato
-        setTableData((prev) => prev.filter((row) => row.id !== id));
+      // 🔥 Actualizamos el cache de SWR nosotros mismos (sin revalidar)
+      await mutateProducts(
+        (current) => (current || []).filter((row) => row.id !== id),
+        false // <- NO revalidar (no llamar de nuevo al backend)
+      );
 
-        // Refrescamos cache de SWR desde el backend
-        await mutateProducts();
+      // Opcional: si querés mantener tableData separado
+      setTableData((prev) => prev.filter((row) => row.id !== id));
 
-        enqueueSnackbar('Producto eliminado correctamente');
-      } catch (error) {
-        console.error(error);
-        enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
-      }
-    },
-    [enqueueSnackbar, mutateProducts]
-  );
+      enqueueSnackbar('Producto eliminado correctamente');
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
+    }
+  },
+  [enqueueSnackbar, mutateProducts]
+);
 
-  const handleDeleteRows = useCallback(
-    async () => {
-      try {
-        if (!selectedRowIds.length) return;
+const handleDeleteRows = useCallback(
+  async () => {
+    try {
+      if (!selectedRowIds.length) return;
 
-        await deleteProducts(selectedRowIds); // 🔥 borra todos en backend
+      await deleteProducts(selectedRowIds); // backend ✅
 
-        setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
+      await mutateProducts(
+        (current) =>
+          (current || []).filter((row) => !selectedRowIds.includes(row.id)),
+        false // <- NO revalidar
+      );
 
-        await mutateProducts();
+      setTableData((prev) =>
+        prev.filter((row) => !selectedRowIds.includes(row.id))
+      );
 
-        enqueueSnackbar('Productos eliminados correctamente');
-        setSelectedRowIds([]);
-      } catch (error) {
-        console.error(error);
-        enqueueSnackbar('Error al eliminar los productos seleccionados', { variant: 'error' });
-      }
-    },
-    [enqueueSnackbar, selectedRowIds, mutateProducts]
-  );
+      enqueueSnackbar('Productos eliminados correctamente');
+      setSelectedRowIds([]);
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar('Error al eliminar los productos seleccionados', {
+        variant: 'error',
+      });
+    }
+  },
+  [enqueueSnackbar, selectedRowIds, mutateProducts]
+);
+
 
   const handleEditRow = useCallback(
     (id) => {
