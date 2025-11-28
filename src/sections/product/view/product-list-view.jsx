@@ -77,7 +77,8 @@ export default function ProductListView() {
   const settings = useSettingsContext();
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
-  const { products, productsLoading } = useGetProducts(commerceId);
+
+  const { products, productsLoading, mutateProducts } = useGetProducts(commerceId);
 
   const [tableData, setTableData] = useState([]);
 
@@ -88,8 +89,10 @@ export default function ProductListView() {
   const [columnVisibilityModel, setColumnVisibilityModel] = useState(HIDE_COLUMNS);
 
   useEffect(() => {
-    if (products.length) {
+    if (products?.length) {
       setTableData(products);
+    } else {
+      setTableData([]);
     }
   }, [products]);
 
@@ -111,38 +114,46 @@ export default function ProductListView() {
     setFilters(defaultFilters);
   }, []);
 
-const handleDeleteRow = useCallback(
-  async (id) => {
-    try {
-      await deleteProduct(id); 
+  const handleDeleteRow = useCallback(
+    async (id) => {
+      try {
+        await deleteProduct(id); // 🔥 borra en backend
 
-      setTableData((prev) => prev.filter((row) => row.id !== id));
+        // Actualizamos estado local para feedback inmediato
+        setTableData((prev) => prev.filter((row) => row.id !== id));
 
-      enqueueSnackbar('Producto eliminado correctamente');
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
-    }
-  },
-  [enqueueSnackbar]
-);
+        // Refrescamos cache de SWR desde el backend
+        await mutateProducts();
 
-const handleDeleteRows = useCallback(
-  async () => {
-    try {
-      await deleteProducts(selectedRowIds); 
+        enqueueSnackbar('Producto eliminado correctamente');
+      } catch (error) {
+        console.error(error);
+        enqueueSnackbar('Error al eliminar el producto', { variant: 'error' });
+      }
+    },
+    [enqueueSnackbar, mutateProducts]
+  );
 
-      setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
+  const handleDeleteRows = useCallback(
+    async () => {
+      try {
+        if (!selectedRowIds.length) return;
 
-      enqueueSnackbar('Productos eliminados correctamente');
-      setSelectedRowIds([]);
-    } catch (error) {
-      console.error(error);
-      enqueueSnackbar('Error al eliminar los productos seleccionados', { variant: 'error' });
-    }
-  },
-  [enqueueSnackbar, selectedRowIds]
-);
+        await deleteProducts(selectedRowIds); // 🔥 borra todos en backend
+
+        setTableData((prev) => prev.filter((row) => !selectedRowIds.includes(row.id)));
+
+        await mutateProducts();
+
+        enqueueSnackbar('Productos eliminados correctamente');
+        setSelectedRowIds([]);
+      } catch (error) {
+        console.error(error);
+        enqueueSnackbar('Error al eliminar los productos seleccionados', { variant: 'error' });
+      }
+    },
+    [enqueueSnackbar, selectedRowIds, mutateProducts]
+  );
 
   const handleEditRow = useCallback(
     (id) => {
@@ -238,7 +249,7 @@ const handleDeleteRows = useCallback(
       filterable: false,
       disableColumnMenu: true,
       getActions: (params) => [
-        /*        <GridActionsCellItem
+        /* <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:eye-bold" />}
           label="View"
@@ -403,6 +414,8 @@ const handleDeleteRows = useCallback(
             variant="contained"
             color="error"
             onClick={() => {
+           
+
               handleDeleteRows();
               confirmRows.onFalse();
             }}

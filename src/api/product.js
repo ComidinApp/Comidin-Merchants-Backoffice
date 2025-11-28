@@ -1,12 +1,12 @@
 import useSWR from 'swr';
 import { useMemo } from 'react';
-import axios from 'axios'; // 👈 agregamos axios
+import axios from 'axios';
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// Instancia simple para operaciones direccionales (DELETE, POST, etc.) sobre el backend
+// Instancia para operaciones directas al backend (DELETE, POST, etc.)
 const axiosInstance = axios.create({
   baseURL: VITE_API_COMIDIN,
 });
@@ -39,8 +39,7 @@ export function useGetProducts(commerceId) {
     ? `${VITE_API_COMIDIN}/product/commerce/${commerceId}`
     : `${VITE_API_COMIDIN}/product`;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, fetcher);
-  console.log(data);
+  const { data, isLoading, error, isValidating, mutate } = useSWR(URL, fetcher);
 
   const memoizedValue = useMemo(
     () => ({
@@ -49,10 +48,10 @@ export function useGetProducts(commerceId) {
       productsError: error,
       productsValidating: isValidating,
       productsEmpty: !isLoading && !data,
+      mutateProducts: mutate, // 👈 importante para refrescar cache
     }),
-    [data, error, isLoading, isValidating]
+    [data, error, isLoading, isValidating, mutate]
   );
-  console.log(memoizedValue);
 
   return memoizedValue;
 }
@@ -106,7 +105,7 @@ export function useSearchProducts(query) {
 // ----------------------------------------------------------------------
 
 export async function deleteProduct(id) {
-  // Backend: DELETE /product/:id (según tu router)
+  // Backend: DELETE /product/:id
   const res = await axiosInstance.delete(`/product/${id}`);
   return res.data;
 }
