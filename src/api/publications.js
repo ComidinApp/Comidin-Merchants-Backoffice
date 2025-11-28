@@ -1,9 +1,14 @@
+// src/api/publication.js
 import useSWR from 'swr';
 import { useMemo } from 'react';
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
+
+// ----------------------------------------------------------------------
+// Hooks de lectura
+// ----------------------------------------------------------------------
 
 export function useGetPublications(commerceId) {
   const URL = commerceId
@@ -65,10 +70,52 @@ export function useSearchPublications(query) {
       searchLoading: isLoading,
       searchError: error,
       searchValidating: isValidating,
-      searchEmpty: !isLoading && !data?.results.length,
+      searchEmpty: !isLoading && !data?.results?.length,
     }),
     [data?.results, error, isLoading, isValidating]
   );
 
   return memoizedValue;
+}
+
+// ----------------------------------------------------------------------
+// ACCIONES (crear/editar/eliminar) – ahora sí hablamos con el backend
+// ----------------------------------------------------------------------
+
+/**
+ * Elimina una publicación por ID llamando al backend.
+ *
+ * DELETE `${VITE_API_COMIDIN}/publication/:id`
+ */
+export async function deletePublication(id) {
+  if (!id && id !== 0) {
+    throw new Error('ID de publicación inválido');
+  }
+
+  const url = `${VITE_API_COMIDIN}/publication/${id}`;
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const rawText = await response.text();
+
+  if (!response.ok) {
+    // Log útil para debug
+    console.error('Error al eliminar publicación. Respuesta cruda:', rawText);
+    throw new Error(
+      `Error al eliminar la publicación (status ${response.status}): ${rawText || 'Sin cuerpo'}`
+    );
+  }
+
+  // El backend devuelve { message: 'Publicación eliminada correctamente' }
+  // pero por las dudas parseamos y caemos a objeto vacío si no es JSON
+  try {
+    return rawText ? JSON.parse(rawText) : {};
+  } catch {
+    return {};
+  }
 }
