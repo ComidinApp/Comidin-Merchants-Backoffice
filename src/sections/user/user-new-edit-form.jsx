@@ -1,7 +1,8 @@
+// src/sections/user/user-new-edit-form.jsx
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { useMemo, useCallback, useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
@@ -11,7 +12,6 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import Button from '@mui/material/Button';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -39,6 +39,13 @@ export default function UserNewEditForm({ currentUser }) {
   const [roles, setRoles] = useState([]);
   const [commerces, setCommerces] = useState([]);
 
+  // Estado local para duplicados
+  const [duplicateFlags, setDuplicateFlags] = useState({
+    emailExists: false,
+    phoneExists: false,
+    nationalIdExists: false,
+  });
+
   useEffect(() => {
     const fetchRoles = async () => {
       try {
@@ -64,7 +71,7 @@ export default function UserNewEditForm({ currentUser }) {
     fetchCommerces();
   }, []);
 
-  // 🔥 VALIDACIONES ALINEADAS CON EL BACKEND (createUserValidation)
+  // VALIDACIONES ALINEADAS CON BACKEND (createEmployeeValidation + password fuerte)
   const NewUserSchema = Yup.object().shape({
     first_name: Yup.string().required('Nombre es requerido'),
     last_name: Yup.string().required('Apellido es requerido'),
@@ -75,10 +82,7 @@ export default function UserNewEditForm({ currentUser }) {
 
     phone_number: Yup.string()
       .required('Número de teléfono es requerido')
-      .matches(
-        /^[0-9+\-\s()]{6,20}$/,
-        'Número de teléfono no es válido'
-      ),
+      .matches(/^[0-9+\-\s()]{6,20}$/, 'Número de teléfono no es válido'),
 
     national_id: Yup.string().required('DNI es requerido'),
 
@@ -163,14 +167,196 @@ export default function UserNewEditForm({ currentUser }) {
   const {
     reset,
     watch,
-    control,
     setValue,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { isSubmitting },
   } = methods;
 
+  const watchedEmail = watch('email');
+  const watchedPhone = watch('phone_number');
+  const watchedNationalId = watch('national_id');
+
+  // 🔁 Validación en tiempo real contra /employee/exists
+  useEffect(() => {
+    // Solo interesa validar duplicados cuando estamos creando, no editando
+    if (currentUser) return;
+
+    const email = watchedEmail?.trim();
+    const phone = watchedPhone?.trim();
+    const dni = watchedNationalId?.trim();
+
+    // Si no hay nada cargado todavía, limpio errores de duplicado
+    if (!email && !phone && !dni) {
+      setDuplicateFlags({
+        emailExists: false,
+        phoneExists: false,
+        nationalIdExists: false,
+      });
+      clearErrors(['email', 'phone_number', 'national_id']);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams();
+        if (email) params.append('email', email);
+        if (phone) params.append('phone_number', phone);
+        if (dni) params.append('national_id', dni);
+
+        const res = await fetch(
+          `${VITE_API_COMIDIN}/employee/exists?${params.toString()}`,
+          { signal: controller.signal }
+        );
+
+        if (!res.ok) {
+          console.error('Error checking employee exists (real time)');
+          return;
+        }
+
+        const data = await res.json();
+        const {
+          emailExists = false,
+          phoneExists = false,
+          nationalIdExists = false,
+        } = data || {};
+
+        setDuplicateFlags({
+          emailExists,
+          phoneExists,
+          nationalIdExists,
+        });
+
+        if (emailExists) {
+          setError('email', {
+            type: 'manual',
+            message: 'Ya existe un empleado con este email.',
+          });
+        } else {
+          // Solo limpio error si era de tipo manual (no rompo otros tipos)
+          clearErrors('email');
+        }
+
+        if (phoneExists) {
+          setError('phone_number', {
+            type: 'manual',
+            message: 'Ya existe un empleado con este número de teléfono.',
+          });
+        } else {
+          clearErrors('phone_number');
+        }
+
+        if (nationalIdExists) {
+          setError('national_id', {
+            type: 'manual',
+            message: 'Ya existe un empleado con este DNI.',
+          });
+        } else {
+          clearErrors('national_id');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error checking employee exists (real time):', error);
+        }
+      }
+    }, 500); // debounce 500ms
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [
+    currentUser,
+    watchedEmail,
+    watchedPhone,
+    watchedNationalId,
+    clearErrors,
+    setError,
+  ]);
+
+  // Check final antes de enviar POST/PUT para bloquear si hay duplicados
+  const validateUniqueBeforeSubmit = async (data) => {
+    const email = data.email?.trim();
+    const phone = data.phone_number?.trim();
+    const dni = data.national_id?.trim();
+
+    if (!email && !phone && !dni) {
+      return false; // no hay nada para validar
+    }
+
+    const params = new URLSearchParams();
+    if (email) params.append('email', email);
+    if (phone) params.append('phone_number', phone);
+    if (dni) params.append('national_id', dni);
+    if (currentUser?.id) params.append('excludeId', currentUser.id);
+
+    const res = await fetch(
+      `${VITE_API_COMIDIN}/employee/exists?${params.toString()}`
+    );
+
+    if (!res.ok) {
+      console.error('Error checking employee exists (on submit)');
+      return false;
+    }
+
+    const {
+      emailExists = false,
+      phoneExists = false,
+      nationalIdExists = false,
+    } = await res.json();
+
+    setDuplicateFlags({
+      emailExists,
+      phoneExists,
+      nationalIdExists,
+    });
+
+    let hasDuplicates = false;
+
+    if (emailExists) {
+      hasDuplicates = true;
+      setError('email', {
+        type: 'manual',
+        message: 'Ya existe un empleado con este email.',
+      });
+    }
+
+    if (phoneExists) {
+      hasDuplicates = true;
+      setError('phone_number', {
+        type: 'manual',
+        message: 'Ya existe un empleado con este número de teléfono.',
+      });
+    }
+
+    if (nationalIdExists) {
+      hasDuplicates = true;
+      setError('national_id', {
+        type: 'manual',
+        message: 'Ya existe un empleado con este DNI.',
+      });
+    }
+
+    if (hasDuplicates) {
+      enqueueSnackbar(
+        'Ya existe un empleado con alguno de los datos ingresados (email, teléfono o DNI). Corregí los campos marcados.',
+        { variant: 'error' }
+      );
+    }
+
+    return hasDuplicates;
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     try {
+      // Validar duplicados antes de mandar POST/PUT
+      const hasDuplicates = await validateUniqueBeforeSubmit(data);
+      if (hasDuplicates) {
+        return; // NO envío la solicitud hasta que el usuario corrija
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const url = currentUser
@@ -201,9 +387,10 @@ export default function UserNewEditForm({ currentUser }) {
       }
 
       reset();
-      enqueueSnackbar(currentUser ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito', {
-        variant: 'success',
-      });
+      enqueueSnackbar(
+        currentUser ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito',
+        { variant: 'success' }
+      );
       router.push(paths.dashboard.user.list);
     } catch (error) {
       console.error(error);
