@@ -1,3 +1,4 @@
+// src/sections/user/user-table-row.jsx
 import PropTypes from 'prop-types';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
@@ -22,6 +23,12 @@ import UserQuickEditForm from './user-quick-edit-form';
 
 // ----------------------------------------------------------------------
 
+const STATUS_LABELS = {
+  active: 'Activo',
+  pending: 'Pendiente',
+  banned: 'Bloqueado',
+};
+
 export default function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }) {
   const { first_name, avatar_url, last_name, commerce, role, status, email, phone_number } = row;
 
@@ -31,15 +38,7 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
   const popover = usePopover();
 
   const statusLower = (status || '').toLowerCase();
-
-  const statusLabel =
-    statusLower === 'active'
-      ? 'Activo'
-      : statusLower === 'pending'
-      ? 'Pendiente'
-      : statusLower === 'banned'
-      ? 'Bloqueado'
-      : status || 'Desconocido';
+  const statusLabel = STATUS_LABELS[statusLower] || status || 'Desconocido';
 
   return (
     <>
