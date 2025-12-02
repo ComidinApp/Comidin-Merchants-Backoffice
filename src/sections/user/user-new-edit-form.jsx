@@ -1,7 +1,7 @@
 // src/sections/user/user-new-edit-form.jsx
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
-import { useMemo, useCallback, useEffect, useState } from 'react';
+import { useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
@@ -23,16 +23,15 @@ import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
   RHFTextField,
-  RHFUploadAvatar,
   RHFAutocomplete,
 } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
 // ----------------------------------------------------------------------
-// Reglas de validación “fuertes”
+// Reglas de validación
 
-const phoneRegExp = /^(\+?\d{1,3})?[\s.-]?\d{6,14}$/; // flexible, pero razonable
+const phoneRegExp = /^(\+?\d{1,3})?[\s.-]?\d{6,14}$/; // flexible
 const dniRegExp = /^\d{7,9}$/; // 7–9 dígitos
 
 // 8+ caracteres, al menos una letra y un número
@@ -52,6 +51,9 @@ export default function UserNewEditForm({ currentUser }) {
 
   const [roles, setRoles] = useState([]);
   const [commerces, setCommerces] = useState([]);
+
+  // input file ref para abrir el explorador nativo
+  const fileInputRef = useRef(null);
 
   // --- Carga de roles ---
   useEffect(() => {
@@ -150,14 +152,13 @@ export default function UserNewEditForm({ currentUser }) {
             ),
         }),
 
-    // AVATAR OPCIONAL → el front siempre envía algo (random o base64),
-    // pero no obligamos al usuario a subir uno.
+    // Avatar OPCIONAL: no lo marcamos como requerido
     avatar_url: Yup.mixed().nullable(),
 
     status: Yup.string().oneOf(['active', 'pending', 'banned']).optional(),
   });
 
-  // --- Avatar random por defecto (si no sube nada) ---
+  // --- Avatar por defecto (random) si es nuevo usuario ---
   const getRandomAvatarImage = useCallback(() => {
     const avatarImages = [
       `${assets_url}fries.png`,
@@ -193,8 +194,6 @@ export default function UserNewEditForm({ currentUser }) {
       country: currentUser?.country || '',
       postal_code: currentUser?.postal_code || '',
       commerce_id: currentUser?.commerce_id || '',
-      // si es nuevo → avatar random por defecto
-      // si edita → el que ya tiene
       avatar_url: currentUser?.avatar_url || getRandomAvatarImage(),
       phone_number: currentUser?.phone_number || '',
     }),
@@ -213,6 +212,13 @@ export default function UserNewEditForm({ currentUser }) {
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
+
+  const avatarValue = watch('avatar_url');
+  const [avatarPreview, setAvatarPreview] = useState(avatarValue);
+
+  useEffect(() => {
+    setAvatarPreview(avatarValue);
+  }, [avatarValue]);
 
   // --- submit ---
   const onSubmit = handleSubmit(async (data) => {
@@ -255,23 +261,29 @@ export default function UserNewEditForm({ currentUser }) {
     }
   });
 
-  // --- drop de avatar: convertimos a BASE64 para el backend ---
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const file = acceptedFiles[0];
-      if (!file) return;
+  // --- cambio de archivo: base64 + preview ---
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result; // data:image/...;base64,...
-        setValue('avatar_url', base64, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
-    },
-    [setValue]
-  );
+    // guardamos en base64 para el backend
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result; // data:image/...;base64,...
+      setValue('avatar_url', base64, { shouldValidate: true });
+      setAvatarPreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
 
-  // --- si el usuario logueado no es admin global, fijar comercio por defecto ---
+  // abrir explorador de archivos al clickear la tarjeta
+  const handleClickCard = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // si el usuario logueado no es admin global, fijar comercio por defecto
   useEffect(() => {
     if (user?.role_id !== 1 && user?.commerce?.id) {
       setValue('commerce_id', user.commerce.id);
@@ -281,30 +293,67 @@ export default function UserNewEditForm({ currentUser }) {
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
+        {/* Input de archivo oculto */}
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+
         <Grid xs={12} md={4}>
-          <Card sx={{ pt: 10, pb: 5, px: 3 }}>
-            <Box sx={{ mb: 5 }}>
-              <RHFUploadAvatar
-                name="avatar_url"
-                maxSize={3145728}
-                onDrop={handleDrop}
-                helperText={
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mt: 3,
-                      mx: 'auto',
-                      display: 'block',
-                      textAlign: 'center',
-                      color: 'text.disabled',
-                    }}
-                  >
-                    Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).  
-                    Si no elegís ninguna, se usará un avatar por defecto.
-                  </Typography>
-                }
+          <Card
+            sx={{
+              pt: 10,
+              pb: 5,
+              px: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              cursor: 'pointer',
+            }}
+            onClick={handleClickCard}
+          >
+            <Box
+              sx={{
+                mb: 3,
+                width: 140,
+                height: 140,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: (theme) => `2px dashed ${theme.palette.divider}`,
+              }}
+            >
+              <Box
+                component="img"
+                alt="Avatar"
+                src={avatarPreview}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
               />
             </Box>
+
+            <Typography
+              variant="caption"
+              sx={{
+                mt: 1,
+                mx: 'auto',
+                display: 'block',
+                textAlign: 'center',
+                color: 'text.disabled',
+              }}
+            >
+              Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
+              <br />
+              Si no elegís ninguna, se usará un avatar por defecto.
+            </Typography>
           </Card>
         </Grid>
 
