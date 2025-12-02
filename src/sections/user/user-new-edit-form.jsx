@@ -1,4 +1,3 @@
-// src/sections/user/user-new-edit-form.jsx
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { useMemo, useCallback, useEffect, useState } from 'react';
@@ -26,7 +25,6 @@ import FormProvider, {
   RHFAutocomplete,
 } from 'src/components/hook-form';
 
-// ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
 export default function UserNewEditForm({ currentUser }) {
@@ -39,8 +37,8 @@ export default function UserNewEditForm({ currentUser }) {
   const [roles, setRoles] = useState([]);
   const [commerces, setCommerces] = useState([]);
 
-  // Estado local para duplicados
-  const [duplicateFlags, setDuplicateFlags] = useState({
+  // Solo usamos setDuplicateFlags (no duplicateFlags)
+  const [, setDuplicateFlags] = useState({
     emailExists: false,
     phoneExists: false,
     nationalIdExists: false,
@@ -71,7 +69,6 @@ export default function UserNewEditForm({ currentUser }) {
     fetchCommerces();
   }, []);
 
-  // VALIDACIONES ALINEADAS CON BACKEND (createEmployeeValidation + password fuerte)
   const NewUserSchema = Yup.object().shape({
     first_name: Yup.string().required('Nombre es requerido'),
     last_name: Yup.string().required('Apellido es requerido'),
@@ -178,16 +175,15 @@ export default function UserNewEditForm({ currentUser }) {
   const watchedPhone = watch('phone_number');
   const watchedNationalId = watch('national_id');
 
-  // 🔁 Validación en tiempo real contra /employee/exists
+  // --- 🔥 VALIDACIÓN EN TIEMPO REAL SIN RETURN VACÍO ---
   useEffect(() => {
-    // Solo interesa validar duplicados cuando estamos creando, no editando
     if (currentUser) return;
 
     const email = watchedEmail?.trim();
     const phone = watchedPhone?.trim();
     const dni = watchedNationalId?.trim();
 
-    // Si no hay nada cargado todavía, limpio errores de duplicado
+    // Si no hay nada cargado limpiamos errores
     if (!email && !phone && !dni) {
       setDuplicateFlags({
         emailExists: false,
@@ -195,7 +191,6 @@ export default function UserNewEditForm({ currentUser }) {
         nationalIdExists: false,
       });
       clearErrors(['email', 'phone_number', 'national_id']);
-      return;
     }
 
     const controller = new AbortController();
@@ -211,57 +206,39 @@ export default function UserNewEditForm({ currentUser }) {
           { signal: controller.signal }
         );
 
-        if (!res.ok) {
-          console.error('Error checking employee exists (real time)');
-          return;
-        }
+        if (!res.ok) return;
 
         const data = await res.json();
         const {
           emailExists = false,
           phoneExists = false,
           nationalIdExists = false,
-        } = data || {};
+        } = data;
 
-        setDuplicateFlags({
-          emailExists,
-          phoneExists,
-          nationalIdExists,
-        });
+        setDuplicateFlags({ emailExists, phoneExists, nationalIdExists });
 
         if (emailExists) {
           setError('email', {
             type: 'manual',
             message: 'Ya existe un empleado con este email.',
           });
-        } else {
-          // Solo limpio error si era de tipo manual (no rompo otros tipos)
-          clearErrors('email');
-        }
+        } else clearErrors('email');
 
         if (phoneExists) {
           setError('phone_number', {
             type: 'manual',
-            message: 'Ya existe un empleado con este número de teléfono.',
+            message: 'Ya existe un empleado con este número.',
           });
-        } else {
-          clearErrors('phone_number');
-        }
+        } else clearErrors('phone_number');
 
         if (nationalIdExists) {
           setError('national_id', {
             type: 'manual',
             message: 'Ya existe un empleado con este DNI.',
           });
-        } else {
-          clearErrors('national_id');
-        }
-      } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Error checking employee exists (real time):', error);
-        }
-      }
-    }, 500); // debounce 500ms
+        } else clearErrors('national_id');
+      } catch (_) {}
+    }, 500);
 
     return () => {
       clearTimeout(timeoutId);
@@ -276,72 +253,42 @@ export default function UserNewEditForm({ currentUser }) {
     setError,
   ]);
 
-  // Check final antes de enviar POST/PUT para bloquear si hay duplicados
+  // --- Validación final antes de submit ---
   const validateUniqueBeforeSubmit = async (data) => {
-    const email = data.email?.trim();
-    const phone = data.phone_number?.trim();
-    const dni = data.national_id?.trim();
-
-    if (!email && !phone && !dni) {
-      return false; // no hay nada para validar
-    }
-
     const params = new URLSearchParams();
-    if (email) params.append('email', email);
-    if (phone) params.append('phone_number', phone);
-    if (dni) params.append('national_id', dni);
+    if (data.email) params.append('email', data.email.trim());
+    if (data.phone_number) params.append('phone_number', data.phone_number.trim());
+    if (data.national_id) params.append('national_id', data.national_id.trim());
     if (currentUser?.id) params.append('excludeId', currentUser.id);
 
     const res = await fetch(
       `${VITE_API_COMIDIN}/employee/exists?${params.toString()}`
     );
 
-    if (!res.ok) {
-      console.error('Error checking employee exists (on submit)');
-      return false;
-    }
+    if (!res.ok) return false;
 
-    const {
-      emailExists = false,
-      phoneExists = false,
-      nationalIdExists = false,
-    } = await res.json();
-
-    setDuplicateFlags({
-      emailExists,
-      phoneExists,
-      nationalIdExists,
-    });
+    const { emailExists, phoneExists, nationalIdExists } = await res.json();
 
     let hasDuplicates = false;
 
     if (emailExists) {
       hasDuplicates = true;
-      setError('email', {
-        type: 'manual',
-        message: 'Ya existe un empleado con este email.',
-      });
+      setError('email', { type: 'manual', message: 'Ya existe un empleado con este email.' });
     }
 
     if (phoneExists) {
       hasDuplicates = true;
-      setError('phone_number', {
-        type: 'manual',
-        message: 'Ya existe un empleado con este número de teléfono.',
-      });
+      setError('phone_number', { type: 'manual', message: 'Ya existe un empleado con este número.' });
     }
 
     if (nationalIdExists) {
       hasDuplicates = true;
-      setError('national_id', {
-        type: 'manual',
-        message: 'Ya existe un empleado con este DNI.',
-      });
+      setError('national_id', { type: 'manual', message: 'Ya existe un empleado con este DNI.' });
     }
 
     if (hasDuplicates) {
       enqueueSnackbar(
-        'Ya existe un empleado con alguno de los datos ingresados (email, teléfono o DNI). Corregí los campos marcados.',
+        'Ya existe un empleado con alguno de los datos ingresados (email, teléfono, DNI).',
         { variant: 'error' }
       );
     }
@@ -350,15 +297,10 @@ export default function UserNewEditForm({ currentUser }) {
   };
 
   const onSubmit = handleSubmit(async (data) => {
+    const hasDuplicates = await validateUniqueBeforeSubmit(data);
+    if (hasDuplicates) return;
+
     try {
-      // Validar duplicados antes de mandar POST/PUT
-      const hasDuplicates = await validateUniqueBeforeSubmit(data);
-      if (hasDuplicates) {
-        return; // NO envío la solicitud hasta que el usuario corrija
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       const url = currentUser
         ? `${VITE_API_COMIDIN}/employee/${currentUser.id}`
         : `${VITE_API_COMIDIN}/employee`;
@@ -371,19 +313,10 @@ export default function UserNewEditForm({ currentUser }) {
         body: JSON.stringify(data),
       });
 
-      let responseData = null;
-      try {
-        responseData = await response.json();
-      } catch {
-        responseData = null;
-      }
+      const json = await response.json();
 
       if (!response.ok) {
-        const msg =
-          responseData?.error ||
-          responseData?.message ||
-          'Error al enviar los datos. Por favor, verificá la información.';
-        throw new Error(msg);
+        throw new Error(json?.error || json?.message || 'Error al guardar el usuario.');
       }
 
       reset();
@@ -391,12 +324,10 @@ export default function UserNewEditForm({ currentUser }) {
         currentUser ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito',
         { variant: 'success' }
       );
+
       router.push(paths.dashboard.user.list);
     } catch (error) {
-      console.error(error);
-      enqueueSnackbar(error.message || 'Ocurrió un error al guardar el usuario.', {
-        variant: 'error',
-      });
+      enqueueSnackbar(error.message, { variant: 'error' });
     }
   });
 
@@ -407,16 +338,13 @@ export default function UserNewEditForm({ currentUser }) {
 
       const maxSizeMB = 3;
       if (file.size > maxSizeMB * 1024 * 1024) {
-        enqueueSnackbar(`La imagen supera ${maxSizeMB}MB. Elegí otra más liviana.`, {
-          variant: 'error',
-        });
+        enqueueSnackbar(`La imagen supera ${maxSizeMB}MB.`, { variant: 'error' });
         return;
       }
 
       const reader = new FileReader();
       reader.onload = () => {
-        const base64 = reader.result;
-        setValue('avatar_url', base64, { shouldValidate: true });
+        setValue('avatar_url', reader.result, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     },
@@ -440,19 +368,8 @@ export default function UserNewEditForm({ currentUser }) {
                 maxSize={3145728}
                 onDrop={handleDrop}
                 helperText={
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mt: 3,
-                      mx: 'auto',
-                      display: 'block',
-                      textAlign: 'center',
-                      color: 'text.disabled',
-                    }}
-                  >
-                    Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
-                    <br />
-                    Si no elegís ninguna, se usará un avatar por defecto.
+                  <Typography variant="caption" sx={{ mt: 3, textAlign: 'center', color: 'text.disabled' }}>
+                    Podés subir JPG, PNG o GIF (máx. 3MB).
                   </Typography>
                 }
               />
@@ -466,10 +383,7 @@ export default function UserNewEditForm({ currentUser }) {
               rowGap={3}
               columnGap={2}
               display="grid"
-              gridTemplateColumns={{
-                xs: 'repeat(1, 1fr)',
-                sm: 'repeat(2, 1fr)',
-              }}
+              gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
             >
               <RHFTextField name="first_name" label="Nombre" />
               <RHFTextField name="last_name" label="Apellido" />
@@ -480,9 +394,7 @@ export default function UserNewEditForm({ currentUser }) {
                 name="country"
                 type="country"
                 label="País"
-                placeholder="Elegí un país"
-                fullWidth
-                options={countries.map((option) => option.label)}
+                options={countries.map((o) => o.label)}
                 getOptionLabel={(option) => option}
               />
 
@@ -491,40 +403,26 @@ export default function UserNewEditForm({ currentUser }) {
               <RHFTextField name="address" label="Dirección" />
               <RHFTextField name="postal_code" label="Código postal" />
 
-              {authUser.user.role_id === 1 ? (
+              {authUser.user.role_id === 1 && (
                 <RHFAutocomplete
                   name="commerce_id"
                   label="Comercio"
-                  fullWidth
                   options={commerces}
-                  getOptionLabel={(option) => option.name}
-                  onChange={(_, value) => setValue('commerce_id', value?.id || '')}
-                  value={
-                    commerces.find((commerce) => commerce.id === watch('commerce_id')) ||
-                    commerces.find((commerce) => commerce.id === currentUser?.commerce_id) ||
-                    null
-                  }
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === (value?.id || value)
-                  }
+                  getOptionLabel={(o) => o.name}
+                  onChange={(_, v) => setValue('commerce_id', v?.id || '')}
+                  value={commerces.find((c) => c.id === watch('commerce_id')) || null}
+                  isOptionEqualToValue={(o, v) => o.id === (v?.id || v)}
                 />
-              ) : null}
+              )}
 
               <RHFAutocomplete
                 name="role_id"
                 label="Rol"
-                fullWidth
                 options={roles}
-                getOptionLabel={(option) => option.name}
-                onChange={(_, value) => setValue('role_id', value?.id || '')}
-                value={
-                  roles.find((role) => role.id === watch('role_id')) ||
-                  roles.find((role) => role.id === currentUser?.role_id) ||
-                  null
-                }
-                isOptionEqualToValue={(option, value) =>
-                  option.id === (value?.id || value)
-                }
+                getOptionLabel={(o) => o.name}
+                onChange={(_, v) => setValue('role_id', v?.id || '')}
+                value={roles.find((r) => r.id === watch('role_id')) || null}
+                isOptionEqualToValue={(o, v) => o.id === (v?.id || v)}
               />
 
               {!currentUser && (
@@ -539,7 +437,7 @@ export default function UserNewEditForm({ currentUser }) {
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                {!currentUser ? 'Crear usuario' : 'Guardar cambios'}
+                {currentUser ? 'Guardar cambios' : 'Crear usuario'}
               </LoadingButton>
             </Stack>
           </Card>
