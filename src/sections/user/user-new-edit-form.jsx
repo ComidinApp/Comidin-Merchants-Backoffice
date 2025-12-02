@@ -1,27 +1,25 @@
+// src/sections/user/user-new-edit-form.jsx
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { useMemo, useCallback, useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import FormControlLabel from '@mui/material/FormControlLabel';
 
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { countries } from 'src/assets/data';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 
-import Label from 'src/components/label';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
   RHFTextField,
@@ -29,72 +27,144 @@ import FormProvider, {
   RHFAutocomplete,
 } from 'src/components/hook-form';
 
-// ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
+
+// ----------------------------------------------------------------------
+// Reglas de validación “fuertes”
+
+const phoneRegExp =
+  /^(\+?\d{1,3})?[\s\-\.]?\d{6,14}$/; // flexible pero evita cosas raras
+
+const dniRegExp = /^\d{7,9}$/; // 7 a 9 dígitos
+
+const passwordRegexp =
+  /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&_\-]{8,}$/; // 8+ caracteres, letra y número
+
+// ----------------------------------------------------------------------
 
 export default function UserNewEditForm({ currentUser }) {
   const router = useRouter();
-  const authUser = useAuthContext();
+  const auth = useAuthContext();
+  const user = auth?.user;
+
   const { enqueueSnackbar } = useSnackbar();
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
 
-  // --- Roles ---
   const [roles, setRoles] = useState([]);
+  const [commerces, setCommerces] = useState([]);
 
+  // --- Carga de roles ---
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        // ✅ consistente con backend: /api/role
         const response = await fetch(`${VITE_API_COMIDIN}/api/role`);
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
-        console.error('Error al obtener los roles:', error);
+        console.error('Error al obtener roles:', error);
       }
     };
     fetchRoles();
   }, []);
 
-  // --- Comercios ---
-  const [commerces, setCommerces] = useState([]);
-
+  // --- Carga de comercios ---
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        // ✅ consistente con backend: /api/commerce
         const response = await fetch(`${VITE_API_COMIDIN}/api/commerce`);
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
-        console.error('Error al obtener los comercios:', error);
+        console.error('Error al obtener comercios:', error);
       }
     };
     fetchCommerces();
   }, []);
 
-  // --- Validación ---
+  // --- Yup schema robusto ---
   const NewUserSchema = Yup.object().shape({
-    first_name: Yup.string().required('El nombre es obligatorio'),
-    last_name: Yup.string().required('El apellido es obligatorio'),
+    first_name: Yup.string()
+      .trim()
+      .required('El nombre es obligatorio')
+      .max(80, 'El nombre no puede superar los 80 caracteres'),
+
+    last_name: Yup.string()
+      .trim()
+      .required('El apellido es obligatorio')
+      .max(80, 'El apellido no puede superar los 80 caracteres'),
+
     email: Yup.string()
+      .trim()
       .required('El email es obligatorio')
-      .email('El email debe ser una dirección válida.'),
-    phone_number: Yup.string().required('El número de teléfono es obligatorio'),
-    address: Yup.string().required('La dirección es obligatoria'),
-    country: Yup.string().required('El país es obligatorio'),
-    commerce_id: Yup.number().required('El comercio es obligatorio'),
-    national_id: Yup.string().required('El DNI es obligatorio'),
-    city: Yup.string().required('La ciudad es obligatoria'),
-    role_id: Yup.number().required('El rol es obligatorio'),
-    postal_code: Yup.string().required('El código postal es obligatorio'),
+      .email('El email debe ser una dirección válida'),
+
+    phone_number: Yup.string()
+      .trim()
+      .required('El número de teléfono es obligatorio')
+      .matches(phoneRegExp, 'El número de teléfono no tiene un formato válido'),
+
+    address: Yup.string()
+      .trim()
+      .required('La dirección es obligatoria')
+      .max(160, 'La dirección es demasiado larga'),
+
+    country: Yup.string()
+      .trim()
+      .required('El país es obligatorio'),
+
+    commerce_id: Yup.number()
+      .typeError('Debés seleccionar un comercio')
+      .integer('Comercio inválido')
+      .positive('Comercio inválido')
+      .required('El comercio es obligatorio'),
+
+    national_id: Yup.string()
+      .trim()
+      .required('El DNI es obligatorio')
+      .matches(dniRegExp, 'El DNI debe tener solo números (7 a 9 dígitos)'),
+
+    city: Yup.string()
+      .trim()
+      .required('La ciudad es obligatoria')
+      .max(80, 'La ciudad es demasiado larga'),
+
+    role_id: Yup.number()
+      .typeError('Debés seleccionar un rol')
+      .integer('Rol inválido')
+      .positive('Rol inválido')
+      .required('El rol es obligatorio'),
+
+    postal_code: Yup.string()
+      .trim()
+      .required('El código postal es obligatorio')
+      .max(20, 'El código postal es demasiado largo'),
+
     ...(currentUser
       ? {}
-      : { password: Yup.string().required('La contraseña es obligatoria') }),
-    avatar_url: Yup.mixed().nullable().required('El avatar es obligatorio'),
-    status: Yup.string(),
+      : {
+          password: Yup.string()
+            .required('La contraseña es obligatoria')
+            .matches(
+              passwordRegexp,
+              'La contraseña debe tener al menos 8 caracteres, incluyendo letras y números'
+            ),
+        }),
+
+    avatar_url: Yup.mixed()
+      .nullable()
+      .test('required', 'El avatar es obligatorio', (value) => {
+        if (!value) return false;
+        if (typeof value === 'string') return value.trim().length > 0;
+        if (value instanceof File) return true;
+        if (value?.preview) return true;
+        return false;
+      }),
+
+    status: Yup.string().oneOf(['active', 'pending', 'banned']).optional(),
   });
 
+  // --- Avatar random por defecto ---
   const getRandomAvatarImage = useCallback(() => {
     const avatarImages = [
       `${assets_url}fries.png`,
@@ -132,7 +202,6 @@ export default function UserNewEditForm({ currentUser }) {
       commerce_id: currentUser?.commerce_id || '',
       avatar_url: currentUser?.avatar_url || getRandomAvatarImage(),
       phone_number: currentUser?.phone_number || '',
-      /* isVerified: currentUser?.isVerified || true, */
     }),
     [currentUser, getRandomAvatarImage]
   );
@@ -145,19 +214,16 @@ export default function UserNewEditForm({ currentUser }) {
   const {
     reset,
     watch,
-    control,
     setValue,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  // --- Submit ---
+  // --- submit ---
   const onSubmit = handleSubmit(async (data) => {
     try {
-      // pequeño delay para UX
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // ✅ consistente con backend: /api/employee
       const url = currentUser
         ? `${VITE_API_COMIDIN}/api/employee/${currentUser.id}`
         : `${VITE_API_COMIDIN}/api/employee`;
@@ -173,11 +239,13 @@ export default function UserNewEditForm({ currentUser }) {
       });
 
       if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        console.error('Respuesta de error del backend:', errText);
         throw new Error('Error al enviar los datos al servidor');
       }
 
       const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
+      console.log('Respuesta del servidor (user-new-edit):', responseData);
 
       reset();
       enqueueSnackbar(
@@ -187,12 +255,12 @@ export default function UserNewEditForm({ currentUser }) {
       router.push(paths.dashboard.user.list);
       console.info('DATA', data);
     } catch (error) {
-      console.error('Error al guardar el usuario:', error);
-      enqueueSnackbar('Error al guardar el usuario', { variant: 'error' });
+      console.error('Error en el submit de usuario:', error);
+      enqueueSnackbar('Ocurrió un error al guardar el usuario', { variant: 'error' });
     }
   });
 
-  // --- Avatar drop ---
+  // --- drop de avatar ---
   const handleDrop = useCallback(
     (acceptedFiles) => {
       const file = acceptedFiles[0];
@@ -208,12 +276,12 @@ export default function UserNewEditForm({ currentUser }) {
     [setValue]
   );
 
-  // Si no es admin global, forzamos commerce_id al del usuario logueado
+  // --- si el usuario logueado no es admin global, fijar comercio por defecto ---
   useEffect(() => {
-    if (authUser.user.role_id !== 1) {
-      setValue('commerce_id', authUser.user.commerce.id);
+    if (user?.role_id !== 1 && user?.commerce?.id) {
+      setValue('commerce_id', user.commerce.id);
     }
-  }, [authUser.user.role_id, authUser.user.commerce.id, setValue]);
+  }, [user?.role_id, user?.commerce?.id, setValue]);
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
@@ -236,45 +304,11 @@ export default function UserNewEditForm({ currentUser }) {
                       color: 'text.disabled',
                     }}
                   >
-                    {/* Podés subir imágenes *.jpeg, *.jpg, *.png, *.gif
-                    <br /> tamaño máximo 3MB */}
+                    Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
                   </Typography>
                 }
               />
             </Box>
-
-            {/* Bloque de estado / baneado (por ahora comentado, en inglés) */}
-            {/* {currentUser && (
-              <FormControlLabel
-                labelPlacement="start"
-                control={
-                  <Controller
-                    name="status"
-                    control={control}
-                    render={({ field }) => (
-                      <Switch
-                        {...field}
-                        checked={field.value !== 'active'}
-                        onChange={(event) =>
-                          field.onChange(event.target.checked ? 'banned' : 'active')
-                        }
-                      />
-                    )}
-                  />
-                }
-                label={
-                  <>
-                    <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                      Bloqueado
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Aplicar bloqueo a la cuenta
-                    </Typography>
-                  </>
-                }
-                sx={{ mx: 0, mb: 3, width: 1, justifyContent: 'space-between' }}
-              />
-            )} */}
           </Card>
         </Grid>
 
@@ -309,8 +343,7 @@ export default function UserNewEditForm({ currentUser }) {
               <RHFTextField name="address" label="Dirección" />
               <RHFTextField name="postal_code" label="Código postal" />
 
-              {/* Solo admin global puede elegir comercio */}
-              {authUser.user.role_id === 1 ? (
+              {user?.role_id === 1 && (
                 <RHFAutocomplete
                   name="commerce_id"
                   label="Comercio"
@@ -325,7 +358,7 @@ export default function UserNewEditForm({ currentUser }) {
                   }
                   isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
                 />
-              ) : null}
+              )}
 
               <RHFAutocomplete
                 name="role_id"
