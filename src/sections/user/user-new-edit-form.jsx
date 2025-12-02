@@ -8,7 +8,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -32,13 +31,16 @@ const { VITE_API_COMIDIN } = import.meta.env;
 // ----------------------------------------------------------------------
 // Reglas de validación “fuertes”
 
-const phoneRegExp =
-  /^(\+?\d{1,3})?[\s\-\.]?\d{6,14}$/; // flexible pero evita cosas raras
+// flexible pero evita cosas raras (espacio, - o . en el medio, sin escapes inútiles)
+const phoneRegExp = /^(\+?\d{1,3})?[\s.-]?\d{6,14}$/;
 
-const dniRegExp = /^\d{7,9}$/; // 7 a 9 dígitos
+// 7 a 9 dígitos
+const dniRegExp = /^\d{7,9}$/;
 
+// 8+ caracteres, al menos una letra y un número
+// el guion va al final del grupo para no tener que escaparlo
 const passwordRegexp =
-  /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&_\-]{8,}$/; // 8+ caracteres, letra y número
+  /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&_ -]{8,}$/;
 
 // ----------------------------------------------------------------------
 
