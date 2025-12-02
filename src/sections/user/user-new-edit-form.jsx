@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
@@ -31,14 +32,10 @@ const { VITE_API_COMIDIN } = import.meta.env;
 // ----------------------------------------------------------------------
 // Reglas de validación “fuertes”
 
-// flexible pero evita cosas raras (espacio, - o . en el medio, sin escapes inútiles)
-const phoneRegExp = /^(\+?\d{1,3})?[\s.-]?\d{6,14}$/;
-
-// 7 a 9 dígitos
-const dniRegExp = /^\d{7,9}$/;
+const phoneRegExp = /^(\+?\d{1,3})?[\s.-]?\d{6,14}$/; // flexible, pero razonable
+const dniRegExp = /^\d{7,9}$/; // 7–9 dígitos
 
 // 8+ caracteres, al menos una letra y un número
-// el guion va al final del grupo para no tener que escaparlo
 const passwordRegexp =
   /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&_ -]{8,}$/;
 
@@ -153,20 +150,14 @@ export default function UserNewEditForm({ currentUser }) {
             ),
         }),
 
-    avatar_url: Yup.mixed()
-      .nullable()
-      .test('required', 'El avatar es obligatorio', (value) => {
-        if (!value) return false;
-        if (typeof value === 'string') return value.trim().length > 0;
-        if (value instanceof File) return true;
-        if (value?.preview) return true;
-        return false;
-      }),
+    // AVATAR OPCIONAL → el front siempre envía algo (random o base64),
+    // pero no obligamos al usuario a subir uno.
+    avatar_url: Yup.mixed().nullable(),
 
     status: Yup.string().oneOf(['active', 'pending', 'banned']).optional(),
   });
 
-  // --- Avatar random por defecto ---
+  // --- Avatar random por defecto (si no sube nada) ---
   const getRandomAvatarImage = useCallback(() => {
     const avatarImages = [
       `${assets_url}fries.png`,
@@ -202,6 +193,8 @@ export default function UserNewEditForm({ currentUser }) {
       country: currentUser?.country || '',
       postal_code: currentUser?.postal_code || '',
       commerce_id: currentUser?.commerce_id || '',
+      // si es nuevo → avatar random por defecto
+      // si edita → el que ya tiene
       avatar_url: currentUser?.avatar_url || getRandomAvatarImage(),
       phone_number: currentUser?.phone_number || '',
     }),
@@ -262,18 +255,18 @@ export default function UserNewEditForm({ currentUser }) {
     }
   });
 
-  // --- drop de avatar ---
+  // --- drop de avatar: convertimos a BASE64 para el backend ---
   const handleDrop = useCallback(
     (acceptedFiles) => {
       const file = acceptedFiles[0];
+      if (!file) return;
 
-      const newFile = Object.assign(file, {
-        preview: URL.createObjectURL(file),
-      });
-
-      if (file) {
-        setValue('avatar_url', newFile, { shouldValidate: true });
-      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result; // data:image/...;base64,...
+        setValue('avatar_url', base64, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
     },
     [setValue]
   );
@@ -306,7 +299,8 @@ export default function UserNewEditForm({ currentUser }) {
                       color: 'text.disabled',
                     }}
                   >
-                    Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
+                    Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).  
+                    Si no elegís ninguna, se usará un avatar por defecto.
                   </Typography>
                 }
               />
