@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
@@ -44,6 +45,11 @@ import FormProvider, {
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
+
+// Tamaño máximo de imagen: 3MB
+const MAX_IMAGE_SIZE_MB = 3;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+
 export default function CommerceNewEditForm({ currentCommerce }) {
   const router = useRouter();
 
@@ -54,6 +60,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   const [includeTaxes, setIncludeTaxes] = useState(false);
 
   const [commerces, setCommerces] = useState([]);
+
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
@@ -61,13 +68,14 @@ export default function CommerceNewEditForm({ currentCommerce }) {
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error al obtener comercios:', error);
       }
     };
     fetchCommerces();
   }, []);
 
   const [commerce_categories, setCommerceCategories] = useState([]);
+
   useEffect(() => {
     const fetchCommerceCategories = async () => {
       try {
@@ -75,26 +83,26 @@ export default function CommerceNewEditForm({ currentCommerce }) {
         const data = await response.json();
         setCommerceCategories(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error al obtener categorías de comercio:', error);
       }
     };
     fetchCommerceCategories();
   }, []);
 
   const NewCommerceSchema = Yup.object().shape({
-    name: Yup.string().required('Name is required'),
-    description: Yup.string().required('Description is required'),
-    image_url: Yup.array().min(1, 'Images is required'),
-    commerce_category_id: Yup.number().required('Commerce category is required'),
-    commerce_id: Yup.number().required('Commerce is required'),
-    commerce_code: Yup.string().required('Commerce Code is required'),
+    name: Yup.string().required('El nombre es requerido'),
+    description: Yup.string().required('La descripción es requerida'),
+    image_url: Yup.array().min(1, 'La imagen es requerida'),
+    commerce_category_id: Yup.number().required('La categoría de comercio es requerida'),
+    commerce_id: Yup.number().required('El comercio es requerido'),
+    commerce_code: Yup.string().required('El código de comercio es requerido'),
   });
 
   const defaultValues = useMemo(
     () => ({
       name: currentCommerce?.name || '',
       description: currentCommerce?.description || '',
-      image_url: [currentCommerce?.image_url] || [],
+      image_url: currentCommerce?.image_url ? [currentCommerce.image_url] : [],
       commerce_code: currentCommerce?.commerce_code || '',
       commerce_id: currentCommerce?.commerce_id || '',
       commerce_category_id: currentCommerce?.commerce_category_id || '',
@@ -132,6 +140,8 @@ export default function CommerceNewEditForm({ currentCommerce }) {
         : `${VITE_API_COMIDIN}/commerce`;
 
       const method = currentCommerce ? 'PUT' : 'POST';
+
+      // Si estamos editando, image_url viene como array, tomamos el primero
       data.image_url = currentCommerce ? data.image_url[0] : data.image_url;
 
       const response = await fetch(url, {
@@ -143,18 +153,24 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar los datos');
+        throw new Error('Error al enviar los datos. Por favor, verificá la información.');
       }
 
       const responseData = await response.json();
       console.log('Respuesta del servidor:', responseData);
 
       reset();
-      enqueueSnackbar(currentCommerce ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(
+        currentCommerce ? 'Comercio actualizado con éxito' : 'Comercio creado con éxito',
+        { variant: 'success' }
+      );
       router.push(paths.dashboard.commerce.root);
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar(error.message || 'Ocurrió un error al guardar el comercio.', {
+        variant: 'error',
+      });
     }
   });
 
@@ -180,23 +196,36 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
   const handleDrop = useCallback(
     async (acceptedFiles) => {
-      const files = values.images || [];
+      const files = values.image_url || [];
 
       if (files.length >= 1) {
         enqueueSnackbar('Solo se permite una imagen', { variant: 'warning' });
         return;
       }
 
-      const newFiles = await handleFiles(acceptedFiles); // Espera la resolución de la promesa
+      if (!acceptedFiles || acceptedFiles.length === 0) return;
+
+      // Validar tamaño máximo antes de procesar
+      const hasBigFile = acceptedFiles.some((file) => file.size > MAX_IMAGE_SIZE_BYTES);
+      if (hasBigFile) {
+        enqueueSnackbar(
+          `La imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
+          { variant: 'error' }
+        );
+        return; // No agregamos la imagen ni dejamos que quede "cargada"
+      }
+
+      const newFiles = await handleFiles(acceptedFiles);
 
       setValue('image_url', [...files, ...newFiles], { shouldValidate: true });
     },
-    [setValue, values.images, enqueueSnackbar]
+    [setValue, values.image_url, enqueueSnackbar]
   );
 
   const handleRemoveFile = useCallback(
     (inputFile) => {
-      const filtered = values.image_url && values.image_url?.filter((file) => file !== inputFile);
+      const filtered =
+        values.image_url && values.image_url?.filter((file) => file !== inputFile);
       setValue('image_url', filtered);
     },
     [setValue, values.image_url]
@@ -218,24 +247,19 @@ export default function CommerceNewEditForm({ currentCommerce }) {
             Detalles
           </Typography>
           {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Title, short description, image...
+            Título, descripción corta, imagen...
           </Typography> */}
         </Grid>
       )}
 
       <Grid xs={12} md={8}>
         <Card>
-          {!mdUp && <CardHeader title="Details" />}
+          {!mdUp && <CardHeader title="Detalles" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label="Nombre del Comercio" />
+            <RHFTextField name="name" label="Nombre del comercio" />
 
-            <RHFTextField name="description" label="Descripcion" multiline rows={4} />
-
-            {/* <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Content</Typography>
-              <RHFEditor simple name="description" />
-            </Stack> */}
+            <RHFTextField name="description" label="Descripción" multiline rows={4} />
 
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">Imagen</Typography>
@@ -243,7 +267,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 multiple
                 thumbnail
                 name="image_url"
-                maxSize={3145728}
+                maxSize={MAX_IMAGE_SIZE_BYTES}
                 onDrop={handleDrop}
                 onRemove={handleRemoveFile}
                 onRemoveAll={handleRemoveAllFiles}
@@ -263,15 +287,12 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           <Typography variant="h6" sx={{ mb: 0.5 }}>
             Propiedades
           </Typography>
-          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Additional functions and attributes...
-          </Typography> */}
         </Grid>
       )}
 
       <Grid xs={12} md={8}>
         <Card>
-          {!mdUp && <CardHeader title="Properties" />}
+          {!mdUp && <CardHeader title="Propiedades" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <Box
@@ -283,7 +304,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <RHFTextField name="commerce_code" label="Codigo de Comercio" />
+              <RHFTextField name="commerce_code" label="Código de comercio" />
 
               <RHFAutocomplete
                 name="commerce_id"
@@ -298,7 +319,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
               <RHFAutocomplete
                 name="commerce_category_id"
-                label="Categoria del commerce"
+                label="Categoría del comercio"
                 fullWidth
                 options={commerce_categories}
                 getOptionLabel={(option) => option.name}
@@ -310,92 +331,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 }
                 isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
               />
-
-              {/* <RHFTextField name="sku" label="Commerce SKU" />
-
-              <RHFTextField
-                name="quantity"
-                label="Quantity"
-                placeholder="0"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-              /> */}
-
-              {/* <RHFSelect native name="category" label="Category" InputLabelProps={{ shrink: true }}>
-                {COMMERCE_CATEGORY_GROUP_OPTIONS.map((category) => (
-                  <optgroup key={category.group} label={category.group}>
-                    {category.classify.map((classify) => (
-                      <option key={classify} value={classify}>
-                        {classify}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </RHFSelect>
-
-              <RHFMultiSelect
-                checkbox
-                name="colors"
-                label="Colors"
-                options={COMMERCE_COLOR_NAME_OPTIONS}
-              /> */}
-
-              {/* <RHFMultiSelect checkbox name="sizes" label="Sizes" options={COMMERCE_SIZE_OPTIONS} /> */}
             </Box>
-
-            {/* <RHFAutocomplete
-              name="tags"
-              label="Tags"
-              placeholder="+ Tags"
-              multiple
-              freeSolo
-              options={_tags.map((option) => option)}
-              getOptionLabel={(option) => option}
-              renderOption={(props, option) => (
-                <li {...props} key={option}>
-                  {option}
-                </li>
-              )}
-              renderTags={(selected, getTagProps) =>
-                selected.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={option}
-                    size="small"
-                    color="info"
-                    variant="soft"
-                  />
-                ))
-              }
-            /> */}
-
-            {/* <Stack spacing={1}>
-              <Typography variant="subtitle2">Gender</Typography>
-              <RHFMultiCheckbox row name="gender" spacing={2} options={COMMERCE_GENDER_OPTIONS} />
-            </Stack> */}
-
-            {/* <Divider sx={{ borderStyle: 'dashed' }} />
-
-            <Stack direction="row" alignItems="center" spacing={3}>
-              <RHFSwitch name="saleLabel.enabled" label={null} sx={{ m: 0 }} />
-              <RHFTextField
-                name="saleLabel.content"
-                label="Sale Label"
-                fullWidth
-                disabled={!values.saleLabel.enabled}
-              />
-            </Stack>
-
-            <Stack direction="row" alignItems="center" spacing={3}>
-              <RHFSwitch name="newLabel.enabled" label={null} sx={{ m: 0 }} />
-              <RHFTextField
-                name="newLabel.content"
-                label="New Label"
-                fullWidth
-                disabled={!values.newLabel.enabled}
-              />
-            </Stack> */}
           </Stack>
         </Card>
       </Grid>
@@ -407,22 +343,22 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       {mdUp && (
         <Grid md={4}>
           <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Pricing
+            Precios
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Price related inputs
+            Campos relacionados al precio
           </Typography>
         </Grid>
       )}
 
       <Grid xs={12} md={8}>
         <Card>
-          {!mdUp && <CardHeader title="Pricing" />}
+          {!mdUp && <CardHeader title="Precios" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <RHFTextField
               name="price"
-              label="Regular Price"
+              label="Precio regular"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
@@ -439,7 +375,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
             <RHFTextField
               name="priceSale"
-              label="Sale Price"
+              label="Precio en oferta"
               placeholder="0.00"
               type="number"
               InputLabelProps={{ shrink: true }}
@@ -456,13 +392,13 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
             <FormControlLabel
               control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
-              label="Price includes taxes"
+              label="El precio incluye impuestos"
             />
 
             {!includeTaxes && (
               <RHFTextField
                 name="taxes"
-                label="Tax (%)"
+                label="Impuestos (%)"
                 placeholder="0.00"
                 type="number"
                 InputLabelProps={{ shrink: true }}
@@ -487,10 +423,8 @@ export default function CommerceNewEditForm({ currentCommerce }) {
     <>
       {mdUp && <Grid md={4} />}
       <Grid xs={12} md={8} sx={{ display: 'flex', alignItems: 'center' }}>
-        {/* <FormControlLabel control={<Switch defaultChecked />} sx={{ flexGrow: 1, pl: 3 }} /> */}
-
         <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-          {!currentCommerce ? 'Create Commerce' : 'Save Changes'}
+          {!currentCommerce ? 'Crear comercio' : 'Guardar cambios'}
         </LoadingButton>
       </Grid>
     </>
@@ -503,6 +437,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
         {renderProperties}
 
+        {/* Si más adelante querés usar precios, solo descomentá esta línea */}
         {/* {renderPricing} */}
 
         {renderActions}
