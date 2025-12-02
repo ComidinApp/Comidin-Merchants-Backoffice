@@ -20,8 +20,6 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { _roles, _userList, USER_STATUS_OPTIONS } from 'src/_mock';
-
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
@@ -48,7 +46,13 @@ import UserTableFiltersResult from '../user-table-filters-result';
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-const STATUS_OPTIONS = [{ value: 'all', label: 'Todos' }, ...USER_STATUS_OPTIONS];
+// Opciones de estado en ESPAÑOL y alineadas a los valores del backend
+const STATUS_OPTIONS = [
+  { value: 'all',     label: 'Todos' },
+  { value: 'active',  label: 'Activos' },
+  { value: 'pending', label: 'Pendientes' },
+  { value: 'banned',  label: 'Bloqueados' },
+];
 
 const defaultFilters = {
   name: '',
@@ -65,7 +69,7 @@ export default function UserListView() {
 
   const TABLE_HEAD = [
     { id: 'name', label: 'Nombre' },
-    { id: 'phoneNumber', label: 'Telefono', width: 180 },
+    { id: 'phoneNumber', label: 'Teléfono', width: 180 },
     ...(authUser.user.role_id === 1 ? [{ id: 'company', label: 'Comercio', width: 220 }] : []),
     { id: 'role', label: 'Rol', width: 180 },
     { id: 'status', label: 'Estado', width: 100 },
@@ -116,14 +120,15 @@ export default function UserListView() {
 
   const [roles, setRoles] = useState([]);
 
+  // RUTAS BACKEND: usamos /api/role
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch(`${VITE_API_COMIDIN}/role`);
+        const response = await fetch(`${VITE_API_COMIDIN}/api/role`);
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error al obtener los roles:', error);
       }
     };
 
@@ -132,38 +137,26 @@ export default function UserListView() {
 
   const roleNames = roles.map((role) => role.name);
 
-  /* const fetchUserData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${VITE_API_COMIDIN}/employee`);
-      setTableData(Array.isArray(response?.data) ? response.data : []);
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.error('Error fetching user data:', error);
-      enqueueSnackbar('Error fetching user data', { variant: 'error' });
-    }
-  }, [enqueueSnackbar, setLoading]); */
-
+  // RUTAS BACKEND: usamos /api/employee y /api/employee/commerce/:id
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
 
-      let url = `${VITE_API_COMIDIN}/employee`;
+      let url = `${VITE_API_COMIDIN}/api/employee`;
 
+      // Si NO es admin global, trae solo empleados de su comercio
       if (authUser.user.role_id !== 1) {
-        url = `${VITE_API_COMIDIN}/employee/commerce/${authUser.user.commerce.id}`;
+        url = `${VITE_API_COMIDIN}/api/employee/commerce/${authUser.user.commerce.id}`;
       }
 
       const response = await axios.get(url);
-      console.log(response);
       setTableData(Array.isArray(response?.data) ? response.data : []);
 
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.error('Error fetching user data:', error);
-      enqueueSnackbar('Error fetching user data', { variant: 'error' });
+      console.error('Error al obtener los usuarios:', error);
+      enqueueSnackbar('Error al obtener los usuarios', { variant: 'error' });
     }
   }, [authUser, enqueueSnackbar, setLoading]);
 
@@ -174,14 +167,14 @@ export default function UserListView() {
   const handleDeleteRow = useCallback(
     async (id) => {
       try {
-        // Realiza la eliminación en el backend
-        await axios.delete(`${VITE_API_COMIDIN}/employee/${id}`);
+        // Eliminar en backend
+        await axios.delete(`${VITE_API_COMIDIN}/api/employee/${id}`);
 
-        // Actualiza el estado de los datos después de la eliminación
+        // Actualizar estado local
         const deleteRow = tableData.filter((row) => row.id !== id);
         setTableData(deleteRow);
 
-        enqueueSnackbar('Usuario eliminado con éxito');
+        enqueueSnackbar('Usuario eliminado con éxito', { variant: 'success' });
       } catch (error) {
         console.error('Error al eliminar el usuario:', error);
         enqueueSnackbar('Error al eliminar el usuario', { variant: 'error' });
@@ -194,17 +187,16 @@ export default function UserListView() {
 
   const handleDeleteRows = useCallback(async () => {
     try {
-      // Elimina los usuarios seleccionados
       const selectedIds = table.selected;
+
       await Promise.all(
-        selectedIds.map((id) => axios.delete(`${VITE_API_COMIDIN}/employee/${id}`))
+        selectedIds.map((id) => axios.delete(`${VITE_API_COMIDIN}/api/employee/${id}`))
       );
 
-      // Actualiza el estado después de la eliminación
       const deleteRows = tableData.filter((row) => !selectedIds.includes(row.id));
       setTableData(deleteRows);
 
-      enqueueSnackbar('Usuarios eliminados con éxito');
+      enqueueSnackbar('Usuarios eliminados con éxito', { variant: 'success' });
     } catch (error) {
       console.error('Error al eliminar los usuarios:', error);
       enqueueSnackbar('Error al eliminar los usuarios', { variant: 'error' });
@@ -238,7 +230,7 @@ export default function UserListView() {
     <>
       <Container maxWidth={settings.themeStretch ? false : 'lg'}>
         <CustomBreadcrumbs
-          heading="Lista de Usuarios"
+          heading="Lista de usuarios"
           links={[{ name: '' }]}
           action={
             <Button
@@ -247,7 +239,7 @@ export default function UserListView() {
               variant="contained"
               startIcon={<Iconify icon="mingcute:add-line" />}
             >
-              Agregar Usuario
+              Agregar usuario
             </Button>
           }
           sx={{
@@ -317,7 +309,7 @@ export default function UserListView() {
                 )
               }
               action={
-                <Tooltip title="Delete">
+                <Tooltip title="Eliminar">
                   <IconButton color="primary" onClick={confirm.onTrue}>
                     <Iconify icon="solar:trash-bin-trash-bold" />
                   </IconButton>
@@ -385,10 +377,12 @@ export default function UserListView() {
       <ConfirmDialog
         open={confirm.value}
         onClose={confirm.onFalse}
-        title="Delete"
+        title="Eliminar usuarios"
         content={
           <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> items?
+            ¿Estás seguro de que querés eliminar{' '}
+            <strong>{table.selected.length}</strong>{' '}
+            {table.selected.length === 1 ? 'usuario' : 'usuarios'}?
           </>
         }
         action={
@@ -400,7 +394,7 @@ export default function UserListView() {
               confirm.onFalse();
             }}
           >
-            Delete
+            Eliminar
           </Button>
         }
       />

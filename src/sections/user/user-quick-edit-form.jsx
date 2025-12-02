@@ -1,8 +1,9 @@
 import * as Yup from 'yup';
-import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
@@ -14,42 +15,47 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 
 import { countries } from 'src/assets/data';
-import { USER_STATUS_OPTIONS } from 'src/_mock';
-import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
-
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
   RHFSelect,
   RHFTextField,
   RHFAutocomplete,
-  RHFUploadAvatar,
 } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
+
+// Opciones de estado en español
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'Activo' },
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'banned', label: 'Bloqueado' },
+];
+
 export default function UserQuickEditForm({ currentUser, open, onClose }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const [roles, setRoles] = useState([]);
   const [commerces, setCommerces] = useState([]);
 
+  // --- Carga de roles y comercios (rutas /api/...) ---
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch(`${VITE_API_COMIDIN}/role`);
+        const response = await fetch(`${VITE_API_COMIDIN}/api/role`);
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error al obtener los roles:', error);
       }
     };
 
     const fetchCommerces = async () => {
       try {
-        const response = await fetch(`${VITE_API_COMIDIN}/commerce`);
+        const response = await fetch(`${VITE_API_COMIDIN}/api/commerce`);
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
-        console.error('Error fetching commerces:', error);
+        console.error('Error al obtener los comercios:', error);
       }
     };
 
@@ -57,21 +63,24 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
     fetchCommerces();
   }, []);
 
+  // --- Validación ---
   const NewUserSchema = Yup.object().shape({
-    first_name: Yup.string().required('Nombre es requerido'),
-    last_name: Yup.string().required('Apellido es requerido'),
+    first_name: Yup.string().required('El nombre es obligatorio'),
+    last_name: Yup.string().required('El apellido es obligatorio'),
     email: Yup.string()
-      .required('Email es requerido')
-      .email('Email debe ser una direccion valida.'),
-    phone_number: Yup.string().required('Phone number is required'),
-    address: Yup.string().required('Direccion es requerida'),
-    country: Yup.string().required('Pais es requerido'),
-    commerce_id: Yup.number().required('Comercio es requerido'),
-    national_id: Yup.string().required('DNI es requerido'),
-    city: Yup.string().required('Ciudad es requerida'),
-    role_id: Yup.number().required('Rol es requerido'),
-    postal_code: Yup.string().required('Codigo postal es requerido'),
-    ...(currentUser ? {} : { password: Yup.string().required('Contraseña es requerida') }),
+      .required('El email es obligatorio')
+      .email('El email debe ser una dirección válida.'),
+    phone_number: Yup.string().required('El número de teléfono es obligatorio'),
+    address: Yup.string().required('La dirección es obligatoria'),
+    country: Yup.string().required('El país es obligatorio'),
+    commerce_id: Yup.number().required('El comercio es obligatorio'),
+    national_id: Yup.string().required('El DNI es obligatorio'),
+    city: Yup.string().required('La ciudad es obligatoria'),
+    role_id: Yup.number().required('El rol es obligatorio'),
+    postal_code: Yup.string().required('El código postal es obligatorio'),
+    ...(currentUser
+      ? {}
+      : { password: Yup.string().required('La contraseña es obligatoria') }),
     status: Yup.string(),
   });
 
@@ -106,12 +115,14 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
     formState: { isSubmitting },
   } = methods;
 
+  // --- Submit (rutas /api/employee) ---
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const url = currentUser
-        ? `${VITE_API_COMIDIN}/employee/${currentUser.id}`
-        : `${VITE_API_COMIDIN}/employee`;
+        ? `${VITE_API_COMIDIN}/api/employee/${currentUser.id}`
+        : `${VITE_API_COMIDIN}/api/employee`;
 
       const method = currentUser ? 'PUT' : 'POST';
 
@@ -124,32 +135,21 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar los datos');
+        throw new Error('Error al enviar los datos al servidor');
       }
 
       const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
+      console.log('Respuesta del servidor (quick edit):', responseData);
+
       reset();
       onClose();
-      enqueueSnackbar('Update success!');
-      console.info('DATA', data);
+      enqueueSnackbar('Usuario actualizado con éxito', { variant: 'success' });
+      console.info('DATA (quick edit)', data);
     } catch (error) {
-      console.error(error);
+      console.error('Error al actualizar el usuario:', error);
+      enqueueSnackbar('Error al actualizar el usuario', { variant: 'error' });
     }
   });
-
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const file = acceptedFiles[0];
-      const newFile = Object.assign(file, { preview: URL.createObjectURL(file) });
-
-      if (file) {
-        setValue('avatar_url', newFile, { shouldValidate: true });
-      }
-    },
-    [setValue]
-  );
-  console.log(currentUser);
 
   return (
     <Dialog
@@ -160,11 +160,11 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
       PaperProps={{ sx: { maxWidth: 720 } }}
     >
       <FormProvider methods={methods} onSubmit={onSubmit}>
-        <DialogTitle>Quick Update</DialogTitle>
+        <DialogTitle>Edición rápida de usuario</DialogTitle>
 
         <DialogContent>
           <Alert variant="outlined" severity="info" sx={{ mb: 3 }}>
-            Antes de guardar los cambios, verifique que toda la información sea correcta.
+            Antes de guardar los cambios, verificá que toda la información sea correcta.
           </Alert>
 
           <Box
@@ -173,8 +173,8 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
             display="grid"
             gridTemplateColumns={{ xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)' }}
           >
-            <RHFSelect name="status" label="Status">
-              {USER_STATUS_OPTIONS.map((status) => (
+            <RHFSelect name="status" label="Estado">
+              {STATUS_OPTIONS.map((status) => (
                 <MenuItem key={status.value} value={status.value}>
                   {status.label}
                 </MenuItem>
@@ -184,21 +184,21 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
             <RHFTextField name="first_name" label="Nombre" />
             <RHFTextField name="last_name" label="Apellido" />
             <RHFTextField name="email" label="Email" />
-            <RHFTextField name="phone_number" label="Numero de Telefono" />
+            <RHFTextField name="phone_number" label="Número de teléfono" />
 
             <RHFAutocomplete
               name="country"
               type="country"
-              label="Pais"
-              placeholder="Elije un pais"
+              label="País"
+              placeholder="Elegí un país"
               fullWidth
               options={countries.map((option) => option.label)}
               getOptionLabel={(option) => option}
             />
 
             <RHFTextField name="city" label="Ciudad" />
-            <RHFTextField name="address" label="Address" />
-            <RHFTextField name="postal_code" label="Codigo Postal" />
+            <RHFTextField name="address" label="Dirección" />
+            <RHFTextField name="postal_code" label="Código postal" />
 
             <RHFAutocomplete
               name="commerce_id"
@@ -234,10 +234,10 @@ export default function UserQuickEditForm({ currentUser, open, onClose }) {
 
         <DialogActions>
           <Button variant="outlined" onClick={onClose}>
-            Cancel
+            Cancelar
           </Button>
           <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-            Update
+            Guardar cambios
           </LoadingButton>
         </DialogActions>
       </FormProvider>

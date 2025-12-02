@@ -12,7 +12,6 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
-import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -25,16 +24,22 @@ import UserQuickEditForm from './user-quick-edit-form';
 
 export default function UserTableRow({ row, selected, onEditRow, onSelectRow, onDeleteRow }) {
   const { first_name, avatar_url, last_name, commerce, role, status, email, phone_number } = row;
-  console.log(row);
+
   const confirm = useBoolean();
-
   const authUser = useAuthContext();
-
   const quickEdit = useBoolean();
-
   const popover = usePopover();
 
-  const assets_url = VITE_S3_ASSETS_AVATAR;
+  const statusLower = (status || '').toLowerCase();
+
+  const statusLabel =
+    statusLower === 'active'
+      ? 'Activo'
+      : statusLower === 'pending'
+      ? 'Pendiente'
+      : statusLower === 'banned'
+      ? 'Bloqueado'
+      : status || 'Desconocido';
 
   return (
     <>
@@ -44,7 +49,7 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
         </TableCell>
 
         <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar alt={first_name} src={`${avatar_url}`} sx={{ mr: 2 }} />
+          <Avatar alt={first_name} src={avatar_url} sx={{ mr: 2 }} />
 
           <ListItemText
             primary={`${first_name} ${last_name}`}
@@ -60,27 +65,27 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{phone_number}</TableCell>
 
         {authUser.user.role_id === 1 && (
-          <TableCell sx={{ whiteSpace: 'nowrap' }}>{commerce.name}</TableCell>
+          <TableCell sx={{ whiteSpace: 'nowrap' }}>{commerce?.name || '-'}</TableCell>
         )}
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{role.name}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>{role?.name || '-'}</TableCell>
 
         <TableCell>
           <Label
             variant="soft"
             color={
-              (status.toLowerCase() === 'active' && 'success') ||
-              (status.toLowerCase() === 'pending' && 'warning') ||
-              (status.toLowerCase() === 'banned' && 'error') ||
+              (statusLower === 'active' && 'success') ||
+              (statusLower === 'pending' && 'warning') ||
+              (statusLower === 'banned' && 'error') ||
               'default'
             }
           >
-            {status}
+            {statusLabel}
           </Label>
         </TableCell>
 
         <TableCell align="right" sx={{ px: 1, whiteSpace: 'nowrap' }}>
-          <Tooltip title="Quick Edit" placement="top" arrow>
+          <Tooltip title="Edición rápida" placement="top" arrow>
             <IconButton color={quickEdit.value ? 'inherit' : 'default'} onClick={quickEdit.onTrue}>
               <Iconify icon="solar:pen-bold" />
             </IconButton>
@@ -98,7 +103,7 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
         open={popover.open}
         onClose={popover.onClose}
         arrow="right-top"
-        sx={{ width: 140 }}
+        sx={{ width: 160 }}
       >
         <MenuItem
           onClick={() => {
@@ -108,7 +113,7 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
           sx={{ color: 'error.main' }}
         >
           <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
+          Eliminar
         </MenuItem>
 
         <MenuItem
@@ -118,18 +123,18 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
           }}
         >
           <Iconify icon="solar:pen-bold" />
-          Edit
+          Editar
         </MenuItem>
       </CustomPopover>
 
       <ConfirmDialog
         open={confirm.value}
         onClose={confirm.onFalse}
-        title="Delete"
-        content="Are you sure want to delete?"
+        title="Eliminar usuario"
+        content="¿Estás seguro de que querés eliminar este usuario?"
         action={
           <Button variant="contained" color="error" onClick={onDeleteRow}>
-            Delete
+            Eliminar
           </Button>
         }
       />

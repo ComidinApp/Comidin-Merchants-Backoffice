@@ -4,6 +4,7 @@ import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -33,57 +34,64 @@ const { VITE_API_COMIDIN } = import.meta.env;
 
 export default function UserNewEditForm({ currentUser }) {
   const router = useRouter();
-
   const authUser = useAuthContext();
-
   const { enqueueSnackbar } = useSnackbar();
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
 
+  // --- Roles ---
   const [roles, setRoles] = useState([]);
+
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await fetch(`${VITE_API_COMIDIN}/role`);
+        // ✅ consistente con backend: /api/role
+        const response = await fetch(`${VITE_API_COMIDIN}/api/role`);
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error al obtener los roles:', error);
       }
     };
     fetchRoles();
   }, []);
 
+  // --- Comercios ---
   const [commerces, setCommerces] = useState([]);
+
   useEffect(() => {
     const fetchCommerces = async () => {
       try {
-        const response = await fetch(`${VITE_API_COMIDIN}/commerce`);
+        // ✅ consistente con backend: /api/commerce
+        const response = await fetch(`${VITE_API_COMIDIN}/api/commerce`);
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error('Error al obtener los comercios:', error);
       }
     };
     fetchCommerces();
   }, []);
 
+  // --- Validación ---
   const NewUserSchema = Yup.object().shape({
-    first_name: Yup.string().required('Nombre es requerido'),
-    last_name: Yup.string().required('Apellido es requerido'),
+    first_name: Yup.string().required('El nombre es obligatorio'),
+    last_name: Yup.string().required('El apellido es obligatorio'),
     email: Yup.string()
-      .required('Email es requerido')
-      .email('Email debe ser una dirección válida.'),
-    phone_number: Yup.string().required('Número de teléfono es requerido'),
-    address: Yup.string().required('Dirección es requerida'),
-    country: Yup.string().required('País es requerido'),
-    commerce_id: Yup.number().required('Comercio es requerido'),
-    national_id: Yup.string().required('DNI es requerido'),
-    city: Yup.string().required('Ciudad es requerida'),
-    role_id: Yup.number().required('Rol es requerido'),
-    postal_code: Yup.string().required('Código postal es requerido'),
-    ...(currentUser ? {} : { password: Yup.string().required('Contraseña es requerida') }),
-    avatar_url: Yup.mixed().nullable().required('Avatar es requerido'),
+      .required('El email es obligatorio')
+      .email('El email debe ser una dirección válida.'),
+    phone_number: Yup.string().required('El número de teléfono es obligatorio'),
+    address: Yup.string().required('La dirección es obligatoria'),
+    country: Yup.string().required('El país es obligatorio'),
+    commerce_id: Yup.number().required('El comercio es obligatorio'),
+    national_id: Yup.string().required('El DNI es obligatorio'),
+    city: Yup.string().required('La ciudad es obligatoria'),
+    role_id: Yup.number().required('El rol es obligatorio'),
+    postal_code: Yup.string().required('El código postal es obligatorio'),
+    ...(currentUser
+      ? {}
+      : { password: Yup.string().required('La contraseña es obligatoria') }),
+    avatar_url: Yup.mixed().nullable().required('El avatar es obligatorio'),
     status: Yup.string(),
   });
 
@@ -143,15 +151,16 @@ export default function UserNewEditForm({ currentUser }) {
     formState: { isSubmitting },
   } = methods;
 
-  /* const values = watch(); */
-
+  // --- Submit ---
   const onSubmit = handleSubmit(async (data) => {
     try {
+      // pequeño delay para UX
       await new Promise((resolve) => setTimeout(resolve, 500));
 
+      // ✅ consistente con backend: /api/employee
       const url = currentUser
-        ? `${VITE_API_COMIDIN}/employee/${currentUser.id}`
-        : `${VITE_API_COMIDIN}/employee`;
+        ? `${VITE_API_COMIDIN}/api/employee/${currentUser.id}`
+        : `${VITE_API_COMIDIN}/api/employee`;
 
       const method = currentUser ? 'PUT' : 'POST';
 
@@ -164,21 +173,26 @@ export default function UserNewEditForm({ currentUser }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar los datos');
+        throw new Error('Error al enviar los datos al servidor');
       }
 
       const responseData = await response.json();
       console.log('Respuesta del servidor:', responseData);
 
       reset();
-      enqueueSnackbar(currentUser ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(
+        currentUser ? 'Usuario actualizado con éxito' : 'Usuario creado con éxito',
+        { variant: 'success' }
+      );
       router.push(paths.dashboard.user.list);
       console.info('DATA', data);
     } catch (error) {
-      console.error(error);
+      console.error('Error al guardar el usuario:', error);
+      enqueueSnackbar('Error al guardar el usuario', { variant: 'error' });
     }
   });
 
+  // --- Avatar drop ---
   const handleDrop = useCallback(
     (acceptedFiles) => {
       const file = acceptedFiles[0];
@@ -194,6 +208,7 @@ export default function UserNewEditForm({ currentUser }) {
     [setValue]
   );
 
+  // Si no es admin global, forzamos commerce_id al del usuario logueado
   useEffect(() => {
     if (authUser.user.role_id !== 1) {
       setValue('commerce_id', authUser.user.commerce.id);
@@ -205,19 +220,6 @@ export default function UserNewEditForm({ currentUser }) {
       <Grid container spacing={3}>
         <Grid xs={12} md={4}>
           <Card sx={{ pt: 10, pb: 5, px: 3 }}>
-            {/* {currentUser && (
-              <Label
-                color={
-                  (values.status === 'active' && 'success') ||
-                  (values.status === 'banned' && 'error') ||
-                  'warning'
-                }
-                sx={{ position: 'absolute', top: 24, right: 24 }}
-              >
-                {values.status}
-              </Label>
-            )} */}
-
             <Box sx={{ mb: 5 }}>
               <RHFUploadAvatar
                 name="avatar_url"
@@ -234,13 +236,14 @@ export default function UserNewEditForm({ currentUser }) {
                       color: 'text.disabled',
                     }}
                   >
-                    {/* Allowed *.jpeg, *.jpg, *.png, *.gif
-                    <br /> max size of {fData(3145728)} */}
+                    {/* Podés subir imágenes *.jpeg, *.jpg, *.png, *.gif
+                    <br /> tamaño máximo 3MB */}
                   </Typography>
                 }
               />
             </Box>
 
+            {/* Bloque de estado / baneado (por ahora comentado, en inglés) */}
             {/* {currentUser && (
               <FormControlLabel
                 labelPlacement="start"
@@ -262,39 +265,15 @@ export default function UserNewEditForm({ currentUser }) {
                 label={
                   <>
                     <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                      Banned
+                      Bloqueado
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Apply disable account
+                      Aplicar bloqueo a la cuenta
                     </Typography>
                   </>
                 }
                 sx={{ mx: 0, mb: 3, width: 1, justifyContent: 'space-between' }}
               />
-            )} */}
-
-            {/* <RHFSwitch
-              name="isVerified"
-              labelPlacement="start"
-              label={
-                <>
-                  <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                    Email Verified
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Disabling this will automatically send the user a verification email
-                  </Typography>
-                </>
-              }
-              sx={{ mx: 0, width: 1, justifyContent: 'space-between' }}
-            /> */}
-
-            {/* {currentUser && (
-              <Stack justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
-                <Button variant="soft" color="error">
-                  Delete User
-                </Button>
-              </Stack>
             )} */}
           </Card>
         </Grid>
@@ -313,13 +292,13 @@ export default function UserNewEditForm({ currentUser }) {
               <RHFTextField name="first_name" label="Nombre" />
               <RHFTextField name="last_name" label="Apellido" />
               <RHFTextField name="email" label="Email" />
-              <RHFTextField name="phone_number" label="Numero de Telefono" />
+              <RHFTextField name="phone_number" label="Número de teléfono" />
 
               <RHFAutocomplete
                 name="country"
                 type="country"
-                label="Pais"
-                placeholder="Elije un pais"
+                label="País"
+                placeholder="Elegí un país"
                 fullWidth
                 options={countries.map((option) => option.label)}
                 getOptionLabel={(option) => option}
@@ -327,8 +306,10 @@ export default function UserNewEditForm({ currentUser }) {
 
               <RHFTextField name="national_id" label="DNI" />
               <RHFTextField name="city" label="Ciudad" />
-              <RHFTextField name="address" label="Direccion" />
-              <RHFTextField name="postal_code" label="Codigo Postal" />
+              <RHFTextField name="address" label="Dirección" />
+              <RHFTextField name="postal_code" label="Código postal" />
+
+              {/* Solo admin global puede elegir comercio */}
               {authUser.user.role_id === 1 ? (
                 <RHFAutocomplete
                   name="commerce_id"
@@ -360,6 +341,7 @@ export default function UserNewEditForm({ currentUser }) {
                 }
                 isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
               />
+
               {!currentUser && (
                 <RHFTextField
                   name="password"
@@ -372,7 +354,7 @@ export default function UserNewEditForm({ currentUser }) {
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
               <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-                {!currentUser ? 'Create User' : 'Save Changes'}
+                {!currentUser ? 'Crear usuario' : 'Guardar cambios'}
               </LoadingButton>
             </Stack>
           </Card>
