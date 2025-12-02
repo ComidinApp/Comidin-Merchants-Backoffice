@@ -1,4 +1,3 @@
-// src/sections/user/user-new-edit-form.jsx
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
 import { useMemo, useCallback, useEffect, useState } from 'react';
@@ -47,7 +46,6 @@ export default function UserNewEditForm({ currentUser }) {
         const data = await response.json();
         setRoles(data || []);
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('Error fetching roles:', error);
       }
     };
@@ -58,7 +56,6 @@ export default function UserNewEditForm({ currentUser }) {
         const data = await response.json();
         setCommerces(data || []);
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error('Error fetching commerces:', error);
       }
     };
@@ -67,22 +64,52 @@ export default function UserNewEditForm({ currentUser }) {
     fetchCommerces();
   }, []);
 
+  // 🔥 VALIDACIONES ALINEADAS CON EL BACKEND (createUserValidation)
   const NewUserSchema = Yup.object().shape({
     first_name: Yup.string().required('Nombre es requerido'),
     last_name: Yup.string().required('Apellido es requerido'),
+
     email: Yup.string()
       .required('Email es requerido')
       .email('Email debe ser una dirección válida.'),
-    phone_number: Yup.string().required('Número de teléfono es requerido'),
+
+    phone_number: Yup.string()
+      .required('Número de teléfono es requerido')
+      .matches(
+        /^[0-9+\-\s()]{6,20}$/,
+        'Número de teléfono no es válido'
+      ),
+
+    national_id: Yup.string().required('DNI es requerido'),
+
     address: Yup.string().required('Dirección es requerida'),
     country: Yup.string().required('País es requerido'),
-    commerce_id: Yup.number().required('Comercio es requerido'),
-    national_id: Yup.string().required('DNI es requerido'),
+
+    commerce_id: Yup.number()
+      .typeError('Comercio es requerido')
+      .required('Comercio es requerido'),
+
     city: Yup.string().required('Ciudad es requerida'),
-    role_id: Yup.number().required('Rol es requerido'),
+
+    role_id: Yup.number()
+      .typeError('Rol es requerido')
+      .required('Rol es requerido'),
+
     postal_code: Yup.string().required('Código postal es requerido'),
-    ...(currentUser ? {} : { password: Yup.string().required('Contraseña es requerida') }),
-    // 👇 avatar opcional
+
+    ...(currentUser
+      ? {}
+      : {
+          password: Yup.string()
+            .required('Contraseña es requerida')
+            .min(8, 'La contraseña debe tener al menos 8 caracteres')
+            .matches(/\d/, 'La contraseña debe contener al menos un número')
+            .matches(
+              /[!@#$%^&*(),.?":{}|<>]/,
+              'La contraseña debe contener al menos un carácter especial'
+            ),
+        }),
+
     avatar_url: Yup.mixed().nullable(),
     status: Yup.string(),
   });
@@ -154,9 +181,7 @@ export default function UserNewEditForm({ currentUser }) {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
@@ -180,10 +205,7 @@ export default function UserNewEditForm({ currentUser }) {
         variant: 'success',
       });
       router.push(paths.dashboard.user.list);
-      // eslint-disable-next-line no-console
-      console.info('DATA', data);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(error);
       enqueueSnackbar(error.message || 'Ocurrió un error al guardar el usuario.', {
         variant: 'error',
@@ -191,7 +213,6 @@ export default function UserNewEditForm({ currentUser }) {
     }
   });
 
-  // 👇 Manejo del drop / selección de imagen (máx. 3MB, convierte a base64)
   const handleDrop = useCallback(
     (acceptedFiles) => {
       const file = acceptedFiles?.[0];
@@ -216,7 +237,6 @@ export default function UserNewEditForm({ currentUser }) {
   );
 
   useEffect(() => {
-    // Si no es admin (role_id !== 1), forzamos commerce_id al comercio del usuario
     if (authUser.user.role_id !== 1 && authUser.user.commerce?.id) {
       setValue('commerce_id', authUser.user.commerce.id);
     }
@@ -230,7 +250,7 @@ export default function UserNewEditForm({ currentUser }) {
             <Box sx={{ mb: 5 }}>
               <RHFUploadAvatar
                 name="avatar_url"
-                maxSize={3145728} // 3MB
+                maxSize={3145728}
                 onDrop={handleDrop}
                 helperText={
                   <Typography
@@ -297,7 +317,9 @@ export default function UserNewEditForm({ currentUser }) {
                     commerces.find((commerce) => commerce.id === currentUser?.commerce_id) ||
                     null
                   }
-                  isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === (value?.id || value)
+                  }
                 />
               ) : null}
 
@@ -313,7 +335,9 @@ export default function UserNewEditForm({ currentUser }) {
                   roles.find((role) => role.id === currentUser?.role_id) ||
                   null
                 }
-                isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
+                isOptionEqualToValue={(option, value) =>
+                  option.id === (value?.id || value)
+                }
               />
 
               {!currentUser && (
