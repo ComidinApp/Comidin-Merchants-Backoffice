@@ -55,13 +55,15 @@ RHFUploadBox.propTypes = {
 
 // ----------------------------------------------------------------------
 
-// 🔒 Límite global por defecto: 1 MB (se pasa al componente Upload solo como dato)
+// Si querés, podés dejar este límite como referencia, pero ya no lo usamos
+// directamente en el drop. La validación fuerte está en el formulario.
 const DEFAULT_MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
 
 export function RHFUpload({ name, multiple, helperText, maxSize, ...other }) {
   const { control } = useFormContext();
 
-  // Si no nos pasan maxSize desde el formulario, usamos 1MB
+  // Solo lo usamos si en algún momento querés mostrarlo como dato,
+  // pero no se lo pasamos al componente Upload para no mezclar validaciones.
   const effectiveMaxSize = maxSize || DEFAULT_MAX_SIZE_BYTES;
 
   return (
@@ -70,7 +72,7 @@ export function RHFUpload({ name, multiple, helperText, maxSize, ...other }) {
       control={control}
       render={({ field, fieldState: { error } }) => {
         const baseProps = {
-          ...other,
+          ...other, // 👈 acá ya NO va maxSize, porque lo destruimos en los args
           accept: { 'image/*': [] },
           error: !!error,
           helperText:
@@ -79,7 +81,8 @@ export function RHFUpload({ name, multiple, helperText, maxSize, ...other }) {
                 {error ? error?.message : helperText}
               </FormHelperText>
             ),
-          maxSize: effectiveMaxSize,
+          // effectiveMaxSize queda disponible si querés usarlo en algún lado
+          // pero no lo pasamos como prop al Upload.
         };
 
         return multiple ? (

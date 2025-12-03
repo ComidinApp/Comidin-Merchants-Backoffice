@@ -27,9 +27,13 @@ import FormProvider, {
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// 🔒 Límite duro de imagen: 1 MB
+// 🔒 Límite duro de imagen: 1 MB (archivo)
 const MAX_IMAGE_SIZE_MB = 1;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+
+// 🔒 Límite duro de la REQUEST (JSON que se manda al backend)
+const MAX_REQUEST_SIZE_MB = 1;
+const MAX_REQUEST_SIZE_BYTES = MAX_REQUEST_SIZE_MB * 1024 * 1024;
 
 export default function CommerceNewEditForm({ currentCommerce }) {
   const router = useRouter();
@@ -140,12 +144,30 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       // Si estamos editando, image_url viene como array, tomamos el primero
       data.image_url = currentCommerce ? data.image_url[0] : data.image_url;
 
+      // 👉 Armamos el payload JSON
+      const payload = JSON.stringify(data);
+
+      // 👉 Medimos el tamaño REAL de la request
+      const payloadSizeBytes = new Blob([payload]).size;
+
+      if (payloadSizeBytes > MAX_REQUEST_SIZE_BYTES) {
+        console.warn(
+          `Payload demasiado grande: ${payloadSizeBytes} bytes (límite ${MAX_REQUEST_SIZE_BYTES})`
+        );
+
+        enqueueSnackbar(
+          `La imagen es demasiado pesada. El tamaño total de la solicitud no puede superar ${MAX_REQUEST_SIZE_MB}MB. Probá con una imagen más liviana (menor a ${MAX_IMAGE_SIZE_MB}MB).`,
+          { variant: 'error' }
+        );
+        return; // ❌ NO mandamos la request → evitamos el 413
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: payload,
       });
 
       if (!response.ok) {
@@ -153,7 +175,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           'Error al enviar los datos. Por favor, verificá la información ingresada.';
 
         if (response.status === 413) {
-          msg = `La imagen es demasiado pesada. El tamaño máximo permitido es de ${MAX_IMAGE_SIZE_MB}MB.`;
+          msg = `La imagen es demasiado pesada para el servidor. Probá con una imagen más liviana (menor a ${MAX_IMAGE_SIZE_MB}MB).`;
         }
 
         throw new Error(msg);
