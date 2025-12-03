@@ -279,7 +279,10 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 onUpload={() => console.info('ON UPLOAD')}
               />
 
-              <Typography variant="caption" sx={{ color: imageTooBig ? 'error.main' : 'text.secondary' }}>
+              <Typography
+                variant="caption"
+                sx={{ color: imageTooBig ? 'error.main' : 'text.secondary' }}
+              >
                 Formatos recomendados: JPG o PNG. Tamaño máximo: {MAX_IMAGE_SIZE_MB}MB.
               </Typography>
             </Stack>
@@ -322,7 +325,10 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 options={commerces}
                 getOptionLabel={(option) => option.name}
                 onChange={(_, value) => setValue('commerce_id', value?.id || '')}
-                value={commerces.find((commerce) => commerce.id === watch('commerce_id')) || null}
+                value={
+                  commerces.find((commerce) => commerce.id === watch('commerce_id')) ||
+                  null
+                }
                 isOptionEqualToValue={(option, value) => option.id === (value?.id || value)}
               />
 
@@ -332,7 +338,9 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 fullWidth
                 options={commerceCategories}
                 getOptionLabel={(option) => option.name}
-                onChange={(_, value) => setValue('commerce_category_id', value?.id || '')}
+                onChange={(_, value) =>
+                  setValue('commerce_category_id', value?.id || '')
+                }
                 value={
                   commerceCategories.find(
                     (commerce) => commerce.id === watch('commerce_category_id')
@@ -356,8 +364,13 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           type="submit"
           variant="contained"
           loading={isSubmitting}
-          // 🚫 Bloqueamos el botón si la imagen es demasiado grande
-          disabled={imageTooBig}
+          // 🚫 Bloqueamos el botón si la imagen es demasiado grande o no hay imagen
+          disabled={
+            isSubmitting ||
+            imageTooBig ||
+            !values.image_url ||
+            values.image_url.length === 0
+          }
         >
           {!currentCommerce ? 'Crear comercio' : 'Guardar cambios'}
         </LoadingButton>
