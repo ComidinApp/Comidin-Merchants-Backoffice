@@ -53,6 +53,10 @@ const daysOfWeek = [
   { value: 6, label: 'Domingo' },
 ];
 
+// 🔒 Límite de imagen: 1 MB (archivo)
+const MAX_IMAGE_SIZE_MB = 1;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+
 // ====== Validación Yup ======
 const RegisterSchema = Yup.object().shape({
   name: Yup.string().nullable().required('El nombre del comercio es requerido'),
@@ -189,23 +193,39 @@ export default function CognitoRegisterView() {
     formState: { isSubmitting, errors },
   } = methods;
 
-  // ======== Imagen ========
+  // ======== Imagen (con validación de tamaño) ========
   const handleDropSingleFile = useCallback(
     (acceptedFiles) => {
       const newFile = acceptedFiles?.[0];
-      if (newFile) {
-        const preview = URL.createObjectURL(newFile);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64String = reader.result;
-          setFile({ ...newFile, preview, base64: base64String });
-          setValue('image_url', base64String, { shouldValidate: true });
-          setValue('image_name', newFile.name, { shouldValidate: false });
-        };
-        reader.readAsDataURL(newFile);
+      if (!newFile) return;
+
+      // ✅ Validar tamaño máximo (1MB)
+      if (newFile.size > MAX_IMAGE_SIZE_BYTES) {
+        setFile(null);
+        setValue('image_url', '', { shouldValidate: true });
+        setValue('image_name', '', { shouldValidate: false });
+
+        setError('image_url', {
+          type: 'manual',
+          message: `La imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
+        });
+        return;
       }
+
+      // Si pasó la validación, limpiamos errores y seguimos
+      clearErrors('image_url');
+
+      const preview = URL.createObjectURL(newFile);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setFile({ ...newFile, preview, base64: base64String });
+        setValue('image_url', base64String, { shouldValidate: true });
+        setValue('image_name', newFile.name, { shouldValidate: false });
+      };
+      reader.readAsDataURL(newFile);
     },
-    [setValue]
+    [setValue, setError, clearErrors]
   );
 
   // ======== Conversor de hora 12h a 24h ========
@@ -296,8 +316,6 @@ export default function CognitoRegisterView() {
         }
       }, 600);
     }
-
-    // limpiamos el timeout al inicio del efecto, no hace falta return aquí
   }, [email, clearErrors, setError]);
 
   const isEmailBusy =
@@ -313,6 +331,16 @@ export default function CognitoRegisterView() {
             emailStatus === 'exists'
               ? 'Este email ya está en uso. Por favor ingresá otro.'
               : 'Debe ser un email válido',
+        });
+        return;
+      }
+
+      // ⚠️ Aseguramos que haya imagen válida antes de enviar
+      if (!data.image_url) {
+        setStep(2); // vamos al paso de logo
+        setError('image_url', {
+          type: 'manual',
+          message: `La imagen del comercio es requerida y no debe superar los ${MAX_IMAGE_SIZE_MB}MB.`,
         });
         return;
       }
@@ -600,7 +628,7 @@ export default function CognitoRegisterView() {
     // step === 2
     return (
       <Card>
-        <CardHeader title="Subí el logo de tu comercio" />
+        <CardHeader title={`Subí el logo de tu comercio (máx. ${MAX_IMAGE_SIZE_MB}MB)`} />
         <CardContent>
           <Upload file={file} onDrop={handleDropSingleFile} onDelete={() => setFile(null)} />
           {errors.image_url && (
