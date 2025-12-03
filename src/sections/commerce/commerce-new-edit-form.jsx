@@ -5,48 +5,29 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import {
-  COMMERCE_SIZE_OPTIONS,
-  COMMERCE_GENDER_OPTIONS,
-  COMMERCE_COLOR_NAME_OPTIONS,
-  COMMERCE_CATEGORY_GROUP_OPTIONS,
-} from 'src/_mock/_commerce';
-
-import { _tags } from 'src/_mock/assets';
-
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
-  RHFSelect,
-  RHFEditor,
   RHFUpload,
-  RHFSwitch,
   RHFTextField,
-  RHFMultiSelect,
   RHFAutocomplete,
-  RHFMultiCheckbox,
 } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// 🔒 Límite duro de imagen: 1MB
+// 🔒 Límite duro de imagen: 1 MB
 const MAX_IMAGE_SIZE_MB = 1;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
@@ -55,9 +36,11 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   const mdUp = useResponsive('up', 'md');
   const { enqueueSnackbar } = useSnackbar();
 
-  const [includeTaxes, setIncludeTaxes] = useState(false);
   const [commerces, setCommerces] = useState([]);
-  const [commerce_categories, setCommerceCategories] = useState([]);
+  const [commerceCategories, setCommerceCategories] = useState([]);
+
+  // 👉 flag para bloquear el submit si la imagen es demasiado grande
+  const [imageTooBig, setImageTooBig] = useState(false);
 
   useEffect(() => {
     const fetchCommerces = async () => {
@@ -128,6 +111,23 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   }, [currentCommerce, defaultValues, reset]);
 
   const onSubmit = handleSubmit(async (data) => {
+    // 🚫 Si la imagen se marcó como demasiado grande → NO enviamos la request
+    if (imageTooBig) {
+      enqueueSnackbar(
+        `La imagen que subiste supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB. Por favor, elegí otra imagen más liviana.`,
+        { variant: 'error' }
+      );
+      return;
+    }
+
+    // Por seguridad: si no hay imagen, tampoco seguimos
+    if (!data.image_url || data.image_url.length === 0) {
+      enqueueSnackbar('La imagen del comercio es requerida.', {
+        variant: 'error',
+      });
+      return;
+    }
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -200,6 +200,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
     async (acceptedFiles) => {
       const files = values.image_url || [];
 
+      // Solo permitimos una imagen
       if (files.length >= 1) {
         enqueueSnackbar('Solo se permite una imagen.', { variant: 'warning' });
         return;
@@ -207,15 +208,20 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
       if (!acceptedFiles || acceptedFiles.length === 0) return;
 
-      // ✅ Validar tamaño máximo antes de procesar
-      const tooBig = acceptedFiles.some((file) => file.size > MAX_IMAGE_SIZE_BYTES);
-      if (tooBig) {
+      const file = acceptedFiles[0];
+
+      // ✅ Validar tamaño máximo ANTES de procesar
+      if (file.size > MAX_IMAGE_SIZE_BYTES) {
+        setImageTooBig(true);
         enqueueSnackbar(
           `La imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
           { variant: 'error' }
         );
-        return; // No agregamos la imagen ni dejamos que quede "cargada"
+        return; // No agregamos la imagen al form
       }
+
+      // Si pasó la validación, limpiamos el flag y seguimos
+      setImageTooBig(false);
 
       const newFiles = await handleFiles(acceptedFiles);
       setValue('image_url', [...files, ...newFiles], { shouldValidate: true });
@@ -228,17 +234,15 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       const filtered =
         values.image_url && values.image_url?.filter((file) => file !== inputFile);
       setValue('image_url', filtered);
+      setImageTooBig(false); // al borrar, ya no hay imagen grande
     },
     [setValue, values.image_url]
   );
 
   const handleRemoveAllFiles = useCallback(() => {
     setValue('image_url', []);
+    setImageTooBig(false);
   }, [setValue]);
-
-  const handleChangeIncludeTaxes = useCallback((event) => {
-    setIncludeTaxes(event.target.checked);
-  }, []);
 
   const renderDetails = (
     <>
@@ -256,12 +260,14 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <RHFTextField name="name" label="Nombre del comercio" />
+
             <RHFTextField name="description" label="Descripción" multiline rows={4} />
 
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">
-                Imagen (máx. {MAX_IMAGE_SIZE_MB}MB)
+                Imagen del comercio (máx. {MAX_IMAGE_SIZE_MB}MB)
               </Typography>
+
               <RHFUpload
                 multiple
                 thumbnail
@@ -272,7 +278,8 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 onRemoveAll={handleRemoveAllFiles}
                 onUpload={() => console.info('ON UPLOAD')}
               />
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+
+              <Typography variant="caption" sx={{ color: imageTooBig ? 'error.main' : 'text.secondary' }}>
                 Formatos recomendados: JPG o PNG. Tamaño máximo: {MAX_IMAGE_SIZE_MB}MB.
               </Typography>
             </Stack>
@@ -323,11 +330,11 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 name="commerce_category_id"
                 label="Categoría del comercio"
                 fullWidth
-                options={commerce_categories}
+                options={commerceCategories}
                 getOptionLabel={(option) => option.name}
                 onChange={(_, value) => setValue('commerce_category_id', value?.id || '')}
                 value={
-                  commerce_categories.find(
+                  commerceCategories.find(
                     (commerce) => commerce.id === watch('commerce_category_id')
                   ) || null
                 }
@@ -343,8 +350,15 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   const renderActions = (
     <>
       {mdUp && <Grid md={4} />}
+
       <Grid xs={12} md={8} sx={{ display: 'flex', alignItems: 'center' }}>
-        <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+        <LoadingButton
+          type="submit"
+          variant="contained"
+          loading={isSubmitting}
+          // 🚫 Bloqueamos el botón si la imagen es demasiado grande
+          disabled={imageTooBig}
+        >
           {!currentCommerce ? 'Crear comercio' : 'Guardar cambios'}
         </LoadingButton>
       </Grid>
