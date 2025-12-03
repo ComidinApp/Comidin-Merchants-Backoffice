@@ -195,38 +195,41 @@ export default function CognitoRegisterView() {
 
   // ======== Imagen (con validación de tamaño) ========
   const handleDropSingleFile = useCallback(
-    (acceptedFiles) => {
-      const newFile = acceptedFiles?.[0];
-      if (!newFile) return;
+  (acceptedFiles) => {
+    const newFile = acceptedFiles?.[0];
+    if (!newFile) return;
 
-      // ✅ Validar tamaño máximo (1MB)
-      if (newFile.size > MAX_IMAGE_SIZE_BYTES) {
-        setFile(null);
-        setValue('image_url', '', { shouldValidate: true });
-        setValue('image_name', '', { shouldValidate: false });
+    // ✅ Validar tamaño máximo (1MB)
+    if (newFile.size > MAX_IMAGE_SIZE_BYTES) {
+      // limpiamos el archivo
+      setFile(null);
 
-        setError('image_url', {
-          type: 'manual',
-          message: `La imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
-        });
-        return;
-      }
+      // NO validamos con Yup acá, usamos solo el error manual
+      setValue('image_url', '', { shouldValidate: false });
+      setValue('image_name', '', { shouldValidate: false });
 
-      // Si pasó la validación, limpiamos errores y seguimos
-      clearErrors('image_url');
+      setError('image_url', {
+        type: 'manual',
+        message: `Error: la imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
+      });
+      return;
+    }
 
-      const preview = URL.createObjectURL(newFile);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-        setFile({ ...newFile, preview, base64: base64String });
-        setValue('image_url', base64String, { shouldValidate: true });
-        setValue('image_name', newFile.name, { shouldValidate: false });
-      };
-      reader.readAsDataURL(newFile);
-    },
-    [setValue, setError, clearErrors]
-  );
+    // Si pasó la validación, limpiamos errores y seguimos
+    clearErrors('image_url');
+
+    const preview = URL.createObjectURL(newFile);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      setFile({ ...newFile, preview, base64: base64String });
+      setValue('image_url', base64String, { shouldValidate: true });
+      setValue('image_name', newFile.name, { shouldValidate: false });
+    };
+    reader.readAsDataURL(newFile);
+  },
+  [setValue, setError, clearErrors]
+);
 
   // ======== Conversor de hora 12h a 24h ========
   function convertTime(hora12) {
