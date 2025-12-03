@@ -28,17 +28,17 @@ import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 // =========================================================
-// 🔥 OPCIÓN 2 — BAJAMOS EL LÍMITE DE IMAGEN A 600 KB
+// 🔥 LÍMITE REAL DE IMAGEN: 600 KB
 // =========================================================
-const SAFE_MAX_FILE_MB = 0.6; // archivo real permitido
-const SAFE_MAX_FILE_BYTES = SAFE_MAX_FILE_MB * 1024 * 1024;
+const MAX_FILE_MB = 0.6;
+const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 
-// TEXTO QUE MOSTRAMOS AL USUARIO
-const DISPLAY_MAX_MB = 1;
+// Texto mostrado al usuario (coherente)
+const DISPLAY_MAX_MB = "600KB";
 
 // =========================================================
 
-// Expresiones regulares y validaciones
+// Expresiones regulares
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 const DNI_REGEX = /^[0-9]{7,8}$/;
 const CUIL_REGEX = /^[0-9]{11}$/;
@@ -57,7 +57,7 @@ const daysOfWeek = [
 const EMAIL_EXISTS_ENDPOINT = (email) =>
   `${VITE_API_COMIDIN}/employee/exists?email=${encodeURIComponent(email)}`;
 
-// VALIDACIÓN YUP
+// Yup Validation
 const RegisterSchema = Yup.object().shape({
   name: Yup.string().required('El nombre del comercio es requerido'),
   street_name: Yup.string().required('La dirección es requerida'),
@@ -123,7 +123,7 @@ export default function CognitoRegisterView() {
   const { register: registerCognito } = useAuthContext();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(2); // para probar directamente step logo
   const [file, setFile] = useState(null);
 
   const methods = useForm({
@@ -136,43 +136,38 @@ export default function CognitoRegisterView() {
     setValue,
     setError,
     clearErrors,
-    trigger,
     handleSubmit,
-    watch,
-    formState: { isSubmitting, errors },
+    formState: { errors, isSubmitting },
   } = methods;
-
-  const email = watch('email');
-  const debounceRef = useRef(null);
 
   const password = useBoolean();
   const assets_url = VITE_S3_ASSETS_AVATAR;
 
   // =========================================================
-  // 🔥 VALIDACIÓN DE IMAGEN (LÍMITE 600 KB)
+  // 🔥 VALIDACIÓN DE IMAGEN — LÍMITE 600 KB
   // =========================================================
   const handleDropSingleFile = useCallback(
     (acceptedFiles) => {
       const newFile = acceptedFiles?.[0];
       if (!newFile) return;
 
-      // 1️⃣ VALIDAMOS TAMAÑO REAL DEL ARCHIVO
-      if (newFile.size > SAFE_MAX_FILE_BYTES) {
+      // VALIDAR TAMAÑO REAL DEL ARCHIVO
+      if (newFile.size > MAX_FILE_BYTES) {
         setFile(null);
 
-        // dejamos image_url vacío SIN validar en Yup
+        // No validamos Yup acá → ponemos directamente el error manual
         setValue('image_url', '', { shouldValidate: false });
         setValue('image_name', '', { shouldValidate: false });
 
         setError('image_url', {
           type: 'manual',
-          message: `Error: La imagen supera el tamaño máximo permitido de ${DISPLAY_MAX_MB}MB.`,
+          message: `Error: la imagen no debe superar los ${DISPLAY_MAX_MB}.`,
         });
 
         return;
       }
 
-      // 2️⃣ SI ESTÁ OK → limpiamos errores anteriores
+      // Imagen válida → limpiar errores previos
       clearErrors('image_url');
 
       const preview = URL.createObjectURL(newFile);
@@ -192,41 +187,14 @@ export default function CognitoRegisterView() {
   );
 
   // =========================================================
-  // VERIFICACIÓN DE EMAIL (remota)
-  // =========================================================
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (!email) return;
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(EMAIL_EXISTS_ENDPOINT(email));
-        const data = await res.json();
-
-        if (data.exists) {
-          setError('email', {
-            type: 'manual',
-            message: 'Este email ya está en uso',
-          });
-        } else {
-          clearErrors('email');
-        }
-      } catch (_e) {}
-    }, 500);
-  }, [email, setError, clearErrors]);
-
-  // =========================================================
   // SUBMIT FINAL
   // =========================================================
   const onSubmit = async (data) => {
     try {
-      // Si la imagen es inválida NO enviamos
       if (!data.image_url) {
-        setStep(2);
         setError('image_url', {
           type: 'manual',
-          message: `La imagen es requerida y no debe superar ${DISPLAY_MAX_MB}MB.`,
+          message: `La imagen es requerida y no debe superar los ${DISPLAY_MAX_MB}.`,
         });
         return;
       }
@@ -248,12 +216,11 @@ export default function CognitoRegisterView() {
   };
 
   // =========================================================
-  // RENDER POR PASOS
+  // STEP 3 — LOGO
   // =========================================================
-
-  const renderStep3 = () => (
+  const renderLogoStep = () => (
     <Card>
-      <CardHeader title={`Subí el logo de tu comercio (máx. ${DISPLAY_MAX_MB}MB)`} />
+      <CardHeader title={`Subí tu logo (${DISPLAY_MAX_MB} máx.)`} />
       <CardContent>
         <Upload
           file={file}
@@ -273,49 +240,29 @@ export default function CognitoRegisterView() {
     </Card>
   );
 
-  // Nota: por espacio no repito los otros pasos, quedan tal cual estaban en tu código original.
-  // El único cambio importante está en la lógica de la imagen.
-  // Si los querés completos también, decime y te los armo.
-
   return (
     <>
-      {!!errorMsg && (
+      {errorMsg && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {errorMsg}
         </Alert>
       )}
 
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        {/* ======== Paso 3: Imagen ======== */}
-        {step === 2 && renderStep3()}
+        {renderLogoStep()}
 
         <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
           <LoadingButton
             fullWidth
             size="large"
-            type="submit"
             variant="contained"
+            type="submit"
             loading={isSubmitting}
           >
             Enviar solicitud
           </LoadingButton>
         </Stack>
       </FormProvider>
-
-      <Typography
-        component="div"
-        sx={{ mt: 2.5, textAlign: 'center', typography: 'caption', color: 'text.secondary' }}
-      >
-        {'Al registrarte aceptás los '}
-        <Link underline="always" color="text.primary">
-          Términos y Condiciones
-        </Link>
-        {' y la '}
-        <Link underline="always" color="text.primary">
-          Política de Privacidad
-        </Link>
-        .
-      </Typography>
     </>
   );
 }
