@@ -46,20 +46,18 @@ import FormProvider, {
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// Tamaño máximo de imagen: 3MB
-const MAX_IMAGE_SIZE_MB = 3;
+// 🔒 Límite duro de imagen: 1MB
+const MAX_IMAGE_SIZE_MB = 1;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
 export default function CommerceNewEditForm({ currentCommerce }) {
   const router = useRouter();
-
   const mdUp = useResponsive('up', 'md');
-
   const { enqueueSnackbar } = useSnackbar();
 
   const [includeTaxes, setIncludeTaxes] = useState(false);
-
   const [commerces, setCommerces] = useState([]);
+  const [commerce_categories, setCommerceCategories] = useState([]);
 
   useEffect(() => {
     const fetchCommerces = async () => {
@@ -73,8 +71,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
     };
     fetchCommerces();
   }, []);
-
-  const [commerce_categories, setCommerceCategories] = useState([]);
 
   useEffect(() => {
     const fetchCommerceCategories = async () => {
@@ -133,7 +129,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       const url = currentCommerce
         ? `${VITE_API_COMIDIN}/commerce/${currentCommerce.id}`
@@ -153,7 +149,14 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar los datos. Por favor, verificá la información.');
+        let msg =
+          'Error al enviar los datos. Por favor, verificá la información ingresada.';
+
+        if (response.status === 413) {
+          msg = `La imagen es demasiado pesada. El tamaño máximo permitido es de ${MAX_IMAGE_SIZE_MB}MB.`;
+        }
+
+        throw new Error(msg);
       }
 
       const responseData = await response.json();
@@ -165,7 +168,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
         { variant: 'success' }
       );
       router.push(paths.dashboard.commerce.root);
-      console.info('DATA', data);
     } catch (error) {
       console.error(error);
       enqueueSnackbar(error.message || 'Ocurrió un error al guardar el comercio.', {
@@ -199,15 +201,15 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       const files = values.image_url || [];
 
       if (files.length >= 1) {
-        enqueueSnackbar('Solo se permite una imagen', { variant: 'warning' });
+        enqueueSnackbar('Solo se permite una imagen.', { variant: 'warning' });
         return;
       }
 
       if (!acceptedFiles || acceptedFiles.length === 0) return;
 
-      // Validar tamaño máximo antes de procesar
-      const hasBigFile = acceptedFiles.some((file) => file.size > MAX_IMAGE_SIZE_BYTES);
-      if (hasBigFile) {
+      // ✅ Validar tamaño máximo antes de procesar
+      const tooBig = acceptedFiles.some((file) => file.size > MAX_IMAGE_SIZE_BYTES);
+      if (tooBig) {
         enqueueSnackbar(
           `La imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
           { variant: 'error' }
@@ -216,7 +218,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       }
 
       const newFiles = await handleFiles(acceptedFiles);
-
       setValue('image_url', [...files, ...newFiles], { shouldValidate: true });
     },
     [setValue, values.image_url, enqueueSnackbar]
@@ -246,9 +247,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           <Typography variant="h6" sx={{ mb: 0.5 }}>
             Detalles
           </Typography>
-          {/* <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Título, descripción corta, imagen...
-          </Typography> */}
         </Grid>
       )}
 
@@ -258,11 +256,12 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
           <Stack spacing={3} sx={{ p: 3 }}>
             <RHFTextField name="name" label="Nombre del comercio" />
-
             <RHFTextField name="description" label="Descripción" multiline rows={4} />
 
             <Stack spacing={1.5}>
-              <Typography variant="subtitle2">Imagen</Typography>
+              <Typography variant="subtitle2">
+                Imagen (máx. {MAX_IMAGE_SIZE_MB}MB)
+              </Typography>
               <RHFUpload
                 multiple
                 thumbnail
@@ -273,6 +272,9 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 onRemoveAll={handleRemoveAllFiles}
                 onUpload={() => console.info('ON UPLOAD')}
               />
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Formatos recomendados: JPG o PNG. Tamaño máximo: {MAX_IMAGE_SIZE_MB}MB.
+              </Typography>
             </Stack>
           </Stack>
         </Card>
@@ -338,87 +340,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
     </>
   );
 
-  const renderPricing = (
-    <>
-      {mdUp && (
-        <Grid md={4}>
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Precios
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Campos relacionados al precio
-          </Typography>
-        </Grid>
-      )}
-
-      <Grid xs={12} md={8}>
-        <Card>
-          {!mdUp && <CardHeader title="Precios" />}
-
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField
-              name="price"
-              label="Precio regular"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <RHFTextField
-              name="priceSale"
-              label="Precio en oferta"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <FormControlLabel
-              control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
-              label="El precio incluye impuestos"
-            />
-
-            {!includeTaxes && (
-              <RHFTextField
-                name="taxes"
-                label="Impuestos (%)"
-                placeholder="0.00"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        %
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
-
   const renderActions = (
     <>
       {mdUp && <Grid md={4} />}
@@ -434,12 +355,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         {renderDetails}
-
         {renderProperties}
-
-        {/* Si más adelante querés usar precios, solo descomentá esta línea */}
-        {/* {renderPricing} */}
-
         {renderActions}
       </Grid>
     </FormProvider>
