@@ -29,10 +29,17 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 // ================== CONSTANTES ==================
 
-// ✅ Usamos /api/employee/exists (coincide con los montajes /api/... del backend)
-// Y el backend responde { emailExists, phoneExists, nationalIdExists }
+// Endpoint para chequear email de empleado existente
 const EMAIL_EXISTS_ENDPOINT = (email) =>
   `${VITE_API_COMIDIN}/api/employee/exists?email=${encodeURIComponent(email)}`;
+
+// Endpoint para chequear DNI/CUIL (national_id) existente
+const NATIONAL_ID_EXISTS_ENDPOINT = (nationalId) =>
+  `${VITE_API_COMIDIN}/api/employee/exists?national_id=${encodeURIComponent(nationalId)}`;
+
+// Endpoint para chequear teléfono existente
+const PHONE_EXISTS_ENDPOINT = (phoneNumber) =>
+  `${VITE_API_COMIDIN}/api/employee/exists?phone_number=${encodeURIComponent(phoneNumber)}`;
 
 // Política Cognito: 8+ con mayúscula, minúscula, número y símbolo
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -40,7 +47,7 @@ const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$
 // DNI: solo números, 7–8 dígitos
 const DNI_REGEX = /^[0-9]{7,8}$/;
 
-// CUIT/CUIL: solo números, 11 dígitos
+// CUIT/CUIL: solo números, 11 dígitos (para el comercio)
 const CUIL_REGEX = /^[0-9]{11}$/;
 
 // Teléfono sencillo: números, espacios, + y -
@@ -103,7 +110,7 @@ const RegisterSchema = Yup.object().shape({
   national_id: Yup.string()
     .nullable()
     .required('El DNI es requerido')
-    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'),
+    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'), // unicidad va aparte
 
   commerce_national_id: Yup.string()
     .nullable()
@@ -173,7 +180,7 @@ export default function CognitoRegisterView() {
   const [openAt, setOpenAt] = useState(null);
   const [closeAt, setCloseAt] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [step, setStep] = useState(0); // 👉 empezamos en el paso 0
+  const [step, setStep] = useState(0); // empezamos en el paso 0
   const [file, setFile] = useState(null);
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
@@ -205,7 +212,6 @@ export default function CognitoRegisterView() {
       if (newFile.size > MAX_IMAGE_SIZE_BYTES) {
         setFile(null);
 
-        // No disparamos validación Yup aquí, dejamos solo el error manual
         setValue('image_url', '', { shouldValidate: false });
         setValue('image_name', '', { shouldValidate: false });
 
@@ -255,7 +261,7 @@ export default function CognitoRegisterView() {
   // ======== Chequeo remoto de email (debounced) ========
   const email = watch('email');
   const [emailStatus, setEmailStatus] = useState('idle'); // idle | checking | available | exists | invalid
-  const debounceRef = useRef(null);
+  const emailDebounceRef = useRef(null);
 
   const emailHelperText = () => {
     if (errors.email?.message) return errors.email.message;
@@ -275,7 +281,7 @@ export default function CognitoRegisterView() {
   };
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
 
     if (!email) {
       setEmailStatus('idle');
@@ -291,20 +297,17 @@ export default function CognitoRegisterView() {
       setEmailStatus('checking');
       clearErrors('email');
 
-      debounceRef.current = setTimeout(async () => {
+      emailDebounceRef.current = setTimeout(async () => {
         try {
           const res = await fetch(EMAIL_EXISTS_ENDPOINT(email), { method: 'GET' });
 
           if (!res.ok) {
-            // si el endpoint falla, NO bloqueamos el registro (lo dejamos como disponible)
             setEmailStatus('available');
             clearErrors('email');
             return;
           }
 
           const data = await res.json();
-
-          // 👇 CAMBIO CLAVE: usamos emailExists (y soportamos exists si algún día lo agregás)
           const emailExists = data?.emailExists ?? data?.exists ?? false;
 
           if (emailExists) {
@@ -318,7 +321,6 @@ export default function CognitoRegisterView() {
             clearErrors('email');
           }
         } catch (_e) {
-          // Error de red, no bloqueamos pero marcamos como "disponible"
           setEmailStatus('available');
           clearErrors('email');
         }
@@ -328,6 +330,128 @@ export default function CognitoRegisterView() {
 
   const isEmailBusy =
     emailStatus === 'checking' || emailStatus === 'exists' || emailStatus === 'invalid';
+
+  // ======== Chequeo remoto de DNI/CUIL (national_id) (debounced) ========
+  const nationalId = watch('national_id');
+  const [nationalIdStatus, setNationalIdStatus] = useState('idle'); // idle | checking | available | exists | invalid
+  const nationalIdDebounceRef = useRef(null);
+
+  useEffect(() => {
+    if (nationalIdDebounceRef.current) clearTimeout(nationalIdDebounceRef.current);
+
+    if (!nationalId) {
+      setNationalIdStatus('idle');
+      clearErrors('national_id');
+      return;
+    }
+
+    // Validar formato básico de DNI (7–8 dígitos)
+    if (!DNI_REGEX.test(nationalId)) {
+      setNationalIdStatus('invalid');
+      setError('national_id', {
+        type: 'manual',
+        message: 'El DNI debe tener solo números (7 u 8 dígitos).',
+      });
+      return;
+    }
+
+    setNationalIdStatus('checking');
+    clearErrors('national_id');
+
+    nationalIdDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(NATIONAL_ID_EXISTS_ENDPOINT(nationalId), { method: 'GET' });
+
+        if (!res.ok) {
+          setNationalIdStatus('available');
+          clearErrors('national_id');
+          return;
+        }
+
+        const data = await res.json();
+        const exists = data?.nationalIdExists ?? false;
+
+        if (exists) {
+          setNationalIdStatus('exists');
+          setError('national_id', {
+            type: 'manual',
+            message: 'Este documento ya está registrado. Ingresá otro.',
+          });
+        } else {
+          setNationalIdStatus('available');
+          clearErrors('national_id');
+        }
+      } catch (_e) {
+        setNationalIdStatus('available');
+        clearErrors('national_id');
+      }
+    }, 600);
+  }, [nationalId, clearErrors, setError]);
+
+  const isNationalIdBusy =
+    nationalIdStatus === 'checking' ||
+    nationalIdStatus === 'exists' ||
+    nationalIdStatus === 'invalid';
+
+  // ======== Chequeo remoto de teléfono (phone_number) (debounced) ========
+  const phoneNumber = watch('phone_number');
+  const [phoneStatus, setPhoneStatus] = useState('idle'); // idle | checking | available | exists | invalid
+  const phoneDebounceRef = useRef(null);
+
+  useEffect(() => {
+    if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
+
+    if (!phoneNumber) {
+      setPhoneStatus('idle');
+      clearErrors('phone_number');
+      return;
+    }
+
+    // Validar formato básico de teléfono con el mismo regex de Yup
+    if (!PHONE_REGEX.test(phoneNumber)) {
+      setPhoneStatus('invalid');
+      setError('phone_number', {
+        type: 'manual',
+        message: 'El teléfono solo puede contener números, espacios, + y -',
+      });
+      return;
+    }
+
+    setPhoneStatus('checking');
+    clearErrors('phone_number');
+
+    phoneDebounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(PHONE_EXISTS_ENDPOINT(phoneNumber), { method: 'GET' });
+
+        if (!res.ok) {
+          setPhoneStatus('available');
+          clearErrors('phone_number');
+          return;
+        }
+
+        const data = await res.json();
+        const exists = data?.phoneExists ?? false;
+
+        if (exists) {
+          setPhoneStatus('exists');
+          setError('phone_number', {
+            type: 'manual',
+            message: 'Este teléfono ya está registrado. Ingresá otro.',
+          });
+        } else {
+          setPhoneStatus('available');
+          clearErrors('phone_number');
+        }
+      } catch (_e) {
+        setPhoneStatus('available');
+        clearErrors('phone_number');
+      }
+    }, 600);
+  }, [phoneNumber, clearErrors, setError]);
+
+  const isPhoneBusy =
+    phoneStatus === 'checking' || phoneStatus === 'exists' || phoneStatus === 'invalid';
 
   // ======== Submit ========
   const onSubmit = async (data) => {
@@ -339,6 +463,28 @@ export default function CognitoRegisterView() {
             emailStatus === 'exists'
               ? 'Este email ya está en uso. Por favor ingresá otro.'
               : 'Debe ser un email válido',
+        });
+        return;
+      }
+
+      if (isNationalIdBusy) {
+        setError('national_id', {
+          type: 'manual',
+          message:
+            nationalIdStatus === 'exists'
+              ? 'Este documento ya está registrado. Ingresá otro.'
+              : 'El DNI ingresado no es válido.',
+        });
+        return;
+      }
+
+      if (isPhoneBusy) {
+        setError('phone_number', {
+          type: 'manual',
+          message:
+            phoneStatus === 'exists'
+              ? 'Este teléfono ya está registrado. Ingresá otro.'
+              : 'El teléfono ingresado no es válido.',
         });
         return;
       }
@@ -392,7 +538,7 @@ export default function CognitoRegisterView() {
         : null;
 
       if (closeAtError) {
-        setStep(0); // volvemos al paso de horarios
+        setStep(0);
         setError('close_at', {
           type: 'server',
           message: 'La hora de cierre debe ser posterior a la hora de apertura',
@@ -434,7 +580,7 @@ export default function CognitoRegisterView() {
         'national_id',
       ]);
 
-      if (isEmailBusy) {
+      if (isEmailBusy || isNationalIdBusy || isPhoneBusy) {
         isStepValid = false;
       }
     } else {
@@ -588,7 +734,27 @@ export default function CognitoRegisterView() {
           <RHFTextField
             name="national_id"
             label="DNI del Responsable"
-            helperText={errors.national_id?.message || 'Sólo números, sin puntos ni espacios'}
+            helperText={
+              errors.national_id?.message ||
+              (nationalIdStatus === 'checking'
+                ? 'Verificando documento...'
+                : nationalIdStatus === 'exists'
+                  ? 'Este documento ya está registrado.'
+                  : 'Sólo números, sin puntos ni espacios')
+            }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {nationalIdStatus === 'checking' && <CircularProgress size={18} />}
+                  {nationalIdStatus === 'exists' && (
+                    <Iconify icon="solar:danger-bold" width={20} />
+                  )}
+                  {nationalIdStatus === 'available' && (
+                    <Iconify icon="solar:check-circle-bold" width={20} />
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
 
           <RHFTextField
@@ -605,8 +771,25 @@ export default function CognitoRegisterView() {
             label="Teléfono del Responsable"
             helperText={
               errors.phone_number?.message ||
-              'Sólo números, espacios, + y - (ej: +54 11 1234-5678)'
+              (phoneStatus === 'checking'
+                ? 'Verificando teléfono...'
+                : phoneStatus === 'exists'
+                  ? 'Este teléfono ya está registrado.'
+                  : 'Sólo números, espacios, + y - (ej: +54 11 1234-5678)')
             }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {phoneStatus === 'checking' && <CircularProgress size={18} />}
+                  {phoneStatus === 'exists' && (
+                    <Iconify icon="solar:danger-bold" width={20} />
+                  )}
+                  {phoneStatus === 'available' && (
+                    <Iconify icon="solar:check-circle-bold" width={20} />
+                  )}
+                </InputAdornment>
+              ),
+            }}
           />
 
           <RHFTextField
@@ -675,7 +858,7 @@ export default function CognitoRegisterView() {
               size="large"
               variant="contained"
               onClick={handleNextStep}
-              disabled={step === 1 && isEmailBusy}
+              disabled={step === 1 && (isEmailBusy || isNationalIdBusy || isPhoneBusy)}
             >
               Siguiente
             </LoadingButton>
@@ -689,7 +872,7 @@ export default function CognitoRegisterView() {
               type="submit"
               variant="contained"
               loading={isSubmitting}
-              disabled={isEmailBusy}
+              disabled={isEmailBusy || isNationalIdBusy || isPhoneBusy}
             >
               Enviar solicitud
             </LoadingButton>
