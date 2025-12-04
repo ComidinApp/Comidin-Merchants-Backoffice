@@ -29,9 +29,10 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 // ================== CONSTANTES ==================
 
-// Endpoint para chequear email de empleado existente
+// ✅ Usamos /api/employee/exists (coincide con los montajes /api/... del backend)
+// Y el backend responde { emailExists, phoneExists, nationalIdExists }
 const EMAIL_EXISTS_ENDPOINT = (email) =>
-  `${VITE_API_COMIDIN}/employee/exists?email=${encodeURIComponent(email)}`;
+  `${VITE_API_COMIDIN}/api/employee/exists?email=${encodeURIComponent(email)}`;
 
 // Política Cognito: 8+ con mayúscula, minúscula, número y símbolo
 const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
@@ -172,7 +173,7 @@ export default function CognitoRegisterView() {
   const [openAt, setOpenAt] = useState(null);
   const [closeAt, setCloseAt] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [step, setStep] = useState(0); // 👉 volvemos a empezar en el paso 0
+  const [step, setStep] = useState(0); // 👉 empezamos en el paso 0
   const [file, setFile] = useState(null);
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
@@ -185,7 +186,6 @@ export default function CognitoRegisterView() {
   });
 
   const {
-    reset,
     setValue,
     setError,
     clearErrors,
@@ -296,13 +296,18 @@ export default function CognitoRegisterView() {
           const res = await fetch(EMAIL_EXISTS_ENDPOINT(email), { method: 'GET' });
 
           if (!res.ok) {
+            // si el endpoint falla, NO bloqueamos el registro (lo dejamos como disponible)
             setEmailStatus('available');
             clearErrors('email');
             return;
           }
 
           const data = await res.json();
-          if (data?.exists) {
+
+          // 👇 CAMBIO CLAVE: usamos emailExists (y soportamos exists si algún día lo agregás)
+          const emailExists = data?.emailExists ?? data?.exists ?? false;
+
+          if (emailExists) {
             setEmailStatus('exists');
             setError('email', {
               type: 'manual',
@@ -313,6 +318,7 @@ export default function CognitoRegisterView() {
             clearErrors('email');
           }
         } catch (_e) {
+          // Error de red, no bloqueamos pero marcamos como "disponible"
           setEmailStatus('available');
           clearErrors('email');
         }
@@ -386,7 +392,7 @@ export default function CognitoRegisterView() {
         : null;
 
       if (closeAtError) {
-        setStep(0);
+        setStep(0); // volvemos al paso de horarios
         setError('close_at', {
           type: 'server',
           message: 'La hora de cierre debe ser posterior a la hora de apertura',
