@@ -33,7 +33,7 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 const EMAIL_EXISTS_ENDPOINT = (email) =>
   `${VITE_API_COMIDIN}/api/employee/exists?email=${encodeURIComponent(email)}`;
 
-// Endpoint para chequear DNI/CUIL (national_id) existente
+// Endpoint para chequear DNI existente
 const NATIONAL_ID_EXISTS_ENDPOINT = (nationalId) =>
   `${VITE_API_COMIDIN}/api/employee/exists?national_id=${encodeURIComponent(nationalId)}`;
 
@@ -47,7 +47,7 @@ const PASSWORD_POLICY = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$
 // DNI: solo números, 7–8 dígitos
 const DNI_REGEX = /^[0-9]{7,8}$/;
 
-// CUIT/CUIL: solo números, 11 dígitos (para el comercio)
+// CUIT/CUIL del comercio: solo números, 11 dígitos
 const CUIL_REGEX = /^[0-9]{11}$/;
 
 // Teléfono sencillo: números, espacios, + y -
@@ -90,7 +90,7 @@ const RegisterSchema = Yup.object().shape({
         const { open_at } = this.parent;
         if (!open_at || !value) return true;
         try {
-          return value.getTime() > open_at.getTime(); // estrictamente mayor
+          return value.getTime() > open_at.getTime();
         } catch (_e) {
           return true;
         }
@@ -110,7 +110,7 @@ const RegisterSchema = Yup.object().shape({
   national_id: Yup.string()
     .nullable()
     .required('El DNI es requerido')
-    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'), // unicidad va aparte
+    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'),
 
   commerce_national_id: Yup.string()
     .nullable()
@@ -180,7 +180,7 @@ export default function CognitoRegisterView() {
   const [openAt, setOpenAt] = useState(null);
   const [closeAt, setCloseAt] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [step, setStep] = useState(0); // empezamos en el paso 0
+  const [step, setStep] = useState(0);
   const [file, setFile] = useState(null);
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
@@ -189,7 +189,7 @@ export default function CognitoRegisterView() {
   const methods = useForm({
     resolver: yupResolver(RegisterSchema),
     defaultValues,
-    mode: 'all', // valida en change + blur => feedback en tiempo real
+    mode: 'all',
   });
 
   const {
@@ -208,7 +208,6 @@ export default function CognitoRegisterView() {
       const newFile = acceptedFiles?.[0];
       if (!newFile) return;
 
-      // ✅ Validar tamaño máximo (600KB)
       if (newFile.size > MAX_IMAGE_SIZE_BYTES) {
         setFile(null);
 
@@ -222,7 +221,6 @@ export default function CognitoRegisterView() {
         return;
       }
 
-      // Si pasó la validación, limpiamos el error manual
       clearErrors('image_url');
 
       const preview = URL.createObjectURL(newFile);
@@ -331,7 +329,7 @@ export default function CognitoRegisterView() {
   const isEmailBusy =
     emailStatus === 'checking' || emailStatus === 'exists' || emailStatus === 'invalid';
 
-  // ======== Chequeo remoto de DNI/CUIL (national_id) (debounced) ========
+  // ======== Chequeo remoto de DNI (national_id) ========
   const nationalId = watch('national_id');
   const [nationalIdStatus, setNationalIdStatus] = useState('idle'); // idle | checking | available | exists | invalid
   const nationalIdDebounceRef = useRef(null);
@@ -345,7 +343,6 @@ export default function CognitoRegisterView() {
       return;
     }
 
-    // Validar formato básico de DNI (7–8 dígitos)
     if (!DNI_REGEX.test(nationalId)) {
       setNationalIdStatus('invalid');
       setError('national_id', {
@@ -393,7 +390,17 @@ export default function CognitoRegisterView() {
     nationalIdStatus === 'exists' ||
     nationalIdStatus === 'invalid';
 
-  // ======== Chequeo remoto de teléfono (phone_number) (debounced) ========
+  // Helper sin ternarios anidados para el helperText del DNI
+  const nationalIdHelperText = () => {
+    if (errors.national_id?.message) return errors.national_id.message;
+    if (nationalIdStatus === 'checking') return 'Verificando documento...';
+    if (nationalIdStatus === 'exists') return 'Este documento ya está registrado.';
+    if (nationalIdStatus === 'invalid')
+      return 'El DNI debe tener solo números (7 u 8 dígitos).';
+    return 'Sólo números, sin puntos ni espacios';
+  };
+
+  // ======== Chequeo remoto de teléfono (phone_number) ========
   const phoneNumber = watch('phone_number');
   const [phoneStatus, setPhoneStatus] = useState('idle'); // idle | checking | available | exists | invalid
   const phoneDebounceRef = useRef(null);
@@ -407,7 +414,6 @@ export default function CognitoRegisterView() {
       return;
     }
 
-    // Validar formato básico de teléfono con el mismo regex de Yup
     if (!PHONE_REGEX.test(phoneNumber)) {
       setPhoneStatus('invalid');
       setError('phone_number', {
@@ -453,6 +459,16 @@ export default function CognitoRegisterView() {
   const isPhoneBusy =
     phoneStatus === 'checking' || phoneStatus === 'exists' || phoneStatus === 'invalid';
 
+  // Helper sin ternarios anidados para el helperText del teléfono
+  const phoneHelperText = () => {
+    if (errors.phone_number?.message) return errors.phone_number.message;
+    if (phoneStatus === 'checking') return 'Verificando teléfono...';
+    if (phoneStatus === 'exists') return 'Este teléfono ya está registrado.';
+    if (phoneStatus === 'invalid')
+      return 'El teléfono solo puede contener números, espacios, + y -';
+    return 'Sólo números, espacios, + y - (ej: +54 11 1234-5678)';
+  };
+
   // ======== Submit ========
   const onSubmit = async (data) => {
     try {
@@ -489,7 +505,6 @@ export default function CognitoRegisterView() {
         return;
       }
 
-      // ⚠️ Imagen requerida y válida
       if (!data.image_url) {
         setStep(2);
         setError('image_url', {
@@ -499,11 +514,9 @@ export default function CognitoRegisterView() {
         return;
       }
 
-      // formatea días como CSV "0,1,2"
       data.available_days = data.available_days.join(',');
       data.is_active = true;
 
-      // Formateo de horarios a HH:mm
       if (data.open_at instanceof Date) {
         const formattedOpenAt = convertTime(
           data.open_at.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -734,14 +747,7 @@ export default function CognitoRegisterView() {
           <RHFTextField
             name="national_id"
             label="DNI del Responsable"
-            helperText={
-              errors.national_id?.message ||
-              (nationalIdStatus === 'checking'
-                ? 'Verificando documento...'
-                : nationalIdStatus === 'exists'
-                  ? 'Este documento ya está registrado.'
-                  : 'Sólo números, sin puntos ni espacios')
-            }
+            helperText={nationalIdHelperText()}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -769,14 +775,7 @@ export default function CognitoRegisterView() {
           <RHFTextField
             name="phone_number"
             label="Teléfono del Responsable"
-            helperText={
-              errors.phone_number?.message ||
-              (phoneStatus === 'checking'
-                ? 'Verificando teléfono...'
-                : phoneStatus === 'exists'
-                  ? 'Este teléfono ya está registrado.'
-                  : 'Sólo números, espacios, + y - (ej: +54 11 1234-5678)')
-            }
+            helperText={phoneHelperText()}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
