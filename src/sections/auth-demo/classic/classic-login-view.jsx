@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 
@@ -8,6 +9,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
@@ -21,6 +24,7 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 export default function ClassicLoginView() {
   const password = useBoolean();
+  const [loading, setLoading] = useState(false);
 
   const LoginSchema = Yup.object().shape({
     email: Yup.string().required('Email is required').email('Email must be a valid email address'),
@@ -37,38 +41,29 @@ export default function ClassicLoginView() {
     defaultValues,
   });
 
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
+  const { handleSubmit } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      setLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 500));
       console.info('DATA', data);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   });
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5 }}>
-      <Typography variant="h4">Incia Sesion - Comidin</Typography>
-
-      {/* <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">Nuevo usuario?</Typography>
-
-        <Link component={RouterLink} href={paths.authDemo.classic.register} variant="subtitle2">
-          Crea una cuenta
-        </Link>
-      </Stack> */}
+      <Typography variant="h4">Incia Sesion - Comidin (Classic)</Typography>
     </Stack>
   );
 
   const renderForm = (
     <Stack spacing={2.5}>
       <RHFTextField name="email" label="Email" />
-
       <RHFTextField
         name="password"
         label="Contraseña"
@@ -101,7 +96,7 @@ export default function ClassicLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting}
+        loading={loading}
       >
         Iniciar Sesión
       </LoadingButton>
@@ -109,10 +104,21 @@ export default function ClassicLoginView() {
   );
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
-      {renderHead}
+    <>
+      <FormProvider methods={methods} onSubmit={onSubmit}>
+        {renderHead}
+        {renderForm}
+      </FormProvider>
 
-      {renderForm}
-    </FormProvider>
+      <Backdrop
+        sx={(theme) => ({
+          color: '#fff',
+          zIndex: theme.zIndex.drawer + 1,
+        })}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+    </>
   );
 }

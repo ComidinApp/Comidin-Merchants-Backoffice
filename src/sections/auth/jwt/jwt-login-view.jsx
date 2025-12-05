@@ -27,13 +27,12 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 export default function JwtLoginView() {
   const { login } = useAuthContext();
-
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const searchParams = useSearchParams();
-
   const returnTo = searchParams.get('returnTo');
 
   const password = useBoolean();
@@ -53,27 +52,28 @@ export default function JwtLoginView() {
     defaultValues,
   });
 
-  const {
-    reset,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
+  const { reset, handleSubmit } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      setErrorMsg('');
+      setLoading(true);
+
       await login?.(data.email, data.password);
 
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
       console.error(error);
-      reset();
+      reset({ email: data.email, password: '' });
       setErrorMsg(typeof error === 'string' ? error : error.message);
+    } finally {
+      setLoading(false);
     }
   });
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 1 }}>
-      <Typography variant="h4">Inicia sesión en Comidin</Typography>
+      <Typography variant="h4">Inicia sesión en Comidin (JWT)</Typography>
     </Stack>
   );
 
@@ -106,7 +106,7 @@ export default function JwtLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting}   // 👈 sigue mostrando spinner en el botón
+        loading={loading}
       >
         Iniciar sesión
       </LoadingButton>
@@ -131,13 +131,12 @@ export default function JwtLoginView() {
         {renderForm}
       </FormProvider>
 
-      {/* 🔹 Overlay de carga mientras se está enviando el form */}
       <Backdrop
         sx={(theme) => ({
           color: '#fff',
           zIndex: theme.zIndex.drawer + 1,
         })}
-        open={isSubmitting}
+        open={loading}
       >
         <CircularProgress color="inherit" />
       </Backdrop>

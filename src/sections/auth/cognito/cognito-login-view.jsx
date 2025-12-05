@@ -29,11 +29,10 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 export default function CognitoLoginView() {
   const { login } = useAuthContext();
-
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -57,33 +56,28 @@ export default function CognitoLoginView() {
     defaultValues,
   });
 
-  const {
-    reset,
-    handleSubmit,
-    
-  } = methods;
+  const { reset, handleSubmit } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       setErrorMsg('');
-      setLoading(true); 
+      setLoading(true);
 
       await login?.(data.email, data.password);
 
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
       console.error('Errorrrr', error);
-      reset();
+      reset({ email: data.email, password: '' });
       setErrorMsg(typeof error === 'string' ? error : error.message);
     } finally {
-      
       setLoading(false);
     }
   });
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5 }}>
-      <Typography variant="h4">Sign in to Minimal</Typography>
+      <Typography variant="h4">Sign in to Minimal (Cognito)</Typography>
     </Stack>
   );
 
@@ -123,7 +117,7 @@ export default function CognitoLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={loading}   
+        loading={loading}
       >
         Iniciar Sesión
       </LoadingButton>
@@ -144,13 +138,12 @@ export default function CognitoLoginView() {
         {renderForm}
       </FormProvider>
 
-      {/* 🔹 Overlay global mientras estamos logueando */}
       <Backdrop
         sx={(theme) => ({
           color: '#fff',
           zIndex: theme.zIndex.drawer + 1,
         })}
-        open={loading}  
+        open={loading}
       >
         <CircularProgress color="inherit" />
       </Backdrop>
