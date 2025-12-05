@@ -115,7 +115,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   }, [currentCommerce, defaultValues, reset]);
 
   const onSubmit = handleSubmit(async (data) => {
-    // 🚫 Si la imagen se marcó como demasiado grande → NO enviamos la request
     if (imageTooBig) {
       enqueueSnackbar(
         `La imagen que subiste supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB. Por favor, elegí otra imagen más liviana.`,
@@ -124,7 +123,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       return;
     }
 
-    // Por seguridad: si no hay imagen, tampoco seguimos
     if (!data.image_url || data.image_url.length === 0) {
       enqueueSnackbar('La imagen del comercio es requerida.', {
         variant: 'error',
@@ -141,13 +139,9 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
       const method = currentCommerce ? 'PUT' : 'POST';
 
-      // Si estamos editando, image_url viene como array, tomamos el primero
       data.image_url = currentCommerce ? data.image_url[0] : data.image_url;
 
-      // 👉 Armamos el payload JSON
       const payload = JSON.stringify(data);
-
-      // 👉 Medimos el tamaño REAL de la request
       const payloadSizeBytes = new Blob([payload]).size;
 
       if (payloadSizeBytes > MAX_REQUEST_SIZE_BYTES) {
@@ -159,7 +153,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           `La imagen es demasiado pesada. El tamaño total de la solicitud no puede superar ${MAX_REQUEST_SIZE_MB}MB. Probá con una imagen más liviana (menor a ${MAX_IMAGE_SIZE_MB}MB).`,
           { variant: 'error' }
         );
-        return; // ❌ NO mandamos la request → evitamos el 413
+        return;
       }
 
       const response = await fetch(url, {
@@ -204,11 +198,11 @@ export default function CommerceNewEditForm({ currentCommerce }) {
         (file) =>
           new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.readAsDataURL(file); // Leer el archivo como base64
+            reader.readAsDataURL(file);
             reader.onload = () =>
               resolve({
                 ...file,
-                preview: reader.result, // Guardar base64 en la propiedad 'preview'
+                preview: reader.result,
               });
             reader.onerror = (error) => reject(error);
           })
@@ -222,7 +216,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
     async (acceptedFiles) => {
       const files = values.image_url || [];
 
-      // Solo permitimos una imagen
       if (files.length >= 1) {
         enqueueSnackbar('Solo se permite una imagen.', { variant: 'warning' });
         return;
@@ -232,17 +225,15 @@ export default function CommerceNewEditForm({ currentCommerce }) {
 
       const file = acceptedFiles[0];
 
-      // ✅ Validar tamaño máximo ANTES de procesar
       if (file.size > MAX_IMAGE_SIZE_BYTES) {
         setImageTooBig(true);
         enqueueSnackbar(
           `La imagen supera el tamaño máximo permitido de ${MAX_IMAGE_SIZE_MB}MB.`,
           { variant: 'error' }
         );
-        return; // No agregamos la imagen al form
+        return;
       }
 
-      // Si pasó la validación, limpiamos el flag y seguimos
       setImageTooBig(false);
 
       const newFiles = await handleFiles(acceptedFiles);
@@ -256,7 +247,7 @@ export default function CommerceNewEditForm({ currentCommerce }) {
       const filtered =
         values.image_url && values.image_url?.filter((file) => file !== inputFile);
       setValue('image_url', filtered);
-      setImageTooBig(false); // al borrar, ya no hay imagen grande
+      setImageTooBig(false);
     },
     [setValue, values.image_url]
   );
@@ -281,9 +272,19 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           {!mdUp && <CardHeader title="Detalles" />}
 
           <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField name="name" label="Nombre del comercio" />
+            <RHFTextField
+              name="name"
+              label="Nombre del comercio"
+              autoComplete="off"             
+            />
 
-            <RHFTextField name="description" label="Descripción" multiline rows={4} />
+            <RHFTextField
+              name="description"
+              label="Descripción"
+              multiline
+              rows={4}
+              autoComplete="off"
+            />
 
             <Stack spacing={1.5}>
               <Typography variant="subtitle2">
@@ -338,7 +339,11 @@ export default function CommerceNewEditForm({ currentCommerce }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <RHFTextField name="commerce_code" label="Código de comercio" />
+              <RHFTextField
+                name="commerce_code"
+                label="Código de comercio"
+                autoComplete="off"
+              />
 
               <RHFAutocomplete
                 name="commerce_id"
@@ -386,7 +391,6 @@ export default function CommerceNewEditForm({ currentCommerce }) {
           type="submit"
           variant="contained"
           loading={isSubmitting}
-          // 🚫 Bloqueamos el botón si la imagen es demasiado grande o no hay imagen
           disabled={
             isSubmitting ||
             imageTooBig ||
@@ -401,7 +405,11 @@ export default function CommerceNewEditForm({ currentCommerce }) {
   );
 
   return (
-    <FormProvider methods={methods} onSubmit={onSubmit}>
+    <FormProvider
+      methods={methods}
+      onSubmit={onSubmit}
+      autoComplete="off" 
+    >
       <Grid container spacing={3}>
         {renderDetails}
         {renderProperties}
