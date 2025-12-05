@@ -21,7 +21,7 @@ import { PATH_AFTER_LOGIN } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
-import LoadingScreen from 'src/components/loading-screen'; // 👈 usamos tu pantalla de carga
+import { LoadingScreen } from 'src/components/loading-screen'; // ✅ import corregido
 
 // ----------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ export default function CognitoLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false); // 👈 controla la pantalla de carga
+  const [loading, setLoading] = useState(false); // controla la pantalla de carga
 
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -59,23 +59,22 @@ export default function CognitoLoginView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setErrorMsg('');
-      setLoading(true); // 🔥 mostramos la pantalla de carga
+      setLoading(true); // 🔥 mostrar pantalla de carga
 
       await login?.(data.email, data.password);
 
-      // Si el login es correcto, cambia de ruta → este componente se desmonta
+      // Login OK → navegamos. El componente se desmonta, así que no hace falta setLoading(false)
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
-      console.error('Errorrrr', error);
-
-      // ❌ Login incorrecto → volvemos al formulario
+      console.error('Error login', error);
+      // Login incorrecto → volvemos al form
       reset({ email: data.email, password: '' });
       setErrorMsg(typeof error === 'string' ? error : error.message);
-      setLoading(false); // 👈 ocultamos la pantalla de carga
+      setLoading(false); // 👈 ocultar pantalla de carga
     }
   });
 
-  // 🔹 Si estamos logueando, mostramos SOLO la pantalla de carga
+  // 🔹 Mientras está logueando, mostrar solo la pantalla de carga
   if (loading) {
     return <LoadingScreen />;
   }
@@ -122,8 +121,7 @@ export default function CognitoLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        // 👇 el botón puede mostrar o no su spinner, opcional
-        loading={false}
+        loading={false} // el loading "gordo" lo maneja LoadingScreen
       >
         Iniciar Sesión
       </LoadingButton>
