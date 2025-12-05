@@ -33,9 +33,9 @@ export default function CognitoLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false); 
 
   const searchParams = useSearchParams();
-
   const returnTo = searchParams.get('returnTo');
 
   const password = useBoolean();
@@ -60,11 +60,14 @@ export default function CognitoLoginView() {
   const {
     reset,
     handleSubmit,
-    formState: { isSubmitting },
+    
   } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      setErrorMsg('');
+      setLoading(true); 
+
       await login?.(data.email, data.password);
 
       router.push(returnTo || PATH_AFTER_LOGIN);
@@ -72,6 +75,9 @@ export default function CognitoLoginView() {
       console.error('Errorrrr', error);
       reset();
       setErrorMsg(typeof error === 'string' ? error : error.message);
+    } finally {
+      
+      setLoading(false);
     }
   });
 
@@ -117,7 +123,7 @@ export default function CognitoLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting}  // 👈 spinner en el botón
+        loading={loading}   
       >
         Iniciar Sesión
       </LoadingButton>
@@ -138,13 +144,13 @@ export default function CognitoLoginView() {
         {renderForm}
       </FormProvider>
 
-      {/* 🔹 Overlay global mientras se envía el login */}
+      {/* 🔹 Overlay global mientras estamos logueando */}
       <Backdrop
         sx={(theme) => ({
           color: '#fff',
           zIndex: theme.zIndex.drawer + 1,
         })}
-        open={isSubmitting}
+        open={loading}  
       >
         <CircularProgress color="inherit" />
       </Backdrop>
