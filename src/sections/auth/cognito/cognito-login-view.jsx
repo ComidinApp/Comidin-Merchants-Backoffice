@@ -10,6 +10,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
@@ -39,7 +41,9 @@ export default function CognitoLoginView() {
   const password = useBoolean();
 
   const LoginSchema = Yup.object().shape({
-    email: Yup.string().required('Email is required').email('Email must be a valid email address'),
+    email: Yup.string()
+      .required('Email is required')
+      .email('Email must be a valid email address'),
     password: Yup.string().required('Password is required'),
   });
 
@@ -74,14 +78,6 @@ export default function CognitoLoginView() {
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5 }}>
       <Typography variant="h4">Sign in to Minimal</Typography>
-
-      {/* <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">New user?</Typography>
-
-        <Link component={RouterLink} href={paths.auth.cognito.register} variant="subtitle2">
-          Create an account
-        </Link>
-      </Stack> */}
     </Stack>
   );
 
@@ -121,7 +117,7 @@ export default function CognitoLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting}
+        loading={isSubmitting}  // 👈 spinner en el botón
       >
         Iniciar Sesión
       </LoadingButton>
@@ -141,6 +137,17 @@ export default function CognitoLoginView() {
       <FormProvider methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </FormProvider>
+
+      {/* 🔹 Overlay global mientras se envía el login */}
+      <Backdrop
+        sx={(theme) => ({
+          color: '#fff',
+          zIndex: theme.zIndex.drawer + 1,
+        })}
+        open={isSubmitting}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }
