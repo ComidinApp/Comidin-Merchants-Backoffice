@@ -10,6 +10,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { useRouter, useSearchParams } from 'src/routes/hooks';
 
@@ -71,15 +73,7 @@ export default function JwtLoginView() {
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 1 }}>
-      <Typography variant="h4">Inicia sesion en Comidin</Typography>
-
-      {/* <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2">New user?</Typography>
-
-        <Link component={RouterLink} href={paths.auth.jwt.register} variant="subtitle2">
-          Create an account
-        </Link>
-      </Stack> */}
+      <Typography variant="h4">Inicia sesión en Comidin</Typography>
     </Stack>
   );
 
@@ -112,7 +106,7 @@ export default function JwtLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting}
+        loading={isSubmitting}   // 👈 sigue mostrando spinner en el botón
       >
         Iniciar sesión
       </LoadingButton>
@@ -136,6 +130,17 @@ export default function JwtLoginView() {
       <FormProvider methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </FormProvider>
+
+      {/* 🔹 Overlay de carga mientras se está enviando el form */}
+      <Backdrop
+        sx={(theme) => ({
+          color: '#fff',
+          zIndex: theme.zIndex.drawer + 1,
+        })}
+        open={isSubmitting}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }
