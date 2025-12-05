@@ -1,3 +1,4 @@
+// src/sections/auth/cognito/cognito-login-view.jsx
 import * as Yup from 'yup';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -10,6 +11,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
@@ -21,7 +24,6 @@ import { PATH_AFTER_LOGIN } from 'src/config-global';
 
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
-import { LoadingScreen } from 'src/components/loading-screen'; // ✅ import corregido
 
 // ----------------------------------------------------------------------
 
@@ -30,7 +32,7 @@ export default function CognitoLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false); // controla la pantalla de carga
+  const [loading, setLoading] = useState(false); // 👈 controla pantalla de carga
 
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -59,29 +61,26 @@ export default function CognitoLoginView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setErrorMsg('');
-      setLoading(true); // 🔥 mostrar pantalla de carga
+      setLoading(true); // 🔥 mostramos pantalla de carga
 
       await login?.(data.email, data.password);
 
-      // Login OK → navegamos. El componente se desmonta, así que no hace falta setLoading(false)
+      // Login OK → navegamos
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
       console.error('Error login', error);
-      // Login incorrecto → volvemos al form
+
+      // Login incorrecto → volvemos al formulario
       reset({ email: data.email, password: '' });
       setErrorMsg(typeof error === 'string' ? error : error.message);
-      setLoading(false); // 👈 ocultar pantalla de carga
+
+      setLoading(false); // 🔚 ocultar pantalla de carga
     }
   });
 
-  // 🔹 Mientras está logueando, mostrar solo la pantalla de carga
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5 }}>
-      <Typography variant="h4">Sign in to Minimal</Typography>
+      <Typography variant="h4">Sign in to Minimal (Cognito)</Typography>
     </Stack>
   );
 
@@ -121,7 +120,7 @@ export default function CognitoLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={false} // el loading "gordo" lo maneja LoadingScreen
+        loading={false} // la pantalla de carga la maneja el Backdrop
       >
         Iniciar Sesión
       </LoadingButton>
@@ -141,6 +140,17 @@ export default function CognitoLoginView() {
       <FormProvider methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </FormProvider>
+
+      {/* 🔹 Pantalla de carga global mientras intentamos loguear */}
+      <Backdrop
+        sx={(theme) => ({
+          color: '#fff',
+          zIndex: theme.zIndex.drawer + 1,
+        })}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }

@@ -1,3 +1,4 @@
+// src/sections/auth/jwt/jwt-login-view.jsx
 import * as Yup from 'yup';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -30,7 +31,7 @@ export default function JwtLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // 👈 controla pantalla de carga
 
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -57,17 +58,20 @@ export default function JwtLoginView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setErrorMsg('');
-      setLoading(true);
+      setLoading(true);          // 🔥 mostramos pantalla de carga
 
       await login?.(data.email, data.password);
 
+      // Login OK → navega, este componente se desmonta
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
       console.error(error);
+
+      // Login incorrecto → volvemos al form
       reset({ email: data.email, password: '' });
       setErrorMsg(typeof error === 'string' ? error : error.message);
-    } finally {
-      setLoading(false);
+
+      setLoading(false);         // 🔚 ocultamos la pantalla de carga
     }
   });
 
@@ -106,7 +110,7 @@ export default function JwtLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={loading}
+        loading={false} // la carga la maneja el Backdrop, no el botón
       >
         Iniciar sesión
       </LoadingButton>
@@ -131,6 +135,7 @@ export default function JwtLoginView() {
         {renderForm}
       </FormProvider>
 
+      {/* 🔹 Pantalla de carga global mientras intentamos loguear */}
       <Backdrop
         sx={(theme) => ({
           color: '#fff',
