@@ -45,6 +45,25 @@ export default function PricingCard({ card, sx, ...other }) {
   // snackbar de éxito
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMsg, setSnackMsg] = useState('Suscripción exitosa');
+  const [snackSeverity, setSnackSeverity] = useState('success');
+
+  const openSnack = (msg, severity = 'success') => {
+    setSnackMsg(msg || 'OK');
+    setSnackSeverity(severity);
+    setSnackOpen(true);
+  };
+
+  const closeSnack = (_e, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackOpen(false);
+  };
+
+  const clearPending = () => {
+    localStorage.removeItem('pending_plan_id');
+    localStorage.removeItem('pending_payer_email');
+    localStorage.removeItem('pending_commerce_id');
+    sessionStorage.removeItem('mp_preapproval_id');
+  };
 
   const openSuccess = (msg) => {
     setSnackMsg(msg || 'Suscripción exitosa');
@@ -224,27 +243,54 @@ export default function PricingCard({ card, sx, ...other }) {
   // al volver de MP: confirmamos en backend
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // Parámetros típicos de retorno de MercadoPago (pueden variar según integración)
+    const mpStatus = params.get('status') || params.get('collection_status');
     const preapprovalFromQuery = params.get('preapproval_id');
-    const statusFromQuery = params.get('status'); // a veces MP devuelve status=approved
+    const paymentId = params.get('payment_id') || params.get('collection_id');
 
-    // Fallback: si no vino en query, usamos el guardado al crear
-    const preapprovalId = preapprovalFromQuery || sessionStorage.getItem('mp_preapproval_id');
+    const hasMpReturnParams =
+      Boolean(preapprovalFromQuery) ||
+      Boolean(paymentId) ||
+      params.has('status') ||
+      params.has('collection_status');
 
-    // Datos guardados al iniciar la suscripción
     const planIdLS = Number(localStorage.getItem('pending_plan_id'));
     const commerceIdLS = Number(localStorage.getItem('pending_commerce_id'));
 
-    // Si no hay nada pendiente, no hacemos nada
-    if (!planIdLS || !commerceIdLS) {
-      if (statusFromQuery && !preapprovalId) {
-        console.warn('Volvió de MP con status pero sin preapproval_id:', statusFromQuery);
-      }
+    // Si hay "pending" pero NO volvimos desde MP (ej: apretó ATRÁS), NO confirmar.
+    // Limpiamos el pending para que no vuelva a dispararse.
+    if (planIdLS && commerceIdLS && !hasMpReturnParams) {
+      clearPending();
+      // opcional: mensaje
+      openSnack('Pago cancelado. No se realizó ningún cambio de plan.', 'info');
       return;
     }
 
-    // Guard más fino:
-    // - Con preapproval: único por preapproval_id
-    // - Por búsqueda: único por commerce + plan (permite cambiar 3→2, 2→3, etc.)
+    // Si no hay nada pendiente o no hay retorno MP, no hacemos nada
+    if (!planIdLS || !commerceIdLS || !hasMpReturnParams) return;
+
+    // Si MP devolvió status explícito y NO es aprobado, cancelamos flujo
+    if (mpStatus && mpStatus !== 'approved' && mpStatus !== 'authorized') {
+      clearPending();
+      openSnack('El pago no fue aprobado. No se realizó ningún cambio de plan.', 'info');
+
+      // Limpia query params para no re-disparar
+      const url = new URL(window.location.href);
+      url.searchParams.delete('preapproval_id');
+      url.searchParams.delete('payment_id');
+      url.searchParams.delete('collection_id');
+      url.searchParams.delete('status');
+      url.searchParams.delete('collection_status');
+      window.history.replaceState({}, '', url.toString());
+
+      return;
+    }
+
+    // Fallback: si no vino preapproval_id en query, usamos el guardado al crear
+    const preapprovalId = preapprovalFromQuery || sessionStorage.getItem('mp_preapproval_id');
+
+    // Guard para no ejecutar doble
     const guardKey = preapprovalId
       ? `confirmed:${preapprovalId}`
       : `confirmed:by-search:${commerceIdLS}:${planIdLS}`;
@@ -255,9 +301,9 @@ export default function PricingCard({ card, sx, ...other }) {
     (async () => {
       try {
         const payload = {
-          plan_id: planIdLS || undefined,
-          payer_email: 'TEST_USER_1278385314@testuser.com', // opcional
+          plan_id: planIdLS,
           commerce_id: commerceIdLS,
+          payer_email: 'TEST_USER_1278385314@testuser.com', // si querés, poné userEmail
         };
         if (preapprovalId) payload.preapproval_id = preapprovalId;
 
@@ -270,41 +316,39 @@ export default function PricingCard({ card, sx, ...other }) {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
 
-        // limpiar datos temporales
-        localStorage.removeItem('pending_plan_id');
-        localStorage.removeItem('pending_payer_email');
-        localStorage.removeItem('pending_commerce_id');
-        sessionStorage.removeItem('mp_preapproval_id');
-
-        // limpiar query param para no re-disparar
-        if (preapprovalFromQuery) {
-          const url = new URL(window.location.href);
-          url.searchParams.delete('preapproval_id');
-          window.history.replaceState({}, '', url.toString());
+        // 🔐 Clave: si backend te devuelve mp_status y NO está aprobado, no cambies plan
+        const backendMpStatus = json?.mp_status;
+        if (backendMpStatus && backendMpStatus !== 'approved' && backendMpStatus !== 'authorized') {
+          clearPending();
+          openSnack('El pago no fue aprobado. No se realizó ningún cambio de plan.', 'info');
+          sessionStorage.removeItem(guardKey);
+          return;
         }
 
-        // actualizar estado local (reemplazar plan activo)
-        if (planIdLS) setSubscribedPlans(new Set([Number(planIdLS)]));
+        clearPending();
+
+        // limpiar query param para no re-disparar
+        const url = new URL(window.location.href);
+        url.searchParams.delete('preapproval_id');
+        url.searchParams.delete('payment_id');
+        url.searchParams.delete('collection_id');
+        url.searchParams.delete('status');
+        url.searchParams.delete('collection_status');
+        window.history.replaceState({}, '', url.toString());
+
+        // actualizar estado local
+        setSubscribedPlans(new Set([Number(planIdLS)]));
 
         // avisar global
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
-        // refrescar datos del empleado (sin caché)
-        try {
-          const ts = Date.now();
-          await fetch(`${API_BASE}/employee/email/${encodeURIComponent(userEmail)}?ts=${ts}`, {
-            cache: 'no-store',
-          });
-        } catch (err) {
-          console.warn('No se pudo refrescar employee:', err);
-        }
-
-        // ✅ snackbar de éxito al volver de MP
-        openSuccess(`¡Suscripción exitosa! ${planName(planIdLS)} activada.`);
-        console.log('Suscripción confirmada', json.subscription, 'mp_status:', json?.mp_status, 'mp_id:', json?.mp_id);
+        // ✅ snackbar éxito
+        openSnack(`¡Suscripción exitosa! ${planName(planIdLS)} activada.`, 'success');
       } catch (e) {
         console.error('Confirmación falló:', e);
         sessionStorage.removeItem(guardKey);
+        // No cambiamos plan, solo informamos
+        openSnack('No se pudo confirmar el pago. No se realizó ningún cambio de plan.', 'error');
       }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -438,10 +482,10 @@ export default function PricingCard({ card, sx, ...other }) {
       <Snackbar
         open={snackOpen}
         autoHideDuration={4000}
-        onClose={closeSuccess}
+        onClose={closeSnack}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert onClose={closeSuccess} severity="success" variant="filled" elevation={3}>
+        <Alert onClose={closeSnack} severity={snackSeverity} variant="filled" elevation={3}>
           {snackMsg}
         </Alert>
       </Snackbar>
