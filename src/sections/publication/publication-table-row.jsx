@@ -91,32 +91,10 @@ RenderCellCreatedAt.propTypes = {
 };
 
 export function RenderCellStock({ params }) {
-  const stockPercentage = (params.row.available_stock * 100) / 300;
-
-  let stockStatus;
-  let stockColor;
-
-  if (stockPercentage <= 20) {
-    stockStatus = 'Out of stock';
-    stockColor = 'error';
-  } else if (stockPercentage <= 50) {
-    stockStatus = 'Low stock';
-    stockColor = 'warning';
-  } else {
-    stockStatus = 'In stock';
-    stockColor = 'success';
-  }
 
   return (
     <Stack sx={{ typography: 'caption', color: 'text.secondary', width: 80 }}>
-      <LinearProgress
-        value={stockPercentage}
-        variant="determinate"
-        color={stockColor}
-        sx={{ mb: 1, height: 6, width: '100%' }} // La barra ocupa todo el ancho (80px)
-      />
       {params.row.available_stock} <br />
-      {stockStatus}
     </Stack>
   );
 }
