@@ -842,7 +842,9 @@ export default function CognitoRegisterView() {
       )}
 
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        {renderFormStep()}
+        <div key={`register-step-${step}`}>
+          {renderFormStep()}
+        </div>
 
         <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
           {step > 0 && (
