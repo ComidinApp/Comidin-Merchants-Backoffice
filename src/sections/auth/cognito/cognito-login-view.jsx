@@ -21,6 +21,7 @@ import { useRouter, useSearchParams } from 'src/routes/hooks';
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useAuthContext } from 'src/auth/hooks';
 import { PATH_AFTER_LOGIN } from 'src/config-global';
+import { SplashScreen } from 'src/components/loading-screen';
 
 import Iconify from 'src/components/iconify';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
@@ -61,20 +62,17 @@ export default function CognitoLoginView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setErrorMsg('');
-      setLoading(true); // 🔥 mostramos pantalla de carga
+      setLoading(true);
 
-      await login?.(data.email, data.password);
+      const result = await login?.(data.email, data.password);
 
-      // Login OK → navegamos
+      if (result?.redirected) return;
+
       router.push(returnTo || PATH_AFTER_LOGIN);
     } catch (error) {
-      console.error('Error login', error);
-
-      // Login incorrecto → volvemos al formulario
-      reset({ email: data.email, password: '' });
-      setErrorMsg(typeof error === 'string' ? error : error.message);
-
-      setLoading(false); // 🔚 ocultar pantalla de carga
+      console.error(error);
+      setLoading(false);
+      setErrorMsg(error.message);
     }
   });
 
@@ -140,6 +138,8 @@ export default function CognitoLoginView() {
       <FormProvider methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </FormProvider>
+
+      {loading && ( <SplashScreen sx={{ position: 'fixed', inset: 0, zIndex: (theme) => theme.zIndex.modal + 999, }} /> )}
 
       {/* 🔹 Pantalla de carga global mientras intentamos loguear */}
       <Backdrop

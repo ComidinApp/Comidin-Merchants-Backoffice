@@ -124,52 +124,73 @@ export function AuthProvider({ children }) {
 
   // LOGIN
   const login = useCallback(
-    async (email, password) => {
-      const user = new CognitoUser({ Username: email, Pool: userPool });
-      const authDetails = new AuthenticationDetails({ Username: email, Password: password });
+    (email, password) =>
+      new Promise((resolve, reject) => {
+        const user = new CognitoUser({ Username: email, Pool: userPool });
+        const authDetails = new AuthenticationDetails({
+          Username: email,
+          Password: password,
+        });
 
-      user.authenticateUser(authDetails, {
-        onSuccess: async (session) => {
-          const accessToken = session.getIdToken().getJwtToken();
-          const my_employee = await getEmployee(email);
-          if (my_employee.data.commerce.status !== 'admitted') {
-            user.signOut();
-            navigate(paths.unauthorizedCommerce);
-          }
-          const info = my_employee.data;
-          user.getUserAttributes((err, attributes) => {
-            if (err) {
-              console.error(err);
-              return;
+        user.authenticateUser(authDetails, {
+          onSuccess: async (session) => {
+            try {
+              const accessToken = session.getIdToken().getJwtToken();
+              const my_employee = await getEmployee(email);
+
+              if (my_employee.data.commerce.status !== 'admitted') {
+                user.signOut();
+                navigate(paths.unauthorizedCommerce);
+                resolve({ redirected: true });
+                return;
+              }
+
+              const info = my_employee.data;
+
+              user.getUserAttributes((err, attributes) => {
+                if (err) {
+                  console.error(err);
+                  reject(err);
+                  return;
+                }
+
+                const userData = attributes.reduce((acc, attribute) => {
+                  acc[attribute.getName()] = attribute.getValue();
+                  return acc;
+                }, {});
+
+                dispatch({
+                  type: 'LOGIN',
+                  payload: { user: { ...userData, accessToken, ...info } },
+                });
+
+                resolve({ redirected: false });
+              });
+            } catch (e) {
+              reject(e);
             }
-            const userData = attributes.reduce((acc, attribute) => {
-              acc[attribute.getName()] = attribute.getValue();
-              return acc;
-            }, {});
+          },
 
-            dispatch({
-              type: 'LOGIN',
-              payload: { user: { ...userData, accessToken, ...info } },
+          onFailure: (err) => {
+            console.error(err);
+            reject(err);
+          },
+
+          newPasswordRequired: () => {
+            getEmployee(email).then((my_employee) => {
+              if (my_employee.data.commerce.status !== 'admitted') {
+                user.signOut();
+                navigate(paths.unauthorizedCommerce);
+                resolve({ redirected: true });
+              } else {
+                sendEmployeeVerificationCode(email);
+                navigate(paths.auth.cognito.newPassword);
+                resolve({ redirected: true });
+              }
             });
-          });
-        },
-        onFailure: (err) => {
-          console.error(err);
-        },
-        newPasswordRequired: (session) => {
-          console.log('Se requiere una nueva contraseña.');
-          getEmployee(email).then((my_employee) => {
-            if (my_employee.data.commerce.status !== 'admitted') {
-              user.signOut();
-              navigate(paths.unauthorizedCommerce);
-            } else {
-              sendEmployeeVerificationCode(email);
-              navigate(paths.auth.cognito.newPassword);
-            }
-          });
-        },
-      });
-    },
+          },
+        });
+      }),
     [navigate]
   );
 

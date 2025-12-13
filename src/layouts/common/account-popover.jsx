@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
@@ -11,6 +12,7 @@ import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
+import { SplashScreen } from 'src/components/loading-screen';
 
 import { useMockedUser } from 'src/hooks/use-mocked-user';
 
@@ -52,13 +54,16 @@ export default function AccountPopover() {
 
   const popover = usePopover();
 
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const handleLogout = async () => {
     try {
+      setLogoutLoading(true);
       await logout();
-      popover.onClose();
       router.replace('/');
     } catch (error) {
       console.error(error);
+      setLogoutLoading(false);
       enqueueSnackbar('Unable to logout!', { variant: 'error' });
     }
   };
@@ -131,6 +136,16 @@ export default function AccountPopover() {
           Logout
         </MenuItem>
       </CustomPopover>
+
+      {logoutLoading && (
+        <SplashScreen
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: (theme) => theme.zIndex.modal + 999,
+          }}
+        />
+      )}
     </>
   );
 }

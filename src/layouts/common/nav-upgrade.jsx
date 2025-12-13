@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
+import { SplashScreen } from 'src/components/loading-screen';
 
 import { useRouter } from 'src/routes/hooks';
 
@@ -28,18 +30,22 @@ export default function NavUpgrade() {
 
   const popover = usePopover();
 
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const handleLogout = async () => {
     try {
+      setLogoutLoading(true);
       await logout();
-      popover.onClose();
       router.replace('/');
     } catch (error) {
       console.error(error);
+      setLogoutLoading(false);
       enqueueSnackbar('Unable to logout!', { variant: 'error' });
     }
   };
 
   return (
+  <>
     <Stack
       sx={{
         px: 2,
@@ -79,10 +85,21 @@ export default function NavUpgrade() {
           </Typography>
         </Stack>
 
-        <Button variant="contained" onClick={handleLogout} target="_blank" rel="noopener">
+        <Button variant="contained" onClick={handleLogout}>
           Cerrar Sesión
         </Button>
       </Stack>
     </Stack>
-  );
+
+    {logoutLoading && (
+      <SplashScreen
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: (theme) => theme.zIndex.modal + 999,
+        }}
+      />
+    )}
+  </>
+);
 }

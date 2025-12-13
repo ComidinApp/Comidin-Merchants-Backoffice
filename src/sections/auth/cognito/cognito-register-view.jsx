@@ -18,6 +18,7 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
+import { SplashScreen } from 'src/components/loading-screen';
 
 import { createCommerce } from 'src/api/commerce';
 import { useAuthContext } from 'src/auth/hooks';
@@ -174,6 +175,7 @@ const defaultValues = {
   available_days: [],
 };
 
+
 export default function CognitoRegisterView() {
   const { register: registerCognito } = useAuthContext();
 
@@ -182,6 +184,8 @@ export default function CognitoRegisterView() {
   const [errorMsg, setErrorMsg] = useState('');
   const [step, setStep] = useState(0);
   const [file, setFile] = useState(null);
+  const [loadingScreen, setLoadingScreen] = useState(false);
+
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
   const password = useBoolean();
@@ -472,7 +476,11 @@ export default function CognitoRegisterView() {
   // ======== Submit ========
   const onSubmit = async (data) => {
     try {
+      setErrorMsg('');
+      setLoadingScreen(true);
+
       if (emailStatus === 'exists' || emailStatus === 'invalid') {
+        setLoadingScreen(false);
         setError('email', {
           type: 'manual',
           message:
@@ -484,6 +492,7 @@ export default function CognitoRegisterView() {
       }
 
       if (isNationalIdBusy) {
+        setLoadingScreen(false);
         setError('national_id', {
           type: 'manual',
           message:
@@ -495,6 +504,7 @@ export default function CognitoRegisterView() {
       }
 
       if (isPhoneBusy) {
+        setLoadingScreen(false);
         setError('phone_number', {
           type: 'manual',
           message:
@@ -506,6 +516,7 @@ export default function CognitoRegisterView() {
       }
 
       if (!data.image_url) {
+        setLoadingScreen(false);
         setStep(2);
         setError('image_url', {
           type: 'manual',
@@ -538,9 +549,9 @@ export default function CognitoRegisterView() {
       data.avatar_url = `${assets_url}coffe.png`;
 
       await registerCognito?.(data);
-      // router.push('/gracias');
     } catch (error) {
       console.error('Error', error);
+      setLoadingScreen(false);
 
       const backendErrors = error?.response?.data?.errors;
       const closeAtError = Array.isArray(backendErrors)
@@ -880,6 +891,16 @@ export default function CognitoRegisterView() {
           )}
         </Stack>
       </FormProvider>
+
+      {loadingScreen && (
+        <SplashScreen
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: (theme) => theme.zIndex.modal + 999,
+          }}
+        />
+      )}
 
       <Typography
         component="div"
