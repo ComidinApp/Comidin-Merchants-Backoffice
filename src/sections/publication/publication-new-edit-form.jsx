@@ -35,11 +35,10 @@ import { useGetProducts } from 'src/api/product';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 
-import FormProvider, {
-  RHFEditor,
-  RHFUpload,
-  RHFTextField,
-} from 'src/components/hook-form';
+import FormProvider, { RHFUpload, RHFTextField } from 'src/components/hook-form';
+
+// ✅ NUEVO: límite + beneficios
+import { canCreatePublication, fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
@@ -59,6 +58,13 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const [price, setPrice] = useState(currentPublication?.price || 0);
   const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || 0);
   const [selectedValue, setSelectedValue] = useState();
+
+  // ✅ beneficios (para can_add_stock)
+  const [benefits, setBenefits] = useState(null);
+  const [benefitsLoaded, setBenefitsLoaded] = useState(false);
+
+  const canAddStock = benefits?.can_add_stock !== false; // default true si no cargó
+  const stockLocked = benefitsLoaded && !canAddStock;
 
   // ----------------------------------------------------------------------
   // Validaciones Yup
@@ -141,7 +147,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
         ? new Date(currentPublication.expiration_date)
         : null,
       is_active: currentPublication?.is_active || 'active',
-      // Campos de texto opcionales
       name: currentPublication?.name || '',
       subDescription: currentPublication?.subDescription || '',
       description: currentPublication?.description || '',
@@ -165,7 +170,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     reset,
     watch,
     setValue,
-    handleSubmit,            // 👈 IMPORTANTE: lo usamos para envolver onSubmit
+    handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
@@ -176,6 +181,47 @@ export default function PublicationNewEditForm({ currentPublication }) {
       setValue('product_id', currentPublication.product_id);
     }
   }, [currentPublication, setValue]);
+
+  // ✅ cargar beneficios (para can_add_stock)
+  useEffect(() => {
+    let alive = true;
+
+    async function loadBenefits() {
+      if (!commerceId) {
+        setBenefits(null);
+        setBenefitsLoaded(true);
+        return;
+      }
+
+      try {
+        const b = await fetchBenefitsByCommerceId(Number(commerceId));
+        if (!alive) return;
+        setBenefits(b);
+      } catch (e) {
+        // Si falla, no bloqueamos stock por error de red
+        console.warn('[Publication] No se pudieron cargar beneficios:', e);
+        if (!alive) return;
+        setBenefits(null);
+      } finally {
+        if (alive) setBenefitsLoaded(true);
+      }
+    }
+
+    loadBenefits();
+
+    return () => {
+      alive = false;
+    };
+  }, [commerceId]);
+
+  // ✅ si no puede stock: forzar stock = 1 y bloquear edición
+  useEffect(() => {
+    if (!benefitsLoaded) return;
+
+    if (stockLocked) {
+      setValue('available_stock', 1, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [benefitsLoaded, stockLocked, setValue]);
 
   // ----------------------------------------------------------------------
   // Selección de producto
@@ -257,18 +303,38 @@ export default function PublicationNewEditForm({ currentPublication }) {
   }, [currentPublication, defaultValues, reset]);
 
   // ----------------------------------------------------------------------
-  // SUBMIT (este sí le pega al backend)
+  // SUBMIT
   // ----------------------------------------------------------------------
 
   const onSubmit = async (data) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const url = currentPublication
+      const isEdit = Boolean(currentPublication?.id);
+
+      // ✅ Validación de límite SOLO al crear
+      if (!isEdit) {
+        const cid = Number(data?.commerce_id || commerceId);
+        const check = await canCreatePublication({ commerceId: cid });
+
+        if (!check.allowed) {
+          enqueueSnackbar(check.reason || 'Superaste el máximo de publicaciones permitidas.', {
+            variant: 'error',
+          });
+          return;
+        }
+      }
+
+      // ✅ si no puede manejar stock: forzar 1 antes de enviar
+      if (stockLocked) {
+        data.available_stock = 1;
+      }
+
+      const url = isEdit
         ? `${VITE_API_COMIDIN}/publication/${currentPublication.id}`
         : `${VITE_API_COMIDIN}/publication`;
 
-      const method = currentPublication ? 'PUT' : 'POST';
+      const method = isEdit ? 'PUT' : 'POST';
 
       // Normalizar fecha/hora de vencimiento
       if (data.expiration_date) {
@@ -283,35 +349,22 @@ export default function PublicationNewEditForm({ currentPublication }) {
         data.expiration_date = dateObj.toISOString();
       }
 
-      console.log('URL al backend:', url);
-      console.log('Payload que se envía al backend:', data);
-
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
       const text = await response.text();
-      console.log('Status backend:', response.status);
-      console.log('Respuesta cruda del backend:', text);
 
       if (!response.ok) {
         throw new Error(`Backend respondió ${response.status}: ${text}`);
       }
 
-      const responseData = text ? JSON.parse(text) : {};
-      console.log('Respuesta parseada:', responseData);
-
       reset();
-      enqueueSnackbar(
-        currentPublication
-          ? '¡Publicación actualizada con éxito!'
-          : '¡Publicación creada con éxito!',
-        { variant: 'success' }
-      );
+      enqueueSnackbar(isEdit ? '¡Publicación actualizada con éxito!' : '¡Publicación creada con éxito!', {
+        variant: 'success',
+      });
       router.push(paths.dashboard.publication.root);
     } catch (error) {
       console.error('Error al guardar publicación:', error);
@@ -406,19 +459,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 <DialogTitle>Productos</DialogTitle>
 
                 <DialogContent sx={{ p: 0 }}>
-                  <List
-                    sx={{
-                      maxHeight: '400px',
-                      overflow: 'auto',
-                    }}
-                  >
+                  <List sx={{ maxHeight: '400px', overflow: 'auto' }}>
                     {products.map((product) => (
                       <ListItemButton
-                        sx={{
-                          px: 2.5,
-                          py: 1.5,
-                          typography: 'subtitle1',
-                        }}
+                        sx={{ px: 2.5, py: 1.5, typography: 'subtitle1' }}
                         onClick={() => handleClose(product)}
                         key={product.id}
                       >
@@ -454,6 +498,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 placeholder="0"
                 type="number"
                 InputLabelProps={{ shrink: true }}
+                disabled={stockLocked}
+                helperText={stockLocked ? 'Tu suscripción no permite tener más stock.' : ''}
+                FormHelperTextProps={{ sx: { color: 'error.main' } }}
               />
             </Box>
           </Stack>
@@ -544,7 +591,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   );
 
   // ----------------------------------------------------------------------
-  // Acciones (switch activo + botón submit)
+  // Acciones
   // ----------------------------------------------------------------------
 
   const renderActions = (
@@ -570,17 +617,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
     </>
   );
 
-  // ----------------------------------------------------------------------
-
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Grid container spacing={3}>
-        {/* {renderDetails} si alguna vez reactivás más campos de texto */}
-
         {renderProperties}
-
         {renderPricing}
-
         {renderActions}
       </Grid>
     </FormProvider>
