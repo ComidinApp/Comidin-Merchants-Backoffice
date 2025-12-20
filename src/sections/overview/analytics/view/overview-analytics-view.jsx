@@ -1,4 +1,3 @@
-// src/sections/overview/analytics/view/overview-analytics-view.jsx
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
 import Alert from '@mui/material/Alert';
@@ -28,17 +27,18 @@ import AnalyticsOrderTimeline from '../analytics-order-timeline';
 import AnalyticsWebsiteVisits from '../analytics-website-visits';
 import AnalyticsWidgetSummary from '../analytics-widget-summary';
 import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
-import AnalyticsCurrentSubject from '../analytics-current-subject';
-import AnalyticsConversionRates from '../analytics-conversion-rates';
 import ReportDownloadMenu from '../../report-download-menu';
 import PeriodSelector from '../../period-selector';
 import AnalyticsTopProductsBar from '../../analytics-top-products-bar';
 
-// --- Helpers ---
+// ---------- Helpers ----------
 function monthKeyToShortLabel(key) {
   const [y, m] = key.split('-').map((n) => parseInt(n, 10));
   const d = new Date(y, m - 1, 1);
-  return new Intl.DateTimeFormat('es-AR', { month: 'short', year: '2-digit' }).format(d);
+  return new Intl.DateTimeFormat('es-AR', {
+    month: 'short',
+    year: '2-digit',
+  }).format(d);
 }
 
 function buildMonthlyChart(overview) {
@@ -73,7 +73,7 @@ function subheaderFromPeriod(period) {
   }
 }
 
-// --- Page ---
+// ---------- Page ----------
 export default function OverviewAnalyticsView() {
   const auth = useAuthContext();
   const settings = useSettingsContext();
@@ -81,10 +81,10 @@ export default function OverviewAnalyticsView() {
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState('');
 
-  // ⭐ período
+  // período
   const [period, setPeriod] = useState('last3m');
 
-  // ✅ beneficios
+  // beneficios
   const [benefits, setBenefits] = useState(null);
   const [benefitsLoading, setBenefitsLoading] = useState(false);
   const [benefitsError, setBenefitsError] = useState('');
@@ -96,16 +96,20 @@ export default function OverviewAnalyticsView() {
     auth?.commerce_id ??
     null;
 
-  const authToken = auth?.accessToken || auth?.token || localStorage.getItem('accessToken') || '';
+  const authToken =
+    auth?.accessToken ||
+    auth?.token ||
+    localStorage.getItem('accessToken') ||
+    '';
 
   const hasReportsAccess = benefits?.access_reports === true;
 
-  // 1) Cargar beneficios (una vez por commerceId)
+  // ---------- Cargar beneficios ----------
   useEffect(() => {
     if (userCommerceId == null) {
       setBenefits(null);
       setBenefitsError('No se pudo determinar tu comercio (commerceId).');
-      return;
+      return undefined;
     }
 
     let alive = true;
@@ -114,19 +118,23 @@ export default function OverviewAnalyticsView() {
 
     fetchBenefitsByCommerceId(Number(userCommerceId))
       .then((b) => {
-        if (!alive) return;
-        setBenefits(b);
+        if (alive) {
+          setBenefits(b);
+        }
       })
       .catch((err) => {
         console.error('[Benefits] error', err);
-        if (!alive) return;
-        // Si falla beneficios, por seguridad bloqueamos analytics (no hacemos llamadas de overview)
-        setBenefits(null);
-        setBenefitsError(err?.message || 'No se pudieron cargar los beneficios del plan.');
+        if (alive) {
+          setBenefits(null);
+          setBenefitsError(
+            err?.message || 'No se pudieron cargar los beneficios del plan.'
+          );
+        }
       })
       .finally(() => {
-        if (!alive) return;
-        setBenefitsLoading(false);
+        if (alive) {
+          setBenefitsLoading(false);
+        }
       });
 
     return () => {
@@ -134,19 +142,16 @@ export default function OverviewAnalyticsView() {
     };
   }, [userCommerceId]);
 
-  // 2) Cargar overview SOLO si hay acceso a reportes
+  // ---------- Cargar analytics SOLO si tiene acceso ----------
   useEffect(() => {
     if (userCommerceId == null) {
-      console.warn('[Analytics] No se pudo obtener commerceId del usuario');
       setOverview(null);
       setError('No se pudo determinar tu comercio (commerceId).');
       return;
     }
 
-    // ⛔️ si todavía no sé los beneficios, no pido overview
     if (benefitsLoading) return;
 
-    // ⛔️ si no hay acceso, NO llamar endpoint de estadísticas
     if (!hasReportsAccess) {
       setOverview(null);
       setError('');
@@ -163,7 +168,10 @@ export default function OverviewAnalyticsView() {
       });
   }, [userCommerceId, period, hasReportsAccess, benefitsLoading]);
 
-  const monthlyChart = useMemo(() => buildMonthlyChart(overview), [overview]);
+  const monthlyChart = useMemo(
+    () => buildMonthlyChart(overview),
+    [overview]
+  );
 
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
@@ -182,42 +190,56 @@ export default function OverviewAnalyticsView() {
         </Grid>
       </Grid>
 
-      {/* ✅ Estado de beneficios / acceso */}
       {!!benefitsError && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {benefitsError}
         </Alert>
       )}
 
-      {/* ⛔️ Sin acceso a reportes: mostrar alerta y NO renderizar analytics */}
-      {!benefitsLoading && !benefitsError && benefits && !hasReportsAccess && (
+      {!benefitsLoading && benefits && !hasReportsAccess && (
         <Alert severity="warning" sx={{ mt: 2 }}>
-          Tu suscripción actual no incluye <b>reportes</b> ni <b>estadísticas</b>. Para habilitarlos,
-          cambiá a un plan Estándar o Premium.
+          Tu suscripción actual no incluye <b>reportes</b> ni{' '}
+          <b>estadísticas</b>. Para habilitarlos, cambiá a un plan
+          Estándar o Premium.
         </Alert>
       )}
 
-      {/* Solo mostrar selector + descarga si hay acceso */}
       {hasReportsAccess && (
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '12px 0' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 12,
+            alignItems: 'center',
+            margin: '12px 0',
+          }}
+        >
           <PeriodSelector value={period} onChange={setPeriod} />
           {userCommerceId != null && (
-            <ReportDownloadMenu period={period} commerceId={Number(userCommerceId)} token={authToken} />
+            <ReportDownloadMenu
+              period={period}
+              commerceId={Number(userCommerceId)}
+              token={authToken}
+            />
           )}
         </div>
       )}
 
-      {!!error && <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>}
+      {!!error && (
+        <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>
+      )}
 
-      {/* ⛔️ Cortamos acá: si no hay acceso, no renderizamos nada de estadísticas */}
       {!hasReportsAccess ? null : (
         <Grid container spacing={3}>
-          {/* KPIs (ya filtrados por back según período) */}
           <Grid xs={12} sm={6} md={3}>
             <AnalyticsWidgetSummary
               title="Ingresos (período)"
               total={Number(overview?.totalRevenue ?? 0)}
-              icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
+              icon={
+                <img
+                  alt="icon"
+                  src="/assets/icons/glass/ic_glass_bag.png"
+                />
+              }
             />
           </Grid>
 
@@ -226,7 +248,12 @@ export default function OverviewAnalyticsView() {
               title="Pedidos realizados (período)"
               total={Number(overview?.totalOrders ?? 0)}
               color="info"
-              icon={<img alt="icon" src="/assets/icons/glass/ic_glass_buy.png" />}
+              icon={
+                <img
+                  alt="icon"
+                  src="/assets/icons/glass/ic_glass_buy.png"
+                />
+              }
             />
           </Grid>
 
@@ -235,7 +262,12 @@ export default function OverviewAnalyticsView() {
               title="Pedidos reclamados (período)"
               total={Number(overview?.returnedOrders ?? 0)}
               color="warning"
-              icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}
+              icon={
+                <img
+                  alt="icon"
+                  src="/assets/icons/glass/ic_glass_message.png"
+                />
+              }
             />
           </Grid>
 
@@ -244,11 +276,15 @@ export default function OverviewAnalyticsView() {
               title="Productos vencidos (período)"
               total={Number(overview?.expiredProducts ?? 0)}
               color="error"
-              icon={<img alt="icon" src="/assets/icons/glass/ic_glass_users.png" />}
+              icon={
+                <img
+                  alt="icon"
+                  src="/assets/icons/glass/ic_glass_users.png"
+                />
+              }
             />
           </Grid>
 
-          {/* Línea/Área (Pedidos + Ventas) */}
           <Grid xs={12} md={12}>
             <AnalyticsWebsiteVisits
               title="Ventas y pedidos por mes"
@@ -260,47 +296,74 @@ export default function OverviewAnalyticsView() {
             />
           </Grid>
 
-          {/* Barras: Top 3 productos (período) */}
           <Grid xs={12} md={6} lg={6}>
-            <AnalyticsTopProductsBar data={overview?.topProductsBar || []} />
+            <AnalyticsTopProductsBar
+              data={overview?.topProductsBar || []}
+            />
           </Grid>
 
-          {/* Torta: productos vendidos vs vencidos (período) */}
           <Grid xs={12} md={6} lg={3}>
             <AnalyticsCurrentVisits
               title="Productos: vendidos vs vencidos"
               chart={{
                 series: [
-                  { label: 'Vendidos', value: Number(overview?.pieProducts?.soldUnits ?? 0) },
-                  { label: 'Vencidos', value: Number(overview?.pieProducts?.expiredUnits ?? 0) },
+                  {
+                    label: 'Vendidos',
+                    value: Number(
+                      overview?.pieProducts?.soldUnits ?? 0
+                    ),
+                  },
+                  {
+                    label: 'Vencidos',
+                    value: Number(
+                      overview?.pieProducts?.expiredUnits ?? 0
+                    ),
+                  },
                 ],
               }}
             />
           </Grid>
 
-          {/* Torta: pedidos realizados vs reclamados (período) */}
           <Grid xs={12} md={6} lg={3}>
             <AnalyticsCurrentVisits
               title="Pedidos: realizados vs reclamados"
               chart={{
                 series: [
-                  { label: 'Realizados', value: Number(overview?.pieOrders?.completedOrders ?? 0) },
-                  { label: 'Reclamados', value: Number(overview?.pieOrders?.claimedOrders ?? 0) },
+                  {
+                    label: 'Realizados',
+                    value: Number(
+                      overview?.pieOrders?.completedOrders ?? 0
+                    ),
+                  },
+                  {
+                    label: 'Reclamados',
+                    value: Number(
+                      overview?.pieOrders?.claimedOrders ?? 0
+                    ),
+                  },
                 ],
               }}
             />
           </Grid>
 
-          {/* Resto igual */}
           <Grid xs={12} md={6} lg={8}>
             <AnalyticsNews title="News" list={_analyticPosts} />
           </Grid>
+
           <Grid xs={12} md={6} lg={4}>
-            <AnalyticsOrderTimeline title="Order Timeline" list={_analyticOrderTimeline} />
+            <AnalyticsOrderTimeline
+              title="Order Timeline"
+              list={_analyticOrderTimeline}
+            />
           </Grid>
+
           <Grid xs={12} md={6} lg={4}>
-            <AnalyticsTrafficBySite title="Traffic by Site" list={_analyticTraffic} />
+            <AnalyticsTrafficBySite
+              title="Traffic by Site"
+              list={_analyticTraffic}
+            />
           </Grid>
+
           <Grid xs={12} md={6} lg={8}>
             <AnalyticsTasks title="Tasks" list={_analyticTasks} />
           </Grid>

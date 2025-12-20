@@ -1,10 +1,11 @@
 // src/api/subscription.js
 
+// Usa la URL base del front que ya tenés en env (fallback prod)
 const API_BASE =
   import.meta?.env?.VITE_API_COMIDIN ||
   'https://api.comidin.com.ar';
 
-// (Opcional) token — no es necesario para testing si tu backend permite público
+// (Opcional) token — mismo patrón que analytics
 function getToken() {
   const direct =
     localStorage.getItem('token') ||
@@ -12,6 +13,7 @@ function getToken() {
     localStorage.getItem('idToken');
   if (direct) return direct;
 
+  // patrón de Cognito
   for (let i = 0; i < localStorage.length; i += 1) {
     const key = localStorage.key(i);
     if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
@@ -23,7 +25,7 @@ function getToken() {
 }
 
 /**
- * Devuelve beneficios efectivos por comercio.
+ * Devuelve beneficios efectivos por comercio
  * GET /api/subscription/commerce/:commerceId/benefits
  */
 export async function fetchBenefitsByCommerceId(commerceId) {
@@ -33,9 +35,12 @@ export async function fetchBenefitsByCommerceId(commerceId) {
     throw new Error('commerceId requerido en fetchBenefitsByCommerceId');
   }
 
-  const res = await fetch(`${API_BASE}/api/subscription/commerce/${commerceId}/benefits`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const res = await fetch(
+    `${API_BASE}/api/subscription/commerce/${commerceId}/benefits`,
+    {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }
+  );
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
