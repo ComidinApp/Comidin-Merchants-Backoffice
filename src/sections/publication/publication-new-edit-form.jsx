@@ -569,25 +569,26 @@ export default function PublicationNewEditForm({ currentPublication }) {
               }}
             />
 
-            <RHFTextField
-              name="discounted_price"
-              label="Precio con descuento"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              value={calculateDiscountedPrice()}
-              disabled={true}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-                readOnly: true,
-              }}
-            />
+<RHFTextField
+  name="discounted_price"
+  label="Precio con descuento"
+  placeholder="0.00"
+  type="number"
+  InputLabelProps={{ shrink: true }}
+  value={calculateDiscountedPrice()}
+  disabled
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <Box component="span" sx={{ color: 'text.disabled' }}>
+          $
+        </Box>
+      </InputAdornment>
+    ),
+    readOnly: true,
+  }}
+/>
+
           </Stack>
         </Card>
       </Grid>
