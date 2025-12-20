@@ -1,6 +1,8 @@
-// src/sections/pricing/components/PricingCard.jsx
+// src/sections/pricing/pricing-card.jsx
+// (o: src/sections/pricing/components/PricingCard.jsx)
+
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -78,40 +80,46 @@ export default function PricingCard({ card, sx, ...other }) {
     return 'Suscripción';
   };
 
-  // ✅ Plan actual real:
-  // - si hay Premium manda
-  // - si hay Estándar manda
-  // - si no hay nada => Free
-  const currentPlanId =
-    subscribedPlans.has(3) ? 3 :
-    subscribedPlans.has(2) ? 2 :
-    1;
+  // ✅ Plan actual (sin ternarios anidados)
+  const currentPlanId = useMemo(() => {
+    let id = 1; // default FREE
+    if (subscribedPlans.has(3)) id = 3;
+    else if (subscribedPlans.has(2)) id = 2;
+    else if (subscribedPlans.has(1)) id = 1;
+    else id = 1; // si backend devuelve [], igual free
+    return id;
+  }, [subscribedPlans]);
 
   const isCurrentPlan = Number(planId) === Number(currentPlanId);
 
   // trae las subscripciones actuales del comercio
-  const fetchSubscriptions = useCallback(async (abortSignal) => {
-    if (!commerceId) {
-      setCheckingSub(false);
-      return;
-    }
-    try {
-      // ✅ IMPORTANTE: tu backend real cuelga de /api/subscriptions
-      const resp = await fetch(`${API_BASE}/api/subscriptions/commerce/${commerceId}`, { signal: abortSignal });
-
-      if (!resp.ok) {
-        setSubscribedPlans(new Set());
-      } else {
-        const arr = await resp.json().catch(() => []);
-        const plans = new Set((arr || []).map((s) => Number(s.plan_id)).filter(Boolean));
-        setSubscribedPlans(plans);
+  const fetchSubscriptions = useCallback(
+    async (abortSignal) => {
+      if (!commerceId) {
+        setCheckingSub(false);
+        return;
       }
-    } catch {
-      setSubscribedPlans(new Set());
-    } finally {
-      setCheckingSub(false);
-    }
-  }, [commerceId]);
+      try {
+        // ✅ endpoint real (plural + /api)
+        const resp = await fetch(`${API_BASE}/api/subscriptions/commerce/${commerceId}`, {
+          signal: abortSignal,
+        });
+
+        if (!resp.ok) {
+          setSubscribedPlans(new Set());
+        } else {
+          const arr = await resp.json().catch(() => []);
+          const plans = new Set((arr || []).map((s) => Number(s.plan_id)).filter(Boolean));
+          setSubscribedPlans(plans);
+        }
+      } catch {
+        setSubscribedPlans(new Set());
+      } finally {
+        setCheckingSub(false);
+      }
+    },
+    [commerceId]
+  );
 
   // al montar la card: cargar subs y escuchar cambios globales
   useEffect(() => {
@@ -128,7 +136,7 @@ export default function PricingCard({ card, sx, ...other }) {
       ctrl.abort();
       window.removeEventListener('comidin:subscriptions-updated', onUpdated);
     };
-  }, [commerceId, fetchSubscriptions]);
+  }, [fetchSubscriptions]);
 
   // click en botón de suscripción
   const handleSubscribe = async () => {
@@ -137,15 +145,15 @@ export default function PricingCard({ card, sx, ...other }) {
 
     if (!API_BASE) {
       console.error('Falta VITE_API_COMIDIN');
-      alert('Error de configuración del backend');
+      openSnack('Error de configuración del backend', 'error');
       return;
     }
     if (!commerceId) {
-      alert('El usuario no tiene comercio asignado');
+      openSnack('El usuario no tiene comercio asignado', 'error');
       return;
     }
 
-    // ⛔️ Si es el plan actual, no hacemos nada (y debería estar disabled igual)
+    // ⛔️ Si ya es plan actual, no hacemos nada
     if (isCurrentPlan) {
       openSnack('Ya estás en este plan.', 'info');
       return;
@@ -163,22 +171,22 @@ export default function PricingCard({ card, sx, ...other }) {
             cancel_mp: true,
           }),
         });
+
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo pasar a suscripción gratuita');
 
         // actualizamos UI y notificamos global
-        setSubscribedPlans(new Set([1])); // quedás explícitamente en plan 1
+        setSubscribedPlans(new Set([1]));
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
         openSnack('¡Listo! Cambiaste a la Suscripción Gratuita.', 'success');
-        return;
       } catch (err) {
         console.error('Error al pasar a suscripción Gratuita:', err);
-        openSnack(err.message || 'Ocurrió un error', 'error');
-        return;
+        openSnack(err?.message || 'Ocurrió un error', 'error');
       } finally {
         setLoading(false);
       }
+      return;
     }
 
     // flujo para planes pagos → pedir link al backend y redirigir a MP
@@ -198,19 +206,14 @@ export default function PricingCard({ card, sx, ...other }) {
 
       let data = null;
       const ct = res.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
-        data = await res.json().catch(() => null);
-      }
+      if (ct.includes('application/json')) data = await res.json().catch(() => null);
 
       if (!res.ok) {
         const msg = data?.error || data?.message || `Error ${res.status}`;
         throw new Error(msg);
       }
 
-      // Si el backend devuelve preapproval directo, lo guardamos
-      if (data?.id) {
-        sessionStorage.setItem('mp_preapproval_id', String(data.id));
-      }
+      if (data?.id) sessionStorage.setItem('mp_preapproval_id', String(data.id));
 
       const url =
         data?.init_point ||
@@ -225,15 +228,14 @@ export default function PricingCard({ card, sx, ...other }) {
         throw new Error('No se recibió el link de suscripción.');
       }
 
-      // guardamos contexto para confirmar al volver
       localStorage.setItem('pending_plan_id', String(planId));
       localStorage.setItem('pending_payer_email', userEmail || 'TEST_USER_1278385314@testuser.com');
       localStorage.setItem('pending_commerce_id', String(commerceId));
 
-      window.location.href = url; // redirect a MP
+      window.location.href = url;
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
-      openSnack(err.message || 'Ocurrió un error al intentar suscribirse.', 'error');
+      openSnack(err?.message || 'Ocurrió un error al intentar suscribirse.', 'error');
     } finally {
       setLoading(false);
     }
@@ -256,7 +258,7 @@ export default function PricingCard({ card, sx, ...other }) {
     const planIdLS = Number(localStorage.getItem('pending_plan_id'));
     const commerceIdLS = Number(localStorage.getItem('pending_commerce_id'));
 
-    // Si hay "pending" pero NO volvimos desde MP, limpiamos y avisamos
+    // si hay pending pero no retorno MP -> limpiar
     if (planIdLS && commerceIdLS && !hasMpReturnParams) {
       clearPending();
       openSnack('Pago cancelado. No se realizó ningún cambio de plan.', 'info');
@@ -265,7 +267,6 @@ export default function PricingCard({ card, sx, ...other }) {
 
     if (!planIdLS || !commerceIdLS || !hasMpReturnParams) return;
 
-    // Si MP devolvió status explícito y NO es aprobado, cancelamos flujo
     if (mpStatus && mpStatus !== 'approved' && mpStatus !== 'authorized') {
       clearPending();
       openSnack('El pago no fue aprobado. No se realizó ningún cambio de plan.', 'info');
@@ -325,10 +326,7 @@ export default function PricingCard({ card, sx, ...other }) {
         url.searchParams.delete('collection_status');
         window.history.replaceState({}, '', url.toString());
 
-        // actualizar estado local (esto dispara currentPlanId)
         setSubscribedPlans(new Set([Number(planIdLS)]));
-
-        // avisar global
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
         openSnack(`¡Suscripción exitosa! ${planName(planIdLS)} activada.`, 'success');
@@ -340,10 +338,10 @@ export default function PricingCard({ card, sx, ...other }) {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ✅ Disable correcto: deshabilitar si es plan actual
+  // ✅ Disable: deshabilitar si es plan actual
   const disableSubscribe = loading || checkingSub || isCurrentPlan;
 
-  // ✅ Label correcto: marcar como actual incluso FREE
+  // ✅ Label: marcar como actual incluso FREE
   let buttonLabel = labelAction;
   if (loading) buttonLabel = 'Procesando...';
   else if (isCurrentPlan) buttonLabel = 'Suscripción Actual';
@@ -370,7 +368,6 @@ export default function PricingCard({ card, sx, ...other }) {
       </Typography>
       <Typography variant="subtitle2">{caption}</Typography>
 
-      {/* ✅ Texto común para cualquier plan */}
       {isCurrentPlan && (
         <Typography variant="caption" color="text.secondary">
           Estás en este plan actualmente.
@@ -403,13 +400,26 @@ export default function PricingCard({ card, sx, ...other }) {
       </Stack>
 
       {lists.map((item) => (
-        <Stack key={item} spacing={1} direction="row" alignItems="center" sx={{ typography: 'body2' }}>
+        <Stack
+          key={item}
+          spacing={1}
+          direction="row"
+          alignItems="center"
+          sx={{ typography: 'body2' }}
+        >
           <Iconify icon="eva:checkmark-fill" width={16} sx={{ mr: 1 }} />
           {item}
         </Stack>
       ))}
+
       {not_lists.map((item) => (
-        <Stack key={item} spacing={1} direction="row" alignItems="center" sx={{ typography: 'body2' }}>
+        <Stack
+          key={item}
+          spacing={1}
+          direction="row"
+          alignItems="center"
+          sx={{ typography: 'body2' }}
+        >
           <Iconify icon="eva:close-fill" width={16} sx={{ mr: 1 }} />
           {item}
         </Stack>
@@ -434,7 +444,9 @@ export default function PricingCard({ card, sx, ...other }) {
                 boxShadow: (theme) => ({
                   xs: theme.customShadows.card,
                   md: `-40px 40px 80px 0px ${alpha(
-                    theme.palette.mode === 'light' ? theme.palette.grey[500] : theme.palette.common.black,
+                    theme.palette.mode === 'light'
+                      ? theme.palette.grey[500]
+                      : theme.palette.common.black,
                     0.16
                   )}`,
                 }),
