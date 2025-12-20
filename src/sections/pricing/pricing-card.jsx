@@ -42,7 +42,7 @@ export default function PricingCard({ card, sx, ...other }) {
   const [checkingSub, setCheckingSub] = useState(true);
   const [subscribedPlans, setSubscribedPlans] = useState(new Set());
 
-  // snackbar de éxito
+  // snackbar
   const [snackOpen, setSnackOpen] = useState(false);
   const [snackMsg, setSnackMsg] = useState('Suscripción exitosa');
   const [snackSeverity, setSnackSeverity] = useState('success');
@@ -65,22 +65,10 @@ export default function PricingCard({ card, sx, ...other }) {
     sessionStorage.removeItem('mp_preapproval_id');
   };
 
-  const openSuccess = (msg) => {
-    setSnackMsg(msg || 'Suscripción exitosa');
-    setSnackOpen(true);
-  };
-  const closeSuccess = (_e, reason) => {
-    if (reason === 'clickaway') return;
-    setSnackOpen(false);
-  };
-
   // flags rápidos
   const basic = subscription === 'Básica';
   const starter = subscription === 'Estándar';
   const premium = subscription === 'Premium';
-
-  // si no hay ningún plan guardado → asumimos que está en Gratis
-  const hasAnyPlan = subscribedPlans.size > 0;
 
   const planName = (pid) => {
     const n = Number(pid);
@@ -90,6 +78,17 @@ export default function PricingCard({ card, sx, ...other }) {
     return 'Suscripción';
   };
 
+  // ✅ Plan actual real:
+  // - si hay Premium manda
+  // - si hay Estándar manda
+  // - si no hay nada => Free
+  const currentPlanId =
+    subscribedPlans.has(3) ? 3 :
+    subscribedPlans.has(2) ? 2 :
+    1;
+
+  const isCurrentPlan = Number(planId) === Number(currentPlanId);
+
   // trae las subscripciones actuales del comercio
   const fetchSubscriptions = useCallback(async (abortSignal) => {
     if (!commerceId) {
@@ -97,7 +96,9 @@ export default function PricingCard({ card, sx, ...other }) {
       return;
     }
     try {
-      const resp = await fetch(`${API_BASE}/subscriptions/commerce/${commerceId}`, { signal: abortSignal });
+      // ✅ IMPORTANTE: tu backend real cuelga de /api/subscriptions
+      const resp = await fetch(`${API_BASE}/api/subscriptions/commerce/${commerceId}`, { signal: abortSignal });
+
       if (!resp.ok) {
         setSubscribedPlans(new Set());
       } else {
@@ -144,11 +145,17 @@ export default function PricingCard({ card, sx, ...other }) {
       return;
     }
 
+    // ⛔️ Si es el plan actual, no hacemos nada (y debería estar disabled igual)
+    if (isCurrentPlan) {
+      openSnack('Ya estás en este plan.', 'info');
+      return;
+    }
+
     // caso plan Básica → downgrade inmediato, no va a MP
     if (basic) {
       try {
         setLoading(true);
-        const resp = await fetch(`${API_BASE}/subscriptions/free`, {
+        const resp = await fetch(`${API_BASE}/api/subscriptions/free`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -163,35 +170,28 @@ export default function PricingCard({ card, sx, ...other }) {
         setSubscribedPlans(new Set([1])); // quedás explícitamente en plan 1
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
-        // ✅ snackbar de éxito (reemplaza alert)
-        openSuccess('¡Listo! Cambiaste a la Suscripción Gratuita.');
+        openSnack('¡Listo! Cambiaste a la Suscripción Gratuita.', 'success');
         return;
       } catch (err) {
         console.error('Error al pasar a suscripción Gratuita:', err);
-        alert(err.message || 'Ocurrió un error');
+        openSnack(err.message || 'Ocurrió un error', 'error');
         return;
       } finally {
         setLoading(false);
       }
     }
 
-    // si ya tiene este plan, no dejamos repetir
-    if (subscribedPlans.has(Number(planId))) {
-      alert('Ya tenés esta suscripción.');
-      return;
-    }
-
     // flujo para planes pagos → pedir link al backend y redirigir a MP
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_BASE}/subscriptions`, {
+      const res = await fetch(`${API_BASE}/api/subscriptions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan_id: Number(planId),
           commerce_id: Number(commerceId),
-          payer_email: 'TEST_USER_1278385314@testuser.com', // fijo de test para sandbox
+          payer_email: userEmail || 'TEST_USER_1278385314@testuser.com',
           userId,
         }),
       });
@@ -212,7 +212,6 @@ export default function PricingCard({ card, sx, ...other }) {
         sessionStorage.setItem('mp_preapproval_id', String(data.id));
       }
 
-      // Soporte para modo fallback (plan_init_point_fallback)
       const url =
         data?.init_point ||
         data?.sandbox_init_point ||
@@ -234,7 +233,7 @@ export default function PricingCard({ card, sx, ...other }) {
       window.location.href = url; // redirect a MP
     } catch (err) {
       console.error('Error al iniciar suscripción:', err);
-      alert(err.message || 'Ocurrió un error al intentar suscribirse.');
+      openSnack(err.message || 'Ocurrió un error al intentar suscribirse.', 'error');
     } finally {
       setLoading(false);
     }
@@ -244,7 +243,6 @@ export default function PricingCard({ card, sx, ...other }) {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
-    // Parámetros típicos de retorno de MercadoPago (pueden variar según integración)
     const mpStatus = params.get('status') || params.get('collection_status');
     const preapprovalFromQuery = params.get('preapproval_id');
     const paymentId = params.get('payment_id') || params.get('collection_id');
@@ -258,16 +256,13 @@ export default function PricingCard({ card, sx, ...other }) {
     const planIdLS = Number(localStorage.getItem('pending_plan_id'));
     const commerceIdLS = Number(localStorage.getItem('pending_commerce_id'));
 
-    // Si hay "pending" pero NO volvimos desde MP (ej: apretó ATRÁS), NO confirmar.
-    // Limpiamos el pending para que no vuelva a dispararse.
+    // Si hay "pending" pero NO volvimos desde MP, limpiamos y avisamos
     if (planIdLS && commerceIdLS && !hasMpReturnParams) {
       clearPending();
-      // opcional: mensaje
       openSnack('Pago cancelado. No se realizó ningún cambio de plan.', 'info');
       return;
     }
 
-    // Si no hay nada pendiente o no hay retorno MP, no hacemos nada
     if (!planIdLS || !commerceIdLS || !hasMpReturnParams) return;
 
     // Si MP devolvió status explícito y NO es aprobado, cancelamos flujo
@@ -275,7 +270,6 @@ export default function PricingCard({ card, sx, ...other }) {
       clearPending();
       openSnack('El pago no fue aprobado. No se realizó ningún cambio de plan.', 'info');
 
-      // Limpia query params para no re-disparar
       const url = new URL(window.location.href);
       url.searchParams.delete('preapproval_id');
       url.searchParams.delete('payment_id');
@@ -283,14 +277,11 @@ export default function PricingCard({ card, sx, ...other }) {
       url.searchParams.delete('status');
       url.searchParams.delete('collection_status');
       window.history.replaceState({}, '', url.toString());
-
       return;
     }
 
-    // Fallback: si no vino preapproval_id en query, usamos el guardado al crear
     const preapprovalId = preapprovalFromQuery || sessionStorage.getItem('mp_preapproval_id');
 
-    // Guard para no ejecutar doble
     const guardKey = preapprovalId
       ? `confirmed:${preapprovalId}`
       : `confirmed:by-search:${commerceIdLS}:${planIdLS}`;
@@ -303,11 +294,11 @@ export default function PricingCard({ card, sx, ...other }) {
         const payload = {
           plan_id: planIdLS,
           commerce_id: commerceIdLS,
-          payer_email: 'TEST_USER_1278385314@testuser.com', // si querés, poné userEmail
+          payer_email: userEmail || 'TEST_USER_1278385314@testuser.com',
         };
         if (preapprovalId) payload.preapproval_id = preapprovalId;
 
-        const resp = await fetch(`${API_BASE}/subscriptions/confirm`, {
+        const resp = await fetch(`${API_BASE}/api/subscriptions/confirm`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -316,7 +307,6 @@ export default function PricingCard({ card, sx, ...other }) {
         const json = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(json?.error || 'No se pudo confirmar la suscripción');
 
-        // 🔐 Clave: si backend te devuelve mp_status y NO está aprobado, no cambies plan
         const backendMpStatus = json?.mp_status;
         if (backendMpStatus && backendMpStatus !== 'approved' && backendMpStatus !== 'authorized') {
           clearPending();
@@ -327,7 +317,6 @@ export default function PricingCard({ card, sx, ...other }) {
 
         clearPending();
 
-        // limpiar query param para no re-disparar
         const url = new URL(window.location.href);
         url.searchParams.delete('preapproval_id');
         url.searchParams.delete('payment_id');
@@ -336,33 +325,31 @@ export default function PricingCard({ card, sx, ...other }) {
         url.searchParams.delete('collection_status');
         window.history.replaceState({}, '', url.toString());
 
-        // actualizar estado local
+        // actualizar estado local (esto dispara currentPlanId)
         setSubscribedPlans(new Set([Number(planIdLS)]));
 
         // avisar global
         window.dispatchEvent(new CustomEvent('comidin:subscriptions-updated'));
 
-        // ✅ snackbar éxito
         openSnack(`¡Suscripción exitosa! ${planName(planIdLS)} activada.`, 'success');
       } catch (e) {
         console.error('Confirmación falló:', e);
         sessionStorage.removeItem(guardKey);
-        // No cambiamos plan, solo informamos
         openSnack('No se pudo confirmar el pago. No se realizó ningún cambio de plan.', 'error');
       }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // regla de disable del botón
-  const disableSubscribe =
-    loading || checkingSub || subscribedPlans.has(Number(planId)) || (basic && !hasAnyPlan);
+  // ✅ Disable correcto: deshabilitar si es plan actual
+  const disableSubscribe = loading || checkingSub || isCurrentPlan;
 
-  // label dinámico
+  // ✅ Label correcto: marcar como actual incluso FREE
   let buttonLabel = labelAction;
-  if (basic && !hasAnyPlan) buttonLabel = 'Suscripción Actual';
+  if (loading) buttonLabel = 'Procesando...';
+  else if (isCurrentPlan) buttonLabel = 'Suscripción Actual';
   else if (basic) buttonLabel = 'Elegir Gratis';
-  else if (subscribedPlans.has(Number(planId))) buttonLabel = 'Ya tenés esta suscripción';
-  else if (loading) buttonLabel = 'Procesando...';
+  else if (starter) buttonLabel = 'Elegir Estándar';
+  else if (premium) buttonLabel = 'Elegir Premium';
 
   // UI
   const renderIcon = (
@@ -382,14 +369,11 @@ export default function PricingCard({ card, sx, ...other }) {
         {subscription}
       </Typography>
       <Typography variant="subtitle2">{caption}</Typography>
-      {subscribedPlans.has(Number(planId)) && !basic && (
+
+      {/* ✅ Texto común para cualquier plan */}
+      {isCurrentPlan && (
         <Typography variant="caption" color="text.secondary">
-          Ya estás suscripto a este plan.
-        </Typography>
-      )}
-      {basic && !hasAnyPlan && (
-        <Typography variant="caption" color="text.secondary">
-          Estás en el plan gratuito.
+          Estás en este plan actualmente.
         </Typography>
       )}
     </Stack>
@@ -478,7 +462,6 @@ export default function PricingCard({ card, sx, ...other }) {
         </Button>
       </Stack>
 
-      {/* Snackbar de éxito común para los 3 planes */}
       <Snackbar
         open={snackOpen}
         autoHideDuration={4000}
