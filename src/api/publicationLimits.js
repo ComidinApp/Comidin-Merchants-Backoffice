@@ -11,13 +11,17 @@ function getToken() {
     localStorage.getItem('idToken');
   if (direct) return direct;
 
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i);
-    if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
-      const val = localStorage.getItem(key);
-      if (val) return val;
-    }
+  // Evitar for..of / iterators: usamos Array.from + find
+  const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i));
+  const cognitoKey = keys.find(
+    (k) => k && k.includes('CognitoIdentityServiceProvider') && k.endsWith('.idToken')
+  );
+
+  if (cognitoKey) {
+    const val = localStorage.getItem(cognitoKey);
+    if (val) return val;
   }
+
   return null;
 }
 
@@ -49,7 +53,10 @@ export async function fetchBenefitsByCommerceId(commerceId) {
 }
 
 /**
- * ⚠️ Ajustá esto a tu endpoint real de listado de publicaciones por comercio si hace falta.
+ * Intenta obtener publicaciones por comercio sin loops.
+ * Lanza todas las requests candidatas en paralelo y toma la primera que devuelva un array.
+ *
+ * ⚠️ Ideal: reemplazar candidates por el endpoint real único de tu backend.
  */
 async function fetchPublicationsByCommerceId(commerceId) {
   const candidates = [
@@ -61,20 +68,26 @@ async function fetchPublicationsByCommerceId(commerceId) {
     `${API_BASE}/api/publication?commerceId=${commerceId}`,
   ];
 
-  let lastErr = null;
+  const settled = await Promise.allSettled(candidates.map((url) => fetchJson(url)));
 
-  for (const url of candidates) {
-    try {
-      const data = await fetchJson(url);
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data?.data)) return data.data;
-      if (Array.isArray(data?.rows)) return data.rows;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
+  const normalizeToArray = (data) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.rows)) return data.rows;
+    return null;
+  };
 
-  throw lastErr || new Error('No se pudo obtener el listado de publicaciones del comercio');
+  const firstOk = settled
+    .map((r) => (r.status === 'fulfilled' ? normalizeToArray(r.value) : null))
+    .find((arr) => Array.isArray(arr));
+
+  if (firstOk) return firstOk;
+
+  // si todas fallaron, devolvemos el primer error “útil”
+  const firstErr = settled.find((r) => r.status === 'rejected');
+  if (firstErr && firstErr.reason) throw firstErr.reason;
+
+  throw new Error('No se pudo obtener el listado de publicaciones del comercio');
 }
 
 function isActiveAndNotExpired(pub, now) {
@@ -89,6 +102,9 @@ function isActiveAndNotExpired(pub, now) {
   return active && exp.getTime() > now.getTime();
 }
 
+/**
+ * Valida límite antes de crear.
+ */
 export async function canCreatePublication({ commerceId }) {
   const cid = Number(commerceId);
   if (!cid) {
