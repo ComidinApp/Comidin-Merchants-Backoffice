@@ -15,7 +15,7 @@ export default function PublicationCreateView() {
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Create a new publication"
+        heading="Crear nueva publicacion"
         links={[
           {
             name: 'Dashboard',

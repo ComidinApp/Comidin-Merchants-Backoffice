@@ -35,9 +35,9 @@ import { useGetProducts } from 'src/api/product';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 
-import FormProvider, { RHFUpload, RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
-// ✅ NUEVO: límite + beneficios
+// ✅ NUEVO: validar cupo + beneficios al entrar
 import { canCreatePublication, fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
 
 // ----------------------------------------------------------------------
@@ -53,18 +53,24 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
   const { products } = useGetProducts(commerceId);
 
-  const [includeTaxes, setIncludeTaxes] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [price, setPrice] = useState(currentPublication?.price || 0);
   const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || 0);
-  const [selectedValue, setSelectedValue] = useState();
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // ✅ beneficios (para can_add_stock)
-  const [benefits, setBenefits] = useState(null);
+  // ✅ estados de validación al ingresar
+  const [screenLoading, setScreenLoading] = useState(false);
+
+  // bloqueo por límite
+  const [limitBlock, setLimitBlock] = useState({
+    blocked: false,
+    message: '',
+  });
+
+  // beneficios (stock)
   const [benefitsLoaded, setBenefitsLoaded] = useState(false);
+  const [canAddStock, setCanAddStock] = useState(true);
 
-  const canAddStock = benefits?.can_add_stock !== false; // default true si no cargó
-  const stockLocked = benefitsLoaded && !canAddStock;
+  const isEdit = Boolean(currentPublication?.id);
 
   // ----------------------------------------------------------------------
   // Validaciones Yup
@@ -147,9 +153,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
         ? new Date(currentPublication.expiration_date)
         : null,
       is_active: currentPublication?.is_active || 'active',
-      name: currentPublication?.name || '',
-      subDescription: currentPublication?.subDescription || '',
-      description: currentPublication?.description || '',
       images: [],
     }),
     [currentPublication]
@@ -177,51 +180,89 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const values = watch();
 
   useEffect(() => {
-    if (currentPublication?.product_id) {
-      setValue('product_id', currentPublication.product_id);
-    }
+    if (currentPublication) reset(defaultValues);
+  }, [currentPublication, defaultValues, reset]);
+
+  useEffect(() => {
+    if (currentPublication?.product_id) setValue('product_id', currentPublication.product_id);
   }, [currentPublication, setValue]);
 
-  // ✅ cargar beneficios (para can_add_stock)
+  // ----------------------------------------------------------------------
+  // ✅ VALIDACIÓN AL ENTRAR (solo para "crear", no editar)
+  // ----------------------------------------------------------------------
   useEffect(() => {
     let alive = true;
 
-    async function loadBenefits() {
-      if (!commerceId) {
-        setBenefits(null);
-        setBenefitsLoaded(true);
+    async function validateOnEnter() {
+      // si estás editando, no bloqueamos la pantalla por cupo (solo aplica a crear)
+      if (isEdit) {
+        setLimitBlock({ blocked: false, message: '' });
         return;
       }
 
+      if (!commerceId) {
+        // si no hay comercio, bloqueamos porque no se puede validar ni crear
+        setLimitBlock({
+          blocked: true,
+          message: 'No se pudo determinar tu comercio para validar tu suscripción.',
+        });
+        return;
+      }
+
+      setScreenLoading(true);
+
+      // 1) beneficios (stock)
+      // 2) límite publicaciones
       try {
-        const b = await fetchBenefitsByCommerceId(Number(commerceId));
+        const [b, limit] = await Promise.all([
+          fetchBenefitsByCommerceId(Number(commerceId)).catch(() => null),
+          canCreatePublication({ commerceId: Number(commerceId) }).catch(() => null),
+        ]);
+
         if (!alive) return;
-        setBenefits(b);
+
+        // --- stock ---
+        const allowStock = b?.can_add_stock !== false;
+        setCanAddStock(allowStock);
+        setBenefitsLoaded(true);
+
+        if (!allowStock) {
+          // setear 1 de una, al entrar
+          setValue('available_stock', 1, { shouldValidate: true, shouldDirty: true });
+        }
+
+        // --- límite publicaciones ---
+        if (limit && limit.allowed === false) {
+          setLimitBlock({
+            blocked: true,
+            message:
+              limit?.reason ||
+              'Alcanzaste el máximo de publicaciones activas permitidas para tu suscripción.',
+          });
+        } else {
+          setLimitBlock({ blocked: false, message: '' });
+        }
       } catch (e) {
-        // Si falla, no bloqueamos stock por error de red
-        console.warn('[Publication] No se pudieron cargar beneficios:', e);
         if (!alive) return;
-        setBenefits(null);
+        // Si falla por red, no bloqueamos por cupo, pero avisamos suave
+        setLimitBlock({ blocked: false, message: '' });
+        setBenefitsLoaded(true);
+        setCanAddStock(true);
+        console.warn('[Publication] validateOnEnter falló:', e);
       } finally {
-        if (alive) setBenefitsLoaded(true);
+        if (alive) setScreenLoading(false);
       }
     }
 
-    loadBenefits();
+    validateOnEnter();
 
     return () => {
       alive = false;
     };
-  }, [commerceId]);
+  }, [commerceId, isEdit, setValue]);
 
-  // ✅ si no puede stock: forzar stock = 1 y bloquear edición
-  useEffect(() => {
-    if (!benefitsLoaded) return;
-
-    if (stockLocked) {
-      setValue('available_stock', 1, { shouldValidate: true, shouldDirty: true });
-    }
-  }, [benefitsLoaded, stockLocked, setValue]);
+  const stockLocked = benefitsLoaded && !canAddStock;
+  const formLocked = Boolean(limitBlock.blocked) || screenLoading;
 
   // ----------------------------------------------------------------------
   // Selección de producto
@@ -232,7 +273,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
       dialog.onFalse();
       if (!value) return;
 
-      setSelectedValue(value);
       setSelectedProduct(value);
       setValue('commerce_id', value.commerce_id, { shouldValidate: true });
       setValue('product_id', value.id, { shouldValidate: true });
@@ -279,6 +319,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       shouldValidate: true,
       shouldDirty: true,
     });
+
     setValue(
       'discounted_price',
       Number.isNaN(calculatedDiscountedPrice) ? 0 : Number(calculatedDiscountedPrice.toFixed(2)),
@@ -289,18 +330,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const calculateDiscountedPrice = () => {
     const basePrice = Number(price) || 0;
     const d = Number(discount) || 0;
-
     if (!d) return basePrice;
-
     const result = basePrice - (basePrice * d) / 100;
     return Number.isNaN(result) ? 0 : Number(result.toFixed(2));
   };
-
-  useEffect(() => {
-    if (currentPublication) {
-      reset(defaultValues);
-    }
-  }, [currentPublication, defaultValues, reset]);
 
   // ----------------------------------------------------------------------
   // SUBMIT
@@ -308,25 +341,16 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
   const onSubmit = async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const isEdit = Boolean(currentPublication?.id);
-
-      // ✅ Validación de límite SOLO al crear
-      if (!isEdit) {
-        const cid = Number(data?.commerce_id || commerceId);
-        const check = await canCreatePublication({ commerceId: cid });
-
-        if (!check.allowed) {
-          enqueueSnackbar(check.reason || 'Superaste el máximo de publicaciones permitidas.', {
-            variant: 'error',
-          });
-          return;
-        }
+      // si está bloqueado, no enviar nunca
+      if (formLocked) {
+        enqueueSnackbar(limitBlock.message || 'No podés crear publicaciones en este momento.', {
+          variant: 'error',
+        });
+        return;
       }
 
-      // ✅ si no puede manejar stock: forzar 1 antes de enviar
-      if (stockLocked) {
+      // por seguridad: si no puede stock, forzamos 1
+      if (!isEdit && stockLocked) {
         data.available_stock = 1;
       }
 
@@ -336,16 +360,13 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
       const method = isEdit ? 'PUT' : 'POST';
 
-      // Normalizar fecha/hora de vencimiento
+      // Normalizar vencimiento
       if (data.expiration_date) {
         const dateObj = new Date(data.expiration_date);
-
         if (Number.isNaN(dateObj.getTime())) {
           enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
-          console.error('expiration_date inválida en el payload:', data.expiration_date);
           return;
         }
-
         data.expiration_date = dateObj.toISOString();
       }
 
@@ -373,42 +394,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   };
 
   // ----------------------------------------------------------------------
-  // Imágenes
-  // ----------------------------------------------------------------------
-
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const files = values.images || [];
-
-      const newFiles = acceptedFiles.map((file) =>
-        Object.assign(file, {
-          preview: URL.createObjectURL(file),
-        })
-      );
-
-      setValue('images', [...files, ...newFiles], { shouldValidate: true });
-    },
-    [setValue, values.images]
-  );
-
-  const handleRemoveFile = useCallback(
-    (inputFile) => {
-      const filtered = values.images && values.images.filter((file) => file !== inputFile);
-      setValue('images', filtered);
-    },
-    [setValue, values.images]
-  );
-
-  const handleRemoveAllFiles = useCallback(() => {
-    setValue('images', []);
-  }, [setValue]);
-
-  const handleChangeIncludeTaxes = useCallback((event) => {
-    setIncludeTaxes(event.target.checked);
-  }, []);
-
-  // ----------------------------------------------------------------------
-  // Sección Propiedades
+  // UI: Propiedades
   // ----------------------------------------------------------------------
 
   const renderProperties = (
@@ -425,7 +411,21 @@ export default function PublicationNewEditForm({ currentPublication }) {
         <Card>
           {!mdUp && <CardHeader title="Propiedades" />}
 
-          <Stack spacing={3} sx={{ p: 3 }}>
+          <Stack spacing={2} sx={{ p: 3 }}>
+            {/* Mensaje bloqueo por límite */}
+            {limitBlock.blocked && (
+              <Typography sx={{ color: 'error.main', fontWeight: 600 }}>
+                {limitBlock.message || 'Alcanzaste el máximo de publicaciones para tu suscripción.'}
+              </Typography>
+            )}
+
+            {/* Mensaje por stock */}
+            {stockLocked && !limitBlock.blocked && (
+              <Typography sx={{ color: 'error.main', fontWeight: 600 }}>
+                Tu suscripción no permite tener más stock.
+              </Typography>
+            )}
+
             <Box
               columnGap={2}
               rowGap={3}
@@ -435,7 +435,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 md: 'repeat(2, 1fr)',
               }}
             >
-              <Button variant="outlined" onClick={dialog.onTrue}>
+              <Button variant="outlined" onClick={dialog.onTrue} disabled={formLocked}>
                 {selectedProduct ? (
                   <>
                     <Avatar
@@ -465,6 +465,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                         sx={{ px: 2.5, py: 1.5, typography: 'subtitle1' }}
                         onClick={() => handleClose(product)}
                         key={product.id}
+                        disabled={formLocked}
                       >
                         <Avatar alt={product.name} src={product.image_url} sx={{ mr: 2 }}>
                           <Iconify icon="solar:user-rounded-bold" />
@@ -473,7 +474,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                       </ListItemButton>
                     ))}
 
-                    <ListItemButton autoFocus href={paths.dashboard.product.new}>
+                    <ListItemButton autoFocus href={paths.dashboard.product.new} disabled={formLocked}>
                       <Avatar sx={{ mr: 2 }}>
                         <Iconify icon="mingcute:add-line" />
                       </Avatar>
@@ -489,7 +490,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 onChange={(newValue) =>
                   setValue('expiration_date', newValue, { shouldValidate: true })
                 }
-                slotProps={{ textField: { fullWidth: true } }}
+                slotProps={{ textField: { fullWidth: true, disabled: formLocked } }}
               />
 
               <RHFTextField
@@ -498,7 +499,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 placeholder="0"
                 type="number"
                 InputLabelProps={{ shrink: true }}
-                disabled={stockLocked}
+                disabled={formLocked || stockLocked}
                 helperText={stockLocked ? 'Tu suscripción no permite tener más stock.' : ''}
                 FormHelperTextProps={{ sx: { color: 'error.main' } }}
               />
@@ -510,7 +511,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   );
 
   // ----------------------------------------------------------------------
-  // Sección Precios
+  // UI: Precios
   // ----------------------------------------------------------------------
 
   const renderPricing = (
@@ -536,6 +537,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
               InputLabelProps={{ shrink: true }}
               value={price}
               onChange={handlePriceChange}
+              disabled={formLocked}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -555,6 +557,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
               InputLabelProps={{ shrink: true }}
               value={discount}
               onChange={handleDiscountChange}
+              disabled={formLocked}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -573,6 +576,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
               type="number"
               InputLabelProps={{ shrink: true }}
               value={calculateDiscountedPrice()}
+              disabled={true}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -591,7 +595,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   );
 
   // ----------------------------------------------------------------------
-  // Acciones
+  // UI: Acciones
   // ----------------------------------------------------------------------
 
   const renderActions = (
@@ -603,6 +607,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
             <Switch
               checked={values.is_active === 'active'}
               onChange={(e) => setValue('is_active', e.target.checked ? 'active' : 'inactive')}
+              disabled={formLocked}
             />
           }
           label="Activo"
@@ -610,7 +615,13 @@ export default function PublicationNewEditForm({ currentPublication }) {
           sx={{ flexGrow: 1, pl: 3 }}
         />
 
-        <LoadingButton type="submit" variant="contained" size="large" loading={isSubmitting}>
+        <LoadingButton
+          type="submit"
+          variant="contained"
+          size="large"
+          loading={isSubmitting}
+          disabled={formLocked}
+        >
           {!currentPublication ? 'Crear publicación' : 'Guardar cambios'}
         </LoadingButton>
       </Grid>

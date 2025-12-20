@@ -1,8 +1,12 @@
 // src/api/publicationLimits.js
 
+// IMPORTANTÍSIMO:
+// Usamos el mismo base que tu front usa para POST/PUT de publication.
+// Si VITE_API_COMIDIN ya viene con "/api", perfecto.
+// Si no viene, usamos fallback con "/api" porque en prod te funciona así.
 const API_BASE =
   import.meta?.env?.VITE_API_COMIDIN ||
-  'https://api.comidin.com.ar';
+  'https://api.comidin.com.ar/api';
 
 function getToken() {
   const direct =
@@ -11,7 +15,7 @@ function getToken() {
     localStorage.getItem('idToken');
   if (direct) return direct;
 
-  // Evitar for..of / iterators: usamos Array.from + find
+  // Sin for-loops: Array.from
   const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i));
   const cognitoKey = keys.find(
     (k) => k && k.includes('CognitoIdentityServiceProvider') && k.endsWith('.idToken')
@@ -21,7 +25,6 @@ function getToken() {
     const val = localStorage.getItem(cognitoKey);
     if (val) return val;
   }
-
   return null;
 }
 
@@ -41,55 +44,42 @@ async function fetchJson(url) {
     err.url = url;
     throw err;
   }
+
   return body;
 }
 
 /**
  * Beneficios efectivos por comercio
- * GET /api/subscriptions/commerce/:commerceId/benefits
+ * GET /subscriptions/commerce/:commerceId/benefits
  */
 export async function fetchBenefitsByCommerceId(commerceId) {
-  return fetchJson(`${API_BASE}/api/subscriptions/commerce/${commerceId}/benefits`);
+  return fetchJson(`${API_BASE}/subscriptions/commerce/${commerceId}/benefits`);
 }
 
 /**
- * Intenta obtener publicaciones por comercio sin loops.
- * Lanza todas las requests candidatas en paralelo y toma la primera que devuelva un array.
- *
- * ⚠️ Ideal: reemplazar candidates por el endpoint real único de tu backend.
+ * Publicaciones por comercio
+ * ✅ Confirmado por tu backend routes/publication.js
+ * GET /publication/commerce/:commerceId
  */
 async function fetchPublicationsByCommerceId(commerceId) {
-  const candidates = [
-    `${API_BASE}/publication/commerce/${commerceId}`,
-    `${API_BASE}/api/publication/commerce/${commerceId}`,
-    `${API_BASE}/publications/commerce/${commerceId}`,
-    `${API_BASE}/api/publications/commerce/${commerceId}`,
-    `${API_BASE}/publication?commerceId=${commerceId}`,
-    `${API_BASE}/api/publication?commerceId=${commerceId}`,
-  ];
+  const data = await fetchJson(`${API_BASE}/publication/commerce/${commerceId}`);
 
-  const settled = await Promise.allSettled(candidates.map((url) => fetchJson(url)));
+  // tu controller normalmente devuelve array directo
+  if (Array.isArray(data)) return data;
 
-  const normalizeToArray = (data) => {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data?.data)) return data.data;
-    if (Array.isArray(data?.rows)) return data.rows;
-    return null;
-  };
+  // por si alguna vez devolvés {data: []} o {rows: []}
+  if (Array.isArray(data?.data)) return data.data;
+  if (Array.isArray(data?.rows)) return data.rows;
 
-  const firstOk = settled
-    .map((r) => (r.status === 'fulfilled' ? normalizeToArray(r.value) : null))
-    .find((arr) => Array.isArray(arr));
-
-  if (firstOk) return firstOk;
-
-  // si todas fallaron, devolvemos el primer error “útil”
-  const firstErr = settled.find((r) => r.status === 'rejected');
-  if (firstErr && firstErr.reason) throw firstErr.reason;
-
-  throw new Error('No se pudo obtener el listado de publicaciones del comercio');
+  // si no viene en formato esperado:
+  throw new Error('Formato inesperado al listar publicaciones del comercio');
 }
 
+/**
+ * Regla de "publicación activa" para el cupo:
+ * - is_active === 'active'
+ * - expiration_date > ahora
+ */
 function isActiveAndNotExpired(pub, now) {
   const active = String(pub?.is_active || '').toLowerCase() === 'active';
 
@@ -103,7 +93,8 @@ function isActiveAndNotExpired(pub, now) {
 }
 
 /**
- * Valida límite antes de crear.
+ * Valida límite antes de crear publicación
+ * Devuelve { allowed, reason, maxPublications, activeCount }
  */
 export async function canCreatePublication({ commerceId }) {
   const cid = Number(commerceId);
@@ -127,7 +118,7 @@ export async function canCreatePublication({ commerceId }) {
   if (activeCount >= Number(max)) {
     return {
       allowed: false,
-      reason: `Superaste el máximo de publicaciones activas permitidas para tu suscripción (${activeCount}/${max}).`,
+      reason: `Alcanzaste el máximo de publicaciones activas permitidas para tu suscripción (${activeCount}/${max}).`,
       maxPublications: Number(max),
       activeCount,
     };
