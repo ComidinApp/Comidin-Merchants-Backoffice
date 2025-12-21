@@ -61,7 +61,7 @@ export default function UserTableRow({ row, selected, onEditRow, onSelectRow, on
           />
         </TableCell>
 
-        <TableCell sx={{ whiteSpace: 'nowrap' }}>{phone_number}</TableCell>
+        <TableCell sx={{ whiteSpace: 'nowrap' }}>+54{phone_number}</TableCell>
 
         {authUser.user.role_id === 1 && (
           <TableCell sx={{ whiteSpace: 'nowrap' }}>{commerce?.name || '-'}</TableCell>
