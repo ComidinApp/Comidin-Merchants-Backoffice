@@ -540,9 +540,9 @@ export default function UserNewEditForm({ currentUser }) {
                         color: 'text.disabled',
                       }}
                     >
-                      Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
+
                       <br />
-                      Si no elegís ninguna, se usará un avatar por defecto.
+                      Se usará un avatar por defecto.
                     </Typography>
                   }
                 />
