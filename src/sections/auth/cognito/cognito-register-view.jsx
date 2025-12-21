@@ -649,6 +649,11 @@ export default function CognitoRegisterView() {
             helperText={
               errors.commerce_national_id?.message || 'Sólo números, sin puntos ni guiones'
             }
+            inputProps={{
+              maxLength: 11,
+              inputMode: 'numeric',
+              pattern: '[0-9]*', 
+            }}
           />
 
           <RHFTextField
