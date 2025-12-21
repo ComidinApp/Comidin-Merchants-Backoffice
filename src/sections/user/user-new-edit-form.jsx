@@ -25,6 +25,9 @@ import FormProvider, {
   RHFAutocomplete,
 } from 'src/components/hook-form';
 
+// ✅ Reutilizamos el fetch de beneficios (mismo endpoint: /subscriptions/commerce/:id/benefits)
+import { fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
+
 const { VITE_API_COMIDIN } = import.meta.env;
 
 export default function UserNewEditForm({ currentUser }) {
@@ -43,6 +46,22 @@ export default function UserNewEditForm({ currentUser }) {
     phoneExists: false,
     nationalIdExists: false,
   });
+
+  // ✅ bloqueo por plan (manage_employees_roles)
+  const [permissionState, setPermissionState] = useState({
+    checking: false,
+    locked: false,
+    message: '',
+  });
+
+  const isEdit = Boolean(currentUser?.id);
+
+  // Resolver commerceId de forma tolerante (admin o no admin)
+  const authCommerceId =
+    authUser?.user?.commerce?.id ??
+    authUser?.user?.commerce_id ??
+    authUser?.user?.commerceId ??
+    null;
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -174,19 +193,98 @@ export default function UserNewEditForm({ currentUser }) {
   const watchedEmail = watch('email');
   const watchedPhone = watch('phone_number');
   const watchedNationalId = watch('national_id');
+  const watchedCommerceId = watch('commerce_id');
+
+  // ✅ Si no es admin y tiene commerce asociado, lo pre-cargamos (y esto dispara validación de plan)
+  useEffect(() => {
+    if (authCommerceId && !watchedCommerceId) {
+      setValue('commerce_id', Number(authCommerceId), { shouldValidate: true });
+    }
+  }, [authCommerceId, watchedCommerceId, setValue]);
+
+  // ✅ Validación de permiso por plan:
+  // - Aplica SOLO para CREAR (no para editar)
+  // - Se recalcula cuando cambia commerce_id (admin puede seleccionar otro comercio)
+  useEffect(() => {
+    let alive = true;
+
+    const run = async () => {
+      if (isEdit) {
+        // Editar usuario existente: no aplicamos bloqueo por plan (solo pediste “para crear”)
+        setPermissionState({ checking: false, locked: false, message: '' });
+        return;
+      }
+
+      const cid = Number(watchedCommerceId || authCommerceId || 0);
+
+      // Si aún no hay commerce seleccionado (admin), bloqueamos suave
+      if (!cid) {
+        setPermissionState({
+          checking: false,
+          locked: true,
+          message: 'Seleccioná un comercio para validar permisos de tu suscripción.',
+        });
+        return;
+      }
+
+      setPermissionState({ checking: true, locked: false, message: '' });
+
+      try {
+        const benefits = await fetchBenefitsByCommerceId(cid);
+
+        if (!alive) return;
+
+        const allowed = benefits?.manage_employees_roles !== false;
+
+        if (!allowed) {
+          setPermissionState({
+            checking: false,
+            locked: true,
+            message: 'El plan actual no permite la creación de nuevos usuarios.',
+          });
+        } else {
+          setPermissionState({ checking: false, locked: false, message: '' });
+        }
+      } catch (e) {
+        if (!alive) return;
+        // Si falla la consulta, no bloqueamos (pero avisamos si querés; acá lo dejamos permisivo)
+        setPermissionState({ checking: false, locked: false, message: '' });
+        console.warn('[UserNewEditForm] No se pudo validar manage_employees_roles:', e);
+      }
+    };
+
+    run();
+
+    return () => {
+      alive = false;
+    };
+  }, [isEdit, watchedCommerceId, authCommerceId]);
+
+  const formLocked = permissionState.locked || permissionState.checking;
+
+  // ✅ Handlers sin inline arrows (evita lints tipo jsx-no-bind)
+  const handleCommerceChange = useCallback(
+    (_event, value) => {
+      setValue('commerce_id', value?.id || '', { shouldValidate: true });
+    },
+    [setValue]
+  );
+
+  const handleRoleChange = useCallback(
+    (_event, value) => {
+      setValue('role_id', value?.id || '', { shouldValidate: true });
+    },
+    [setValue]
+  );
 
   // 🔥 VALIDACIÓN EN TIEMPO REAL CONTRA /employee/exists
   useEffect(() => {
-    // si estoy editando, no hago validación de duplicados en tiempo real
-    if (currentUser) {
-      return () => {};
-    }
+    if (currentUser) return () => {};
 
     const email = watchedEmail?.trim();
     const phone = watchedPhone?.trim();
     const dni = watchedNationalId?.trim();
 
-    // si no hay nada cargado, limpio errores y flags
     if (!email && !phone && !dni) {
       setDuplicateFlags({
         emailExists: false,
@@ -194,8 +292,6 @@ export default function UserNewEditForm({ currentUser }) {
         nationalIdExists: false,
       });
       clearErrors(['email', 'phone_number', 'national_id']);
-      // igual devuelvo una función de cleanup vacía para que
-      // todas las rutas de la función tengan return
       return () => {};
     }
 
@@ -227,10 +323,7 @@ export default function UserNewEditForm({ currentUser }) {
         setDuplicateFlags({ emailExists, phoneExists, nationalIdExists });
 
         if (emailExists) {
-          setError('email', {
-            type: 'manual',
-            message: 'Ya existe un empleado con este email.',
-          });
+          setError('email', { type: 'manual', message: 'Ya existe un empleado con este email.' });
         } else {
           clearErrors('email');
         }
@@ -245,10 +338,7 @@ export default function UserNewEditForm({ currentUser }) {
         }
 
         if (nationalIdExists) {
-          setError('national_id', {
-            type: 'manual',
-            message: 'Ya existe un empleado con este DNI.',
-          });
+          setError('national_id', { type: 'manual', message: 'Ya existe un empleado con este DNI.' });
         } else {
           clearErrors('national_id');
         }
@@ -272,15 +362,13 @@ export default function UserNewEditForm({ currentUser }) {
     setError,
   ]);
 
-  // Validación final antes de submit (bloquea POST si hay duplicados)
+  // Validación final antes de submit
   const validateUniqueBeforeSubmit = async (data) => {
     const email = data.email?.trim();
     const phone = data.phone_number?.trim();
     const dni = data.national_id?.trim();
 
-    if (!email && !phone && !dni) {
-      return false;
-    }
+    if (!email && !phone && !dni) return false;
 
     const params = new URLSearchParams();
     if (email) params.append('email', email);
@@ -288,9 +376,7 @@ export default function UserNewEditForm({ currentUser }) {
     if (dni) params.append('national_id', dni);
     if (currentUser?.id) params.append('excludeId', currentUser.id);
 
-    const res = await fetch(
-      `${VITE_API_COMIDIN}/employee/exists?${params.toString()}`
-    );
+    const res = await fetch(`${VITE_API_COMIDIN}/employee/exists?${params.toString()}`);
 
     if (!res.ok) {
       console.error('Error checking employee exists (on submit)');
@@ -303,20 +389,13 @@ export default function UserNewEditForm({ currentUser }) {
       nationalIdExists = false,
     } = await res.json();
 
-    setDuplicateFlags({
-      emailExists,
-      phoneExists,
-      nationalIdExists,
-    });
+    setDuplicateFlags({ emailExists, phoneExists, nationalIdExists });
 
     let hasDuplicates = false;
 
     if (emailExists) {
       hasDuplicates = true;
-      setError('email', {
-        type: 'manual',
-        message: 'Ya existe un empleado con este email.',
-      });
+      setError('email', { type: 'manual', message: 'Ya existe un empleado con este email.' });
     }
 
     if (phoneExists) {
@@ -329,10 +408,7 @@ export default function UserNewEditForm({ currentUser }) {
 
     if (nationalIdExists) {
       hasDuplicates = true;
-      setError('national_id', {
-        type: 'manual',
-        message: 'Ya existe un empleado con este DNI.',
-      });
+      setError('national_id', { type: 'manual', message: 'Ya existe un empleado con este DNI.' });
     }
 
     if (hasDuplicates) {
@@ -345,7 +421,40 @@ export default function UserNewEditForm({ currentUser }) {
     return hasDuplicates;
   };
 
+  const handleDrop = useCallback(
+    (acceptedFiles) => {
+      if (formLocked) return;
+
+      const file = acceptedFiles?.[0];
+      if (!file) return;
+
+      const maxSizeMB = 3;
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        enqueueSnackbar(`La imagen supera ${maxSizeMB}MB. Elegí otra más liviana.`, {
+          variant: 'error',
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result;
+        setValue('avatar_url', base64, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    },
+    [enqueueSnackbar, setValue, formLocked]
+  );
+
   const onSubmit = handleSubmit(async (data) => {
+    // ✅ bloqueo hard para crear si el plan no lo permite
+    if (!isEdit && permissionState.locked) {
+      enqueueSnackbar(permissionState.message || 'Tu suscripción no permite crear usuarios.', {
+        variant: 'error',
+      });
+      return;
+    }
+
     const hasDuplicates = await validateUniqueBeforeSubmit(data);
     if (hasDuplicates) return;
 
@@ -391,145 +500,154 @@ export default function UserNewEditForm({ currentUser }) {
     }
   });
 
-  const handleDrop = useCallback(
-    (acceptedFiles) => {
-      const file = acceptedFiles?.[0];
-      if (!file) return;
-
-      const maxSizeMB = 3;
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        enqueueSnackbar(`La imagen supera ${maxSizeMB}MB. Elegí otra más liviana.`, {
-          variant: 'error',
-        });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result;
-        setValue('avatar_url', base64, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
-    },
-    [enqueueSnackbar, setValue]
-  );
-
-  useEffect(() => {
-    if (authUser.user.role_id !== 1 && authUser.user.commerce?.id) {
-      setValue('commerce_id', authUser.user.commerce.id);
-    }
-  }, [authUser.user.role_id, authUser.user.commerce, setValue]);
+  // Para deshabilitar todo visualmente (incluye avatar)
+  const lockStyles = formLocked
+    ? { opacity: 0.75, pointerEvents: 'none' }
+    : null;
 
   return (
     <FormProvider methods={methods} onSubmit={onSubmit}>
       <Grid container spacing={3}>
         <Grid xs={12} md={4}>
           <Card sx={{ pt: 10, pb: 5, px: 3 }}>
-            <Box sx={{ mb: 5 }}>
-              <RHFUploadAvatar
-                name="avatar_url"
-                maxSize={3145728}
-                onDrop={handleDrop}
-                helperText={
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      mt: 3,
-                      mx: 'auto',
-                      display: 'block',
-                      textAlign: 'center',
-                      color: 'text.disabled',
-                    }}
-                  >
-                    Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
-                    <br />
-                    Si no elegís ninguna, se usará un avatar por defecto.
-                  </Typography>
-                }
-              />
+            <Box sx={{ mb: 2 }}>
+              {/* ✅ Mensaje bloqueo */}
+              {permissionState.locked && !isEdit && (
+                <Typography sx={{ color: 'error.main', fontWeight: 600, mb: 2 }}>
+                  {permissionState.message || 'El plan actual no permite la creación de nuevos usuarios.'}
+                </Typography>
+              )}
+
+              {permissionState.checking && !isEdit && (
+                <Typography sx={{ color: 'text.secondary', mb: 2 }}>
+                  Validando permisos de tu suscripción...
+                </Typography>
+              )}
+
+              <Box sx={lockStyles || undefined}>
+                <RHFUploadAvatar
+                  name="avatar_url"
+                  maxSize={3145728}
+                  onDrop={handleDrop}
+                  helperText={
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        mt: 3,
+                        mx: 'auto',
+                        display: 'block',
+                        textAlign: 'center',
+                        color: 'text.disabled',
+                      }}
+                    >
+                      Podés subir una imagen JPG, PNG o GIF (máx. 3 MB).
+                      <br />
+                      Si no elegís ninguna, se usará un avatar por defecto.
+                    </Typography>
+                  }
+                />
+              </Box>
             </Box>
           </Card>
         </Grid>
 
         <Grid xs={12} md={8}>
           <Card sx={{ p: 3 }}>
-            <Box
-              rowGap={3}
-              columnGap={2}
-              display="grid"
-              gridTemplateColumns={{
-                xs: 'repeat(1, 1fr)',
-                sm: 'repeat(2, 1fr)',
-              }}
-            >
-              <RHFTextField name="first_name" label="Nombre" />
-              <RHFTextField name="last_name" label="Apellido" />
-              <RHFTextField name="email" label="Email" />
-              <RHFTextField name="phone_number" label="Número de teléfono" />
+            {/* ✅ Mensaje bloqueo arriba del formulario también */}
+            {permissionState.locked && !isEdit && (
+              <Typography sx={{ color: 'error.main', fontWeight: 600, mb: 2 }}>
+                {permissionState.message || 'El plan actual no permite la creación de nuevos usuarios.'}
+              </Typography>
+            )}
 
-              <RHFAutocomplete
-                name="country"
-                type="country"
-                label="País"
-                placeholder="Elegí un país"
-                fullWidth
-                options={countries.map((option) => option.label)}
-                getOptionLabel={(option) => option}
-              />
+            <Box sx={lockStyles || undefined}>
+              <Box
+                rowGap={3}
+                columnGap={2}
+                display="grid"
+                gridTemplateColumns={{
+                  xs: 'repeat(1, 1fr)',
+                  sm: 'repeat(2, 1fr)',
+                }}
+              >
+                <RHFTextField name="first_name" label="Nombre" disabled={formLocked} />
+                <RHFTextField name="last_name" label="Apellido" disabled={formLocked} />
+                <RHFTextField name="email" label="Email" disabled={formLocked} />
+                <RHFTextField name="phone_number" label="Número de teléfono" disabled={formLocked} />
 
-              <RHFTextField name="national_id" label="DNI" />
-              <RHFTextField name="city" label="Ciudad" />
-              <RHFTextField name="address" label="Dirección" />
-              <RHFTextField name="postal_code" label="Código postal" />
-
-              {authUser.user.role_id === 1 ? (
                 <RHFAutocomplete
-                  name="commerce_id"
-                  label="Comercio"
+                  name="country"
+                  type="country"
+                  label="País"
+                  placeholder="Elegí un país"
                   fullWidth
-                  options={commerces}
+                  options={countries.map((option) => option.label)}
+                  getOptionLabel={(option) => option}
+                  disabled={formLocked}
+                />
+
+                <RHFTextField name="national_id" label="DNI" disabled={formLocked} />
+                <RHFTextField name="city" label="Ciudad" disabled={formLocked} />
+                <RHFTextField name="address" label="Dirección" disabled={formLocked} />
+                <RHFTextField name="postal_code" label="Código postal" disabled={formLocked} />
+
+                {authUser?.user?.role_id === 1 ? (
+                  <RHFAutocomplete
+                    name="commerce_id"
+                    label="Comercio"
+                    fullWidth
+                    options={commerces}
+                    getOptionLabel={(option) => option.name}
+                    onChange={handleCommerceChange}
+                    disabled={formLocked}
+                    value={
+                      commerces.find((commerce) => commerce.id === watch('commerce_id')) ||
+                      commerces.find((commerce) => commerce.id === currentUser?.commerce_id) ||
+                      null
+                    }
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === (value?.id || value)
+                    }
+                  />
+                ) : null}
+
+                <RHFAutocomplete
+                  name="role_id"
+                  label="Rol"
+                  fullWidth
+                  options={roles}
                   getOptionLabel={(option) => option.name}
-                  onChange={(_, value) => setValue('commerce_id', value?.id || '')}
+                  onChange={handleRoleChange}
+                  disabled={formLocked}
                   value={
-                    commerces.find((commerce) => commerce.id === watch('commerce_id')) ||
-                    commerces.find((commerce) => commerce.id === currentUser?.commerce_id) ||
+                    roles.find((role) => role.id === watch('role_id')) ||
+                    roles.find((role) => role.id === currentUser?.role_id) ||
                     null
                   }
                   isOptionEqualToValue={(option, value) =>
                     option.id === (value?.id || value)
                   }
                 />
-              ) : null}
 
-              <RHFAutocomplete
-                name="role_id"
-                label="Rol"
-                fullWidth
-                options={roles}
-                getOptionLabel={(option) => option.name}
-                onChange={(_, value) => setValue('role_id', value?.id || '')}
-                value={
-                  roles.find((role) => role.id === watch('role_id')) ||
-                  roles.find((role) => role.id === currentUser?.role_id) ||
-                  null
-                }
-                isOptionEqualToValue={(option, value) =>
-                  option.id === (value?.id || value)
-                }
-              />
-
-              {!currentUser && (
-                <RHFTextField
-                  name="password"
-                  label="Contraseña"
-                  type="password"
-                  autoComplete="new-password"
-                />
-              )}
+                {!currentUser && (
+                  <RHFTextField
+                    name="password"
+                    label="Contraseña"
+                    type="password"
+                    autoComplete="new-password"
+                    disabled={formLocked}
+                  />
+                )}
+              </Box>
             </Box>
 
             <Stack alignItems="flex-end" sx={{ mt: 3 }}>
-              <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                loading={isSubmitting || permissionState.checking}
+                disabled={formLocked}
+              >
                 {!currentUser ? 'Crear usuario' : 'Guardar cambios'}
               </LoadingButton>
             </Stack>
