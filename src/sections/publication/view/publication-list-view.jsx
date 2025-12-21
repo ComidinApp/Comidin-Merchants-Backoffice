@@ -278,12 +278,12 @@ export default function PublicationListView() {
       filterable: false,
       disableColumnMenu: true,
       getActions: (params) => [
-        <GridActionsCellItem
-          showInMenu
-          icon={<Iconify icon="solar:eye-bold" />}
-          label="Ver"
-          onClick={() => handleViewRow(params.row.id)}
-        />,
+        // <GridActionsCellItem
+        //  showInMenu
+        //  icon={<Iconify icon="solar:eye-bold" />}
+        //  label="Ver"
+        //  onClick={() => handleViewRow(params.row.id)}
+        // />,
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:pen-bold" />}
