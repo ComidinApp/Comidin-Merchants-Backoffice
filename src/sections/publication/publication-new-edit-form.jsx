@@ -50,7 +50,12 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const mdUp = useResponsive('up', 'md');
   const { enqueueSnackbar } = useSnackbar();
 
-  const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
+  const commerceId =
+  authUser?.user?.commerce?.id ??
+  authUser?.user?.commerce_id ??
+  authUser?.user?.commerceId ??
+  null;
+  
   const { products } = useGetProducts(commerceId);
 
   const [price, setPrice] = useState(currentPublication?.price || 0);
