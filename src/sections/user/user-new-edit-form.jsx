@@ -477,7 +477,15 @@ export default function UserNewEditForm({ currentUser }) {
                 getOptionLabel={(option) => option}
               />
 
-              <RHFTextField name="national_id" label="DNI" />
+              <RHFTextField
+                name="national_id"
+                label="DNI"
+                inputProps={{
+                  maxLength: 8,
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
+              />
               <RHFTextField name="city" label="Ciudad" />
               <RHFTextField name="address" label="Dirección" />
               <RHFTextField name="postal_code" label="Código postal" />
