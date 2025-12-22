@@ -1,9 +1,5 @@
 // src/api/publicationLimits.js
 
-// IMPORTANTÍSIMO:
-// Usamos el mismo base que tu front usa para POST/PUT de publication.
-// Si VITE_API_COMIDIN ya viene con "/api", perfecto.
-// Si no viene, usamos fallback con "/api" porque en prod te funciona así.
 const API_BASE =
   import.meta?.env?.VITE_API_COMIDIN ||
   'https://api.comidin.com.ar/api';
@@ -15,7 +11,6 @@ function getToken() {
     localStorage.getItem('idToken');
   if (direct) return direct;
 
-  // Sin for-loops: Array.from
   const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i));
   const cognitoKey = keys.find(
     (k) => k && k.includes('CognitoIdentityServiceProvider') && k.endsWith('.idToken')
@@ -58,28 +53,18 @@ export async function fetchBenefitsByCommerceId(commerceId) {
 
 /**
  * Publicaciones por comercio
- * ✅ Confirmado por tu backend routes/publication.js
  * GET /publication/commerce/:commerceId
  */
 async function fetchPublicationsByCommerceId(commerceId) {
   const data = await fetchJson(`${API_BASE}/publication/commerce/${commerceId}`);
 
-  // tu controller normalmente devuelve array directo
   if (Array.isArray(data)) return data;
-
-  // por si alguna vez devolvés {data: []} o {rows: []}
   if (Array.isArray(data?.data)) return data.data;
   if (Array.isArray(data?.rows)) return data.rows;
 
-  // si no viene en formato esperado:
   throw new Error('Formato inesperado al listar publicaciones del comercio');
 }
 
-/**
- * Regla de "publicación activa" para el cupo:
- * - is_active === 'active'
- * - expiration_date > ahora
- */
 function isActiveAndNotExpired(pub, now) {
   const active = String(pub?.is_active || '').toLowerCase() === 'active';
 
@@ -90,6 +75,24 @@ function isActiveAndNotExpired(pub, now) {
   if (Number.isNaN(exp.getTime())) return active;
 
   return active && exp.getTime() > now.getTime();
+}
+
+// ✅ NUEVO: parse robusto del max_publications
+function parseMaxPublications(raw) {
+  // null/undefined => ilimitado
+  if (raw === null || raw === undefined) return null;
+
+  // a veces viene como string "null"
+  if (String(raw).toLowerCase() === 'null') return null;
+
+  // si viene como número o string numérico
+  const n = Number(raw);
+  if (Number.isNaN(n)) {
+    // si viene raro, no bloqueamos por las dudas
+    return null;
+  }
+
+  return n;
 }
 
 /**
@@ -107,22 +110,29 @@ export async function canCreatePublication({ commerceId }) {
     fetchPublicationsByCommerceId(cid),
   ]);
 
-  const max = benefits?.max_publications ?? 0; // null => ilimitadas
-  if (max == null) {
+  const max = parseMaxPublications(benefits?.max_publications);
+
+  // ✅ CLAVE: null => ilimitado => siempre allowed
+  if (max === null) {
+    return { allowed: true, maxPublications: null, activeCount: 0 };
+  }
+
+  // Si por alguna razón max es negativo, también lo tratamos como ilimitado
+  if (typeof max === 'number' && max < 0) {
     return { allowed: true, maxPublications: null, activeCount: 0 };
   }
 
   const now = new Date();
   const activeCount = (pubs || []).filter((p) => isActiveAndNotExpired(p, now)).length;
 
-  if (activeCount >= Number(max)) {
+  if (activeCount >= max) {
     return {
       allowed: false,
       reason: `Alcanzaste el máximo de publicaciones activas permitidas para tu suscripción (${activeCount}/${max}).`,
-      maxPublications: Number(max),
+      maxPublications: max,
       activeCount,
     };
   }
 
-  return { allowed: true, maxPublications: Number(max), activeCount };
+  return { allowed: true, maxPublications: max, activeCount };
 }
