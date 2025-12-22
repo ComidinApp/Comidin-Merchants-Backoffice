@@ -203,17 +203,6 @@ export default function HomeHero() {
           Supermercados, tiendas, restaurantes, y mucho más!
         </Typography>
       </m.div>
-
-      <m.div variants={varFade().in}>
-        <Stack
-          spacing={0.75}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          sx={{ my: 3 }}
-        >
-        </Stack>
-      </m.div>
     </Stack>
   );
 

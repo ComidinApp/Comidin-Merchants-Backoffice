@@ -32,7 +32,7 @@ export default function ReviewsPage() {
     if (commerceId == null) {
       setLoading(false);
       setError('No se pudo determinar el comercio.');
-      return;
+      return undefined;
     }
 
     let alive = true;
@@ -63,7 +63,7 @@ export default function ReviewsPage() {
   }, [commerceId]);
 
   // volver a la primera página si cambian las reviews
-  useEffect(() => setPage(1), [data.ratings]);
+  useEffect(() => { setPage(1); }, [data.ratings]);
 
   const totalPages = Math.max(1, Math.ceil((data.ratings?.length || 0) / PAGE_SIZE));
 
