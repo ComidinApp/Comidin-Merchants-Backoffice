@@ -130,7 +130,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       .typeError('El stock debe ser un número')
       .required('El stock es obligatorio')
       .integer('El stock debe ser un número entero')
-      .min(0, 'El stock no puede ser negativo'),
+      .min(1, 'El stock no puede ser negativo'),
 
     is_active: Yup.string()
       .required('El estado es obligatorio')
