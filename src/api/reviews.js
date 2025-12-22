@@ -1,73 +1,58 @@
-import axios from 'axios';
+const API_BASE =
+  import.meta?.env?.VITE_API_COMIDIN || 'https://api.comidin.com.ar';
 
+function getToken() {
+  const direct =
+    localStorage.getItem('token') ||
+    localStorage.getItem('accessToken') ||
+    localStorage.getItem('idToken');
+  if (direct) return direct;
 
-export async function getGoogleReviews(placeId) {
-  console.log("⏳ MOCK: Fetching reviews for", placeId);
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (key && key.includes('CognitoIdentityServiceProvider') && key.endsWith('.idToken')) {
+      const val = localStorage.getItem(key);
+      if (val) return val;
+    }
+  }
+  return null;
+}
 
-  // Simulación de delay de red
-  await new Promise((res) => setTimeout(res, 600));
+/**
+ * Obtiene las calificaciones/reseñas de un comercio
+ * GET /rating/commerce/:commerceId
+ *
+ * @param {number|string} commerceId
+ * @returns {Promise<{
+ *   commerceId: number,
+ *   averageRating: number,
+ *   totalRatings: number,
+ *   ratings: Array<{
+ *     product_image_url: string,
+ *     product_name: string,
+ *     rate_order: number,
+ *     comment: string
+ *   }>
+ * }>}
+ */
+export async function getCommerceRatings(commerceId) {
+  const token = getToken();
+  const url = `${API_BASE}/rating/commerce/${commerceId}`;
 
-  return {
-    placeId,
-    rating: 4.9,
-    totalReviews: 59,
-    reviews: [
-      {
-        id: "1",
-        authorName: "Provath Ghosh",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/men/32.jpg",
-        rating: 3,
-        text: "Loving this place, highly recommended!",
-        relativeTime: "2 months ago",
-      },
-      {
-        id: "2",
-        authorName: "MD Kamrul Alam",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/men/45.jpg",
-        rating: 5,
-        text: "Well decorated and comfortable environment.",
-        relativeTime: "4 months ago",
-      },
-      {
-        id: "3",
-        authorName: "Rubel Mahmud",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/men/22.jpg",
-        rating: 5,
-        text: "Good software company with great people.",
-        relativeTime: "5 months ago",
-      },
-      {
-        id: "4",
-        authorName: "Ashik Elahi",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/men/14.jpg",
-        rating: 5,
-        text: "Nice workstation with amazing people.",
-        relativeTime: "6 months ago",
-      },
-      {
-        id: "5",
-        authorName: "Rubel Miah",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/men/18.jpg",
-        rating: 5,
-        text: "Very nice environment and professional team!",
-        relativeTime: "7 months ago",
-      },
-      {
-        id: "6",
-        authorName: "Nishat Shahriyar",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/men/29.jpg",
-        rating: 5,
-        text: "Wonderful place, awesome company culture. Recommended!",
-        relativeTime: "7 months ago",
-      },
-      {
-        id: "7",
-        authorName: "Flor raviol",
-        authorPhotoUrl: "https://randomuser.me/api/portraits/women/32.jpg",
-        rating: 3,
-        text: "uwu",
-        relativeTime: "2 months ago",
-      },
-    ],
-  };
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg = body?.error || body?.message || `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.body = body;
+    err.url = url;
+    throw err;
+  }
+
+  return body;
 }

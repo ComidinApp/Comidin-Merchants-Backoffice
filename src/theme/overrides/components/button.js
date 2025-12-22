@@ -131,6 +131,10 @@ export function button(theme) {
 
   return {
     MuiButton: {
+      defaultProps: {
+        color: 'primary',
+        disableElevation: true,
+      },
       styleOverrides: {
         root: ({ ownerState }) => rootStyles(ownerState),
       },

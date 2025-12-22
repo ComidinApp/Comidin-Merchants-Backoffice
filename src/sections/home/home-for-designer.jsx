@@ -45,33 +45,6 @@ export default function HomeForDesigner() {
           Descargá la app y empezá a ahorrar
         </Typography>
       </m.div>
-
-      <m.div variants={varFade().inUp}>
-        <Button
-          color="inherit"
-          size="large"
-          variant="contained"
-          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
-          target="_blank"
-          rel="noopener"
-          href={paths.figma}
-        >
-          Play Store
-        </Button>
-
-        <Button
-          color="inherit"
-          size="large"
-          variant="contained"
-          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
-          target="_blank"
-          rel="noopener"
-          href={paths.figma}
-          sx={{ ml: 2 }} // Añade margen a la izquierda (opcional)
-        >
-          Apple Store
-        </Button>
-      </m.div>
     </Box>
   );
 

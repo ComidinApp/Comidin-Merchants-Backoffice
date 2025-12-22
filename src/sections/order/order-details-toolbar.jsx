@@ -23,6 +23,7 @@ const statusTranslations = {
   confirmed: 'Confirmado',
   refunded: 'Devuelto',
   cancelled: 'Cancelado',
+  CLAIMED: 'Reclamado',
 };
 
 export default function OrderDetailsToolbar({
@@ -80,6 +81,7 @@ export default function OrderDetailsToolbar({
                   (status === 'pending' && 'warning') ||
                   (status === 'confirmed' && 'info') ||
                   (status === 'cancelled' && 'error') ||
+                  (status === 'CLAIMED' && 'error') ||
                   'default'
                 }
               >

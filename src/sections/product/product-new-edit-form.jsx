@@ -523,7 +523,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         {/* <FormControlLabel control={<Switch defaultChecked />} sx={{ flexGrow: 1, pl: 3 }} /> */}
 
         <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-          {!currentProduct ? 'Create Product' : 'Save Changes'}
+          {!currentProduct ? 'Crear Producto' : 'Guardar Cambios'}
         </LoadingButton>
       </Grid>
     </>

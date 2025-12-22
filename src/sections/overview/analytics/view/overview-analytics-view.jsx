@@ -345,28 +345,6 @@ export default function OverviewAnalyticsView() {
               }}
             />
           </Grid>
-
-          <Grid xs={12} md={6} lg={8}>
-            <AnalyticsNews title="News" list={_analyticPosts} />
-          </Grid>
-
-          <Grid xs={12} md={6} lg={4}>
-            <AnalyticsOrderTimeline
-              title="Order Timeline"
-              list={_analyticOrderTimeline}
-            />
-          </Grid>
-
-          <Grid xs={12} md={6} lg={4}>
-            <AnalyticsTrafficBySite
-              title="Traffic by Site"
-              list={_analyticTraffic}
-            />
-          </Grid>
-
-          <Grid xs={12} md={6} lg={8}>
-            <AnalyticsTasks title="Tasks" list={_analyticTasks} />
-          </Grid>
         </Grid>
       )}
     </Container>

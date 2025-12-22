@@ -21,8 +21,9 @@ import { varFade, MotionContainer } from 'src/components/animate';
 const StyledRoot = styled('div')(({ theme }) => ({
   ...bgGradient({
     color: alpha('#95541B', theme.palette.mode === 'light' ? 0.9 : 0.94),
-    startColor: '#95541B', 
-    endColor: '#7B4016',
+    startColor: '#FEFAE0',
+    endColor: '#D67030',
+    direction: 'to right top'
   }),
   width: '100%',
   height: '100vh',
@@ -56,7 +57,7 @@ const StyledTextGradient = styled(m.h1)(({ theme }) => ({
   textAlign: 'center',
   backgroundSize: '400%',
   fontSize: `${64 / 16}rem`,
-  fontFamily: theme.typography.fontSecondaryFamily,
+  fontFamily: theme.typography.fontFamily,
   [theme.breakpoints.up('md')]: {
     fontSize: `${96 / 16}rem`,
   },
@@ -175,6 +176,7 @@ export default function HomeHero() {
           variant="h2"
           sx={{
             textAlign: 'center',
+            fontFamily: theme.typography.fontFamily,
           }}
         >
           Comenzá a <br />
@@ -210,13 +212,6 @@ export default function HomeHero() {
           justifyContent="center"
           sx={{ my: 3 }}
         >
-          <Rating readOnly value={4.95} precision={0.1} max={5} />
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            <Box component="strong" sx={{ mr: 0.5, color: 'text.primary' }}>
-              4.96/5
-            </Box>
-            (99+ reviews)
-          </Typography>
         </Stack>
       </m.div>
     </Stack>

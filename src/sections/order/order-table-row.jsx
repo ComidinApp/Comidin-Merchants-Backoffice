@@ -113,6 +113,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             (status === 'pending' && 'warning') ||
             (status === 'confirmed' && 'info') ||
             (status === 'cancelled' && 'error') ||
+            (status === 'CLAIMED' && 'error') ||
             'default'
           }
         >
@@ -122,6 +123,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             if (status === 'confirmed') return 'Confirmado';
             if (status === 'refunded') return 'Devuelto';
             if (status === 'cancelled') return 'Cancelado';
+            if (status === 'CLAIMED') return 'Reclamado';
             return status;
           })()}
         </Label>

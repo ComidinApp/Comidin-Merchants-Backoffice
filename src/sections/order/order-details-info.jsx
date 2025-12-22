@@ -130,7 +130,7 @@ export default function OrderDetailsInfo({
   let paymentIcon;
   let iconColor;
 
-  if (payment === 'cash') {
+  if (payment === 'cash' || payment === 'efectivo') {
     paymentText = 'Efectivo';
     paymentIcon = 'mdi:cash';
     iconColor = 'green';
@@ -140,7 +140,7 @@ export default function OrderDetailsInfo({
     iconColor = '#00BFFF';
   } else {
     paymentText = payment;
-    paymentIcon = 'logos:mastercard';
+    paymentIcon = 'mdi:cash';
   }
   const renderPayment = (
     <>
