@@ -49,7 +49,6 @@ const ICONS = {
 export function useNavData() {
   const { t } = useTranslate();
   const user = useAuthContext();
-  console.log(user);
 
   const data = useMemo(
     () => [
@@ -185,23 +184,14 @@ export function useNavData() {
             ], */
           },
 
-          // Raitings
+          // RESEÑAS - Todos pueden ver (la página maneja qué muestra a cada rol)
           {
             title: t('reseñas'),
             path: paths.dashboard.reviews,
             icon: ICONS.chat,
-            /* children: [
-              { title: t('lista'), path: paths.dashboard.invoice.root },
-              {
-                title: t('detalle'),
-                path: paths.dashboard.invoice.demo.details,
-              },
-              { title: t('crear'), path: paths.dashboard.invoice.new },
-              { title: t('editar'), path: paths.dashboard.invoice.demo.edit },
-            ], */
           },
 
-          // COMMERCES
+          // COMERCIOS - Solo administradores
           user?.user?.role_id === 1 && {
             title: t('comercios'),
             path: paths.dashboard.commerce.root,

@@ -56,3 +56,33 @@ export async function getCommerceRatings(commerceId) {
 
   return body;
 }
+
+/**
+ * Elimina una reseña/rating por su ID
+ * DELETE /rating/:ratingId
+ *
+ * @param {number|string} ratingId
+ * @returns {Promise<{ message: string }>}
+ */
+export async function deleteRating(ratingId) {
+  const token = getToken();
+  const url = `${API_BASE}/rating/${ratingId}`;
+
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const body = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg = body?.error || body?.message || `HTTP ${res.status}`;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.body = body;
+    err.url = url;
+    throw err;
+  }
+
+  return body;
+}

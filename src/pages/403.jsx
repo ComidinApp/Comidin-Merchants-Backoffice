@@ -8,7 +8,7 @@ export default function Page403() {
   return (
     <>
       <Helmet>
-        <title> 403 Forbidden</title>
+        <title> 403 Sin permisos</title>
       </Helmet>
 
       <View403 />

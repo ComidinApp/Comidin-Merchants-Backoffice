@@ -67,7 +67,7 @@ export default function HomeForDesigner() {
         ...bgGradient({
           startColor: `${theme.palette.grey[900]} 25%`,
           endColor: alpha(theme.palette.grey[900], 0),
-          imgUrl: '/assets/images/home/for_designer.webp',
+          imgUrl: '/assets/images/home/for_designer_comidin.webp',
         }),
         ...(mdUp && {
           ...bgGradient({
