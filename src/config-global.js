@@ -9,7 +9,7 @@ export const ASSETS_API = import.meta.env.VITE_ASSETS_API;
 export const { VITE_S3_ASSETS_AVATAR } = import.meta.env;
 
 // (nuevo) si usás este parámetro en SSM para la API pública
-export const VITE_API_COMIDIN = import.meta.env.VITE_API_COMIDIN;
+export const {VITE_API_COMIDIN} = import.meta.env;
 
 // ✅ BASE unificada para la API (prioriza VITE_API_COMIDIN, luego HOST_API)
 // Elimina barras finales para evitar // en las URLs

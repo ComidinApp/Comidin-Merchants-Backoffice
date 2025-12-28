@@ -1,34 +1,26 @@
+import { useMemo, useState, useEffect } from 'react';
+
+import Alert from '@mui/material/Alert';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
-import Alert from '@mui/material/Alert';
-import { useEffect, useState, useMemo } from 'react';
-
-import { useSettingsContext } from 'src/components/settings';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
-import { SeoIllustration } from 'src/assets/illustrations';
-
-import { fetchOverview } from 'src/api/analytics';
-import { fetchBenefitsByCommerceId } from 'src/api/subscription';
 
 import {
   _appFeatured,
-  _analyticTasks,
-  _analyticPosts,
-  _analyticTraffic,
-  _analyticOrderTimeline,
 } from 'src/_mock';
+import { fetchOverview } from 'src/api/analytics';
+import { SeoIllustration } from 'src/assets/illustrations';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { fetchBenefitsByCommerceId } from 'src/api/subscription';
+
+import { useSettingsContext } from 'src/components/settings';
 
 import AppWelcome from '../app-welcome';
 import AppFeatured from '../app-featured';
-import AnalyticsNews from '../analytics-news';
-import AnalyticsTasks from '../analytics-tasks';
+import PeriodSelector from '../../period-selector';
+import ReportDownloadMenu from '../../report-download-menu';
 import AnalyticsCurrentVisits from '../analytics-current-visits';
-import AnalyticsOrderTimeline from '../analytics-order-timeline';
 import AnalyticsWebsiteVisits from '../analytics-website-visits';
 import AnalyticsWidgetSummary from '../analytics-widget-summary';
-import AnalyticsTrafficBySite from '../analytics-traffic-by-site';
-import ReportDownloadMenu from '../../report-download-menu';
-import PeriodSelector from '../../period-selector';
 import AnalyticsTopProductsBar from '../../analytics-top-products-bar';
 
 // ---------- Helpers ----------

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -11,7 +11,6 @@ import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -21,7 +20,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { isAfter, isBetween } from 'src/utils/format-time';
 
 import { useGetOrders } from 'src/api/orders';
-import { _orders, ORDER_STATUS_OPTIONS } from 'src/_mock';
+import { ORDER_STATUS_OPTIONS } from 'src/_mock';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -83,7 +83,7 @@ export default function OrderListView() {
   const confirm = useBoolean();
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
-  const { orders, ordersLoading } = useGetOrders(commerceId);
+  const { orders } = useGetOrders(commerceId);
 
   const [tableData, setTableData] = useState([]);
 

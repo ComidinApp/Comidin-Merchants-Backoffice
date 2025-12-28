@@ -1,25 +1,21 @@
 import { m } from 'framer-motion';
 
-import Fab from '@mui/material/Fab';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
+// import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
 
-import Image from 'src/components/image';
-import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
 export default function AboutVision() {
-  const theme = useTheme();
+  // const theme = useTheme();
 
   const renderVideo = (
     <Box
       sx={{
-        
+
         position: 'relative',
         paddingTop: '56.25%', // Aspect ratio 16:9
         width: '100%',
@@ -76,7 +72,7 @@ export default function AboutVision() {
         >
           {renderVideo}
 
-          
+
         </Box>
 
         <m.div variants={varFade().inUp}>

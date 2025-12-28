@@ -3,7 +3,6 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Rating from '@mui/material/Rating';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
@@ -12,7 +11,7 @@ import { alpha, styled, useTheme } from '@mui/material/styles';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { HEADER } from 'src/layouts/config-layout';
-import { bgBlur, bgGradient, textGradient } from 'src/theme/css';
+import { bgGradient, textGradient } from 'src/theme/css';
 
 import { varFade, MotionContainer } from 'src/components/animate';
 
@@ -87,31 +86,31 @@ const StyledEllipseBottom = styled('div')(({ theme }) => ({
   backgroundColor: alpha(theme.palette.primary.darker, 0.12),
 }));
 
-const StyledPolygon = styled('div')(({ opacity = 1, anchor = 'left', theme }) => ({
-  ...bgBlur({
-    opacity,
-    color: theme.palette.background.default,
-  }),
-  zIndex: 9,
-  bottom: 0,
-  height: 80,
-  width: '50%',
-  position: 'absolute',
-  clipPath: 'polygon(0% 0%, 100% 100%, 0% 100%)',
-  ...(anchor === 'left' && {
-    left: 0,
-    ...(theme.direction === 'rtl' && {
-      transform: 'scale(-1, 1)',
-    }),
-  }),
-  ...(anchor === 'right' && {
-    right: 0,
-    transform: 'scaleX(-1)',
-    ...(theme.direction === 'rtl' && {
-      transform: 'scaleX(1)',
-    }),
-  }),
-}));
+// const StyledPolygon = styled('div')(({ opacity = 1, anchor = 'left', theme }) => ({
+//   ...bgBlur({
+//     opacity,
+//     color: theme.palette.background.default,
+//   }),
+//   zIndex: 9,
+//   bottom: 0,
+//   height: 80,
+//   width: '50%',
+//   position: 'absolute',
+//   clipPath: 'polygon(0% 0%, 100% 100%, 0% 100%)',
+//   ...(anchor === 'left' && {
+//     left: 0,
+//     ...(theme.direction === 'rtl' && {
+//       transform: 'scale(-1, 1)',
+//     }),
+//   }),
+//   ...(anchor === 'right' && {
+//     right: 0,
+//     transform: 'scaleX(-1)',
+//     ...(theme.direction === 'rtl' && {
+//       transform: 'scaleX(1)',
+//     }),
+//   }),
+// }));
 
 // ----------------------------------------------------------------------
 
@@ -292,14 +291,14 @@ export default function HomeHero() {
     </Stack>
   );
 
-  const renderPolygons = (
-    <>
-      <StyledPolygon />
-      <StyledPolygon anchor="right" opacity={0.48} />
-      <StyledPolygon anchor="right" opacity={0.48} sx={{ height: 48, zIndex: 10 }} />
-      <StyledPolygon anchor="right" sx={{ zIndex: 11, height: 24 }} />
-    </>
-  );
+  // const renderPolygons = (
+  //   <>
+  //     <StyledPolygon />
+  //     <StyledPolygon anchor="right" opacity={0.48} />
+  //     <StyledPolygon anchor="right" opacity={0.48} sx={{ height: 48, zIndex: 10 }} />
+  //     <StyledPolygon anchor="right" sx={{ zIndex: 11, height: 24 }} />
+  //   </>
+  // );
 
   const renderEllipses = (
     <>

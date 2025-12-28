@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { useMemo, useState, useEffect } from 'react';
+
+import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
-import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Helmet } from 'react-helmet-async';
 
 import { useAuthContext } from 'src/auth/hooks';
 import { getCommerceRatings } from 'src/api/reviews';
-import ReviewCard from 'src/sections/reviews/google-review-card';
+
 import { ReviewsHero } from 'src/sections/reviews/reviews-hero';
+import ReviewCard from 'src/sections/reviews/google-review-card';
 
 const PAGE_SIZE = 6;
 

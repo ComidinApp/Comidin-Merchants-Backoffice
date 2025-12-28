@@ -3,6 +3,7 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
 import { _pricingPlans } from 'src/_mock';
+
 import PricingCard from './pricing-card';
 
 export default function PricingView() {

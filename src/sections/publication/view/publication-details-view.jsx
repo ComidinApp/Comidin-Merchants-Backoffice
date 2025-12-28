@@ -14,8 +14,8 @@ import Typography from '@mui/material/Typography';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { useGetPublication } from 'src/api/publications';
 import { PRODUCT_PUBLISH_OPTIONS } from 'src/_mock';
+import { useGetPublication } from 'src/api/publications';
 
 import Iconify from 'src/components/iconify';
 import EmptyContent from 'src/components/empty-content';

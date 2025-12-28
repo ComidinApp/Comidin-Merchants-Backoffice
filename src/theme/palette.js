@@ -74,6 +74,11 @@ export const error = {
 export const common = {
   black: '#000000',
   white: '#FFFFFF',
+  orange: '#D67030',
+  orangeDark: '#BC6C25',
+  green: '#9BA646',
+  greenDark: '#606C38',
+  lightBrown: '#FEFAE0',
 };
 
 export const action = {

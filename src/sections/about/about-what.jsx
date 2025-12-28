@@ -1,20 +1,14 @@
 import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
-import LinearProgress from '@mui/material/LinearProgress';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import { fPercent } from 'src/utils/format-number';
-
 import Image from 'src/components/image';
-import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
@@ -34,7 +28,7 @@ export default function AboutWhat() {
   const lightMode = theme.palette.mode === 'light';
 
   const shadow = `-40px 40px 80px ${alpha(
-    lightMode ? theme.palette.grey[500] : theme.palette.common.black, 
+    lightMode ? theme.palette.grey[500] : theme.palette.common.black,
     0.24
   )}`;
 
@@ -45,7 +39,7 @@ export default function AboutWhat() {
       sx={{
         py: { xs: 10, md: 15 },
         textAlign: { xs: 'center', md: 'unset' },
-        
+
       }}
     >
       <Grid container columnSpacing={{ md: 3 }} alignItems="flex-start">
@@ -58,7 +52,7 @@ export default function AboutWhat() {
                   src="/assets/images/about/what_2.png"
                   ratio="1/1"
                   sx={{ borderRadius: 3, boxShadow: shadow }}
-            
+
                 />
               </m.div>
             </Grid>
@@ -78,7 +72,7 @@ export default function AboutWhat() {
 
         <Grid xs={12} md={6} lg={5}>
           <m.div variants={varFade().inRight}>
-            <Typography variant="h2" sx={{ mb: 3 }}>
+            <Typography variant="h2" sx={{ mb: 3, color: 'common.white' }}>
               ¿Qué es Comidín?
             </Typography>
           </m.div>
@@ -86,7 +80,7 @@ export default function AboutWhat() {
           <m.div variants={varFade().inRight}>
             <Typography
               sx={{
-                color: theme.palette.mode === 'light' ? 'text.secondary' : 'common.white',
+                color: 'common.white',
                 textAlign: 'justify',
               }}
             >
@@ -135,6 +129,6 @@ export default function AboutWhat() {
       </Grid>
     </Container>
   </Box>
-   
+
   );
 }

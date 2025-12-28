@@ -1,5 +1,4 @@
 import Stack from '@mui/material/Stack';
-import Badge from '@mui/material/Badge';
 import Divider from '@mui/material/Divider';
 import Tooltip from '@mui/material/Tooltip';
 import { useTheme } from '@mui/material/styles';
@@ -12,7 +11,6 @@ import { paper } from 'src/theme/css';
 import Iconify from '../../iconify';
 import Scrollbar from '../../scrollbar';
 import BaseOptions from './base-option';
-import LayoutOptions from './layout-options';
 import PresetsOptions from './presets-options';
 import StretchOptions from './stretch-options';
 import { useSettingsContext } from '../context';
@@ -86,34 +84,34 @@ export default function SettingsDrawer() {
     </div>
   );
 
-  const renderDirection = (
-    <div>
-      <Typography variant="caption" component="div" sx={{ ...labelStyles }}>
-        Direction
-      </Typography>
+  // const renderDirection = (
+  //   <div>
+  //     <Typography variant="caption" component="div" sx={{ ...labelStyles }}>
+  //       Direction
+  //     </Typography>
 
-      <BaseOptions
-        value={settings.themeDirection}
-        onChange={(newValue) => settings.onUpdate('themeDirection', newValue)}
-        options={['ltr', 'rtl']}
-        icons={['align_left', 'align_right']}
-      />
-    </div>
-  );
+  //     <BaseOptions
+  //       value={settings.themeDirection}
+  //       onChange={(newValue) => settings.onUpdate('themeDirection', newValue)}
+  //       options={['ltr', 'rtl']}
+  //       icons={['align_left', 'align_right']}
+  //     />
+  //   </div>
+  // );
 
-  const renderLayout = (
-    <div>
-      <Typography variant="caption" component="div" sx={{ ...labelStyles }}>
-        Layout
-      </Typography>
+  // const renderLayout = (
+  //   <div>
+  //     <Typography variant="caption" component="div" sx={{ ...labelStyles }}>
+  //       Layout
+  //     </Typography>
 
-      <LayoutOptions
-        value={settings.themeLayout}
-        onChange={(newValue) => settings.onUpdate('themeLayout', newValue)}
-        options={['vertical', 'horizontal', 'mini']}
-      />
-    </div>
-  );
+  //     <LayoutOptions
+  //       value={settings.themeLayout}
+  //       onChange={(newValue) => settings.onUpdate('themeLayout', newValue)}
+  //       options={['vertical', 'horizontal', 'mini']}
+  //     />
+  //   </div>
+  // );
 
   const renderStretch = (
     <div>

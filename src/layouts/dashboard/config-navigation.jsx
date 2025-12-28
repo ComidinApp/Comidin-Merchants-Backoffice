@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 import { paths } from 'src/routes/paths';
 
 import { useTranslate } from 'src/locales';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import SvgColor from 'src/components/svg-color';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 // ----------------------------------------------------------------------
 

@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types';
+
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Rating from '@mui/material/Rating';
 import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
 
 export default function ReviewCard({ review }) {
   const { product_image_url, product_name, rate_order, comment } = review;

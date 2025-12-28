@@ -74,7 +74,7 @@ export default function ProductTableFiltersResult({
           onClick={onResetFilters}
           startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
         >
-          Clear
+          Limpiar
         </Button>
       </Stack>
     </Stack>

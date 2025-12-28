@@ -1,6 +1,5 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -22,12 +21,12 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import {
-  useGetPublications,
-  deletePublication,
-} from 'src/api/publications';
-
 import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import {
+  deletePublication,
+  useGetPublications,
+} from 'src/api/publications';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
@@ -41,12 +40,12 @@ import PublicationTableFiltersResult from '../publication-table-filters-result';
 import {
   RenderCellStock,
   RenderCellPrice,
-  RenderCellCommerce,
-  RenderCellDiscountedPrice,
-  RenderCellDiscount,
   RenderCellPublish,
-  RenderCellPublication,
+  RenderCellCommerce,
+  RenderCellDiscount,
   RenderCellCreatedAt,
+  RenderCellPublication,
+  RenderCellDiscountedPrice,
 } from '../publication-table-row';
 
 // ----------------------------------------------------------------------
@@ -191,12 +190,12 @@ export default function PublicationListView() {
     [router]
   );
 
-  const handleViewRow = useCallback(
-    (id) => {
-      router.push(paths.dashboard.publication.details(id));
-    },
-    [router]
-  );
+  // const handleViewRow = useCallback(
+  //   (id) => {
+  //     router.push(paths.dashboard.publication.details(id));
+  //   },
+  //   [router]
+  // );
 
   const columns = [
     {

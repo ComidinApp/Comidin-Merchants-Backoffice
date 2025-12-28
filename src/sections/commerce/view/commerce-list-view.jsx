@@ -1,13 +1,13 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
-import Switch from '@mui/material/Switch';
+
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import { MenuItem, Select, FormControl } from '@mui/material';
-
+import { Select, MenuItem, FormControl } from '@mui/material';
 import {
   DataGrid,
   GridToolbarExport,
@@ -20,12 +20,10 @@ import {
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { useGetCommerces, activateCommerce, changeCommerceStatus } from 'src/api/commerce';
-import { COMMERCE_STOCK_OPTIONS } from 'src/_mock/_commerce';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
@@ -34,25 +32,20 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
-import CommerceTableToolbar from '../commerce-table-toolbar';
 import CommerceTableFiltersResult from '../commerce-table-filters-result';
 import {
-  RenderCellStock,
-  RenderCellPrice,
+  RenderCellAddress,
+  RenderCellCommerce,
   RenderCellCommerceCategory,
   RenderCellNationalCommerceId,
-  RenderCellStatus,
-  RenderCellCommerce,
-  RenderCellAddress,
-  RenderCellCreatedAt,
 } from '../commerce-table-row';
 
 // ----------------------------------------------------------------------
 
-const PUBLISH_OPTIONS = [
-  { value: 'published', label: 'Publicado' },
-  { value: 'draft', label: 'Borrador' },
-];
+// const PUBLISH_OPTIONS = [
+//   { value: 'published', label: 'Publicado' },
+//   { value: 'draft', label: 'Borrador' },
+// ];
 
 const STATUS_COMMERCE_OPTIONS = [
   { value: 'admitted', label: 'Admitido' },
@@ -179,12 +172,12 @@ export default function CommerceListView() {
     [router]
   );
 
-  const handleViewRow = useCallback(
-    (id) => {
-      router.push(paths.dashboard.commerce.details(id));
-    },
-    [router]
-  );
+  // const handleViewRow = useCallback(
+  //   (id) => {
+  //     router.push(paths.dashboard.commerce.details(id));
+  //   },
+  //   [router]
+  // );
 
   const columns = [
     {

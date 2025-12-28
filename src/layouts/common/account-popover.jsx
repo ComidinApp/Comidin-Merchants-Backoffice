@@ -10,16 +10,15 @@ import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
-import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-import { SplashScreen } from 'src/components/loading-screen';
 
-import { useMockedUser } from 'src/hooks/use-mocked-user';
+// import { useMockedUser } from 'src/hooks/use-mocked-user';
 
 import { useAuthContext } from 'src/auth/hooks';
 
 import { varHover } from 'src/components/animate';
 import { useSnackbar } from 'src/components/snackbar';
+import { SplashScreen } from 'src/components/loading-screen';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 // ----------------------------------------------------------------------
@@ -46,7 +45,7 @@ export default function AccountPopover() {
 
   const authUser = useAuthContext();
 
-  const { user } = useMockedUser();
+  // const { user } = useMockedUser();
 
   const { logout } = useAuthContext();
 

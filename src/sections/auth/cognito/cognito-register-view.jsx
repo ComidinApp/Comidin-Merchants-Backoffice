@@ -1,31 +1,34 @@
 // src/sections/auth/cognito/cognito-register-view.jsx
 import * as Yup from 'yup';
-import { useState, useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import { useRef, useState, useEffect, useCallback } from 'react';
+
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
-import CardHeader from '@mui/material/CardHeader';
-import CardContent from '@mui/material/CardContent';
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
+import Checkbox from '@mui/material/Checkbox';
+import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import CardContent from '@mui/material/CardContent';
 import InputAdornment from '@mui/material/InputAdornment';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import CircularProgress from '@mui/material/CircularProgress';
-import { SplashScreen } from 'src/components/loading-screen';
 
-import { createCommerce } from 'src/api/commerce';
-import { useAuthContext } from 'src/auth/hooks';
-import { Upload } from 'src/components/upload';
-import { VITE_API_COMIDIN, VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useAuthContext } from 'src/auth/hooks';
+import { createCommerce } from 'src/api/commerce';
+import { VITE_API_COMIDIN, VITE_S3_ASSETS_AVATAR } from 'src/config-global';
+
 import Iconify from 'src/components/iconify';
+import { Upload } from 'src/components/upload';
+import { SplashScreen } from 'src/components/loading-screen';
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 // ================== CONSTANTES ==================
@@ -87,7 +90,7 @@ const RegisterSchema = Yup.object().shape({
     .test(
       'is-later-than-open',
       'La hora de cierre debe ser posterior a la hora de apertura',
-      function (value) {
+      function validateCloseAt(value) {
         const { open_at } = this.parent;
         if (!open_at || !value) return true;
         try {
@@ -652,7 +655,7 @@ export default function CognitoRegisterView() {
             inputProps={{
               maxLength: 11,
               inputMode: 'numeric',
-              pattern: '[0-9]*', 
+              pattern: '[0-9]*',
             }}
           />
 

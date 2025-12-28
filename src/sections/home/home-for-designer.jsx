@@ -1,19 +1,15 @@
 import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
-import { paths } from 'src/routes/paths';
-
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { bgGradient, textGradient } from 'src/theme/css';
 
-import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
@@ -58,11 +54,6 @@ export default function HomeForDesigner() {
         width: '80%',
         objectFit: 'cover',
         position: 'absolute',
-        boxShadow: `-80px 80px 80px ${
-          theme.palette.mode === 'light'
-            ? alpha(theme.palette.grey[500], 0.48)
-            : alpha(theme.palette.common.black, 0.24)
-        }`,
       }}
     />
   );

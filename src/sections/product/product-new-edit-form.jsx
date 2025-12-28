@@ -3,35 +3,30 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
+// import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import { Upload } from 'src/components/upload';
+// import InputAdornment from '@mui/material/InputAdornment';
+// import FormControlLabel from '@mui/material/FormControlLabel';
+
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
+import { Upload } from 'src/components/upload';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
-  RHFSelect,
-  RHFEditor,
-  RHFUpload,
-  RHFSwitch,
   RHFTextField,
-  RHFMultiSelect,
   RHFAutocomplete,
-  RHFMultiCheckbox,
 } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
@@ -47,7 +42,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [includeTaxes, setIncludeTaxes] = useState(false);
+  // const [includeTaxes, setIncludeTaxes] = useState(false);
 
   const [commerces, setCommerces] = useState([]);
   useEffect(() => {
@@ -111,7 +106,7 @@ export default function ProductNewEditForm({ currentProduct }) {
     formState: { isSubmitting },
   } = methods;
 
-  const values = watch();
+  // const values = watch();
 
   useEffect(() => {
     if (currentProduct) {
@@ -238,9 +233,9 @@ export default function ProductNewEditForm({ currentProduct }) {
     setValue('image_url', []);
   }, [setValue]); */
 
-  const handleChangeIncludeTaxes = useCallback((event) => {
-    setIncludeTaxes(event.target.checked);
-  }, []);
+  // const handleChangeIncludeTaxes = useCallback((event) => {
+  //   setIncludeTaxes(event.target.checked);
+  // }, []);
 
   useEffect(() => {
     if (authUser.user.role_id !== 1) {
@@ -435,86 +430,86 @@ export default function ProductNewEditForm({ currentProduct }) {
     </>
   );
 
-  const renderPricing = (
-    <>
-      {mdUp && (
-        <Grid md={4}>
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Pricing
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Price related inputs
-          </Typography>
-        </Grid>
-      )}
+  // const renderPricing = (
+  //   <>
+  //     {mdUp && (
+  //       <Grid md={4}>
+  //         <Typography variant="h6" sx={{ mb: 0.5 }}>
+  //           Pricing
+  //         </Typography>
+  //         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+  //           Price related inputs
+  //         </Typography>
+  //       </Grid>
+  //     )}
 
-      <Grid xs={12} md={8}>
-        <Card>
-          {!mdUp && <CardHeader title="Pricing" />}
+  //     <Grid xs={12} md={8}>
+  //       <Card>
+  //         {!mdUp && <CardHeader title="Pricing" />}
 
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField
-              name="price"
-              label="Regular Price"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-              }}
-            />
+  //         <Stack spacing={3} sx={{ p: 3 }}>
+  //           <RHFTextField
+  //             name="price"
+  //             label="Regular Price"
+  //             placeholder="0.00"
+  //             type="number"
+  //             InputLabelProps={{ shrink: true }}
+  //             InputProps={{
+  //               startAdornment: (
+  //                 <InputAdornment position="start">
+  //                   <Box component="span" sx={{ color: 'text.disabled' }}>
+  //                     $
+  //                   </Box>
+  //                 </InputAdornment>
+  //               ),
+  //             }}
+  //           />
 
-            <RHFTextField
-              name="priceSale"
-              label="Sale Price"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-              }}
-            />
+  //           <RHFTextField
+  //             name="priceSale"
+  //             label="Sale Price"
+  //             placeholder="0.00"
+  //             type="number"
+  //             InputLabelProps={{ shrink: true }}
+  //             InputProps={{
+  //               startAdornment: (
+  //                 <InputAdornment position="start">
+  //                   <Box component="span" sx={{ color: 'text.disabled' }}>
+  //                     $
+  //                   </Box>
+  //                 </InputAdornment>
+  //               ),
+  //             }}
+  //           />
 
-            <FormControlLabel
-              control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
-              label="Price includes taxes"
-            />
+  //           <FormControlLabel
+  //             control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
+  //             label="Price includes taxes"
+  //           />
 
-            {!includeTaxes && (
-              <RHFTextField
-                name="taxes"
-                label="Tax (%)"
-                placeholder="0.00"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        %
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
+  //           {!includeTaxes && (
+  //             <RHFTextField
+  //               name="taxes"
+  //               label="Tax (%)"
+  //               placeholder="0.00"
+  //               type="number"
+  //               InputLabelProps={{ shrink: true }}
+  //               InputProps={{
+  //                 startAdornment: (
+  //                   <InputAdornment position="start">
+  //                     <Box component="span" sx={{ color: 'text.disabled' }}>
+  //                       %
+  //                     </Box>
+  //                   </InputAdornment>
+  //                 ),
+  //               }}
+  //             />
+  //           )}
+  //         </Stack>
+  //       </Card>
+  //     </Grid>
+  //   </>
+  // );
 
   const renderActions = (
     <>
