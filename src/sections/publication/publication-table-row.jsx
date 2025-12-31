@@ -55,9 +55,10 @@ RenderCellDiscount.propTypes = {
 };
 
 export function RenderCellPublish({ params }) {
+  const isActive = params.row.is_active;
   return (
-    <Label variant="soft" color={(params.row.is_active === 'active' && 'info') || 'default'}>
-      {params.row.is_active}
+    <Label variant="soft" color={isActive ? 'success' : 'default'}>
+      {isActive ? 'Activo' : 'Inactivo'}
     </Label>
   );
 }

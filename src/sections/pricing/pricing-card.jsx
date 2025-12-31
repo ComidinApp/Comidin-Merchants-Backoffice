@@ -469,7 +469,7 @@ export default function PricingCard({ card, sx, ...other }) {
           size="large"
           variant="contained"
           disabled={disableSubscribe}
-          color={starter ? 'primary' : 'inherit'}
+          color='primary'
           onClick={handleSubscribe}
         >
           {buttonLabel}

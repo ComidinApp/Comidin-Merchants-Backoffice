@@ -10,7 +10,6 @@ import { LoadingScreen } from 'src/components/loading-screen';
 // PRICING
 const PricingPage = lazy(() => import('src/pages/pricing'));
 // OVERVIEW
-const IndexPage = lazy(() => import('src/pages/dashboard/app'));
 const OverviewAnalyticsPage = lazy(() => import('src/pages/dashboard/analytics'));
 // PRODUCT
 const ProductDetailsPage = lazy(() => import('src/pages/dashboard/product/details'));
@@ -31,7 +30,6 @@ const PublicationEditPage = lazy(() => import('src/pages/dashboard/publication/e
 const OrderListPage = lazy(() => import('src/pages/dashboard/order/list'));
 const OrderDetailsPage = lazy(() => import('src/pages/dashboard/order/details'));
 // USER
-const UserProfilePage = lazy(() => import('src/pages/dashboard/user/profile'));
 const UserListPage = lazy(() => import('src/pages/dashboard/user/list'));
 const UserAccountPage = lazy(() => import('src/pages/dashboard/user/account'));
 const UserCreatePage = lazy(() => import('src/pages/dashboard/user/new'));
@@ -54,12 +52,12 @@ export const dashboardRoutes = [
       </AuthGuard>
     ),
     children: [
-      { element: <IndexPage />, index: true },
+      { element: <OverviewAnalyticsPage />, index: true },
       { path: 'analytics', element: <OverviewAnalyticsPage /> },
       {
         path: 'user',
         children: [
-          { element: <UserProfilePage />, index: true },
+          { element: <UserListPage />, index: true },
           { path: 'list', element: <UserListPage /> },
           { path: 'new', element: <UserCreatePage /> },
           { path: ':id/edit', element: <UserEditPage /> },

@@ -23,6 +23,7 @@ import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { esES_DataGrid } from 'src/locales/data-grid-es';
 import { useGetCommerces, activateCommerce, changeCommerceStatus } from 'src/api/commerce';
 
 import Iconify from 'src/components/iconify';
@@ -363,18 +364,12 @@ export default function CommerceListView() {
             }}
             columnVisibilityModel={columnVisibilityModel}
             onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
+            localeText={esES_DataGrid}
             slots={{
               toolbar: () => (
                 <>
                   <GridToolbarContainer>
-                    {/* <CommerceTableToolbar
-                      filters={filters}
-                      onFilters={handleFilters}
-                      stockOptions={COMMERCE_STOCK_OPTIONS}
-                      publishOptions={PUBLISH_OPTIONS}
-                    /> */}
-
-                    <GridToolbarQuickFilter style={{ width: '700px', height: '50px' }} />
+                    <GridToolbarQuickFilter sx={{ width: '700px', height: '50px' }} />
 
                     <Stack
                       spacing={1}

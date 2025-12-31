@@ -21,6 +21,7 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { esES_DataGrid } from 'src/locales/data-grid-es';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { deleteProduct, useGetProducts, deleteProducts } from 'src/api/product';
 
@@ -346,18 +347,12 @@ const handleDeleteRows = useCallback(
             }}
             columnVisibilityModel={columnVisibilityModel}
             onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
+            localeText={esES_DataGrid}
             slots={{
               toolbar: () => (
                 <>
                   <GridToolbarContainer>
-                    {/* <ProductTableToolbar
-                      filters={filters}
-                      onFilters={handleFilters}
-                      stockOptions={PRODUCT_STOCK_OPTIONS}
-                      publishOptions={PUBLISH_OPTIONS}
-                    /> */}
-
-                    <GridToolbarQuickFilter style={{ width: '700px', height: '50px' }} slotProps={{ input: { placeholder: 'Buscar...' } }} />
+                    <GridToolbarQuickFilter sx={{ width: '700px', height: '50px' }} />
 
                     <Stack
                       spacing={1}
@@ -377,9 +372,9 @@ const handleDeleteRows = useCallback(
                         </Button>
                       )}
 
-                      <GridToolbarColumnsButton slotProps={{ button: { label: 'Columnas' }, tooltip: { title: 'Columnas' } }} />
-                      <GridToolbarFilterButton slotProps={{ button: { label: 'Filtrar' }, tooltip: { title: 'Filtrar' } }} />
-                      <GridToolbarExport slotProps={{ button: { label: 'Exportar' }, tooltip: { title: 'Exportar' } }} />
+                      <GridToolbarColumnsButton />
+                      <GridToolbarFilterButton />
+                      <GridToolbarExport />
                     </Stack>
                   </GridToolbarContainer>
 
@@ -394,8 +389,8 @@ const handleDeleteRows = useCallback(
                   )}
                 </>
               ),
-              noRowsOverlay: () => <EmptyContent title="No Data" />,
-              noResultsOverlay: () => <EmptyContent title="No results found" />,
+              noRowsOverlay: () => <EmptyContent title="Sin datos" />,
+              noResultsOverlay: () => <EmptyContent title="No se encontraron resultados" />,
             }}
             slotProps={{
               columnsPanel: {
@@ -409,10 +404,11 @@ const handleDeleteRows = useCallback(
       <ConfirmDialog
         open={confirmRows.value}
         onClose={confirmRows.onFalse}
-        title="Delete"
+        title="Eliminar productos"
         content={
           <>
-            Are you sure want to delete <strong> {selectedRowIds.length} </strong> items?
+            ¿Estás seguro de que querés eliminar <strong>{selectedRowIds.length}</strong>{' '}
+            {selectedRowIds.length === 1 ? 'producto?' : 'productos?'}
           </>
         }
         action={

@@ -63,7 +63,14 @@ export default function PublicationTableToolbar({
           value={stock}
           onChange={handleChangeStock}
           input={<OutlinedInput label="Stock" />}
-          renderValue={(selected) => selected.map((value) => value).join(', ')}
+          renderValue={(selected) =>
+            selected
+              .map((value) => {
+                const option = stockOptions.find((opt) => opt.value === value);
+                return option?.label || value;
+              })
+              .join(', ')
+          }
           onClose={handleCloseStock}
           sx={{ textTransform: 'capitalize' }}
         >
@@ -82,14 +89,21 @@ export default function PublicationTableToolbar({
           width: { xs: 1, md: 200 },
         }}
       >
-        <InputLabel>Publish</InputLabel>
+        <InputLabel>Estado</InputLabel>
 
         <Select
           multiple
           value={publish}
           onChange={handleChangePublish}
           input={<OutlinedInput label="Publish" />}
-          renderValue={(selected) => selected.map((value) => value).join(', ')}
+          renderValue={(selected) =>
+            selected
+              .map((value) => {
+                const option = publishOptions.find((opt) => opt.value === value);
+                return option?.label || value;
+              })
+              .join(', ')
+          }
           onClose={handleClosePublish}
           sx={{ textTransform: 'capitalize' }}
         >
@@ -114,7 +128,7 @@ export default function PublicationTableToolbar({
           }}
         >
           <Iconify icon="solar:printer-minimalistic-bold" />
-          Print
+          Imprimir
         </MenuItem>
 
         <MenuItem
@@ -123,7 +137,7 @@ export default function PublicationTableToolbar({
           }}
         >
           <Iconify icon="solar:import-bold" />
-          Import
+          Importar
         </MenuItem>
 
         <MenuItem
@@ -132,7 +146,7 @@ export default function PublicationTableToolbar({
           }}
         >
           <Iconify icon="solar:export-bold" />
-          Export
+          Exportar
         </MenuItem>
       </CustomPopover>
     </>
