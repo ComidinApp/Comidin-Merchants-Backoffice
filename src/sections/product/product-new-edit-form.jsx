@@ -14,7 +14,6 @@ import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 // import InputAdornment from '@mui/material/InputAdornment';
 // import FormControlLabel from '@mui/material/FormControlLabel';
-
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
@@ -102,11 +101,20 @@ export default function ProductNewEditForm({ currentProduct }) {
     reset,
     watch,
     setValue,
+    setError,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
   // const values = watch();
+
+  const isDuplicateProductCodeValidatorKey = (validatorKey) =>
+  typeof validatorKey === 'string' &&
+  /product[_-]?code/i.test(validatorKey) &&
+  /(exist|duplicate|already|repeated|duplicated)/i.test(validatorKey);
+
+  const DUPLICATE_PRODUCT_CODE_MSG =
+    'No se pudo crear el producto: Código de producto no disponible.';
 
   useEffect(() => {
     if (currentProduct) {
@@ -125,14 +133,11 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       const url = currentProduct
         ? `${VITE_API_COMIDIN}/product/${currentProduct.id}`
         : `${VITE_API_COMIDIN}/product`;
 
       const method = currentProduct ? 'PUT' : 'POST';
-      data.image_url = currentProduct ? data.image_url : data.image_url;
 
       const response = await fetch(url, {
         method,
@@ -143,18 +148,69 @@ export default function ProductNewEditForm({ currentProduct }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar los datos');
+        let errorPayload = null;
+
+        try {
+          errorPayload = await response.json();
+        } catch (_) {
+          // ignore
+        }
+
+        const validatorKey =
+          errorPayload?.validator_key ||
+          errorPayload?.validatorKey ||
+          errorPayload?.error?.validator_key ||
+          errorPayload?.errors?.[0]?.validator_key;
+
+        if (isDuplicateProductCodeValidatorKey(validatorKey)) {
+          setError('product_code', {
+            type: 'manual',
+            message: 'Código de producto ya cargado con anterioridad',
+          });
+
+          enqueueSnackbar(
+            'No se pudo crear el producto porque el código ya existe.',
+            {
+              variant: 'error',
+              autoHideDuration: 5000,
+            }
+          );
+
+          return;
+        }
+
+        enqueueSnackbar(
+          DUPLICATE_PRODUCT_CODE_MSG,
+          {
+            variant: 'error',
+            autoHideDuration: 5000,
+          }
+        );
+
+        return;
       }
 
-      const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
+      await response.json();
 
       reset();
-      enqueueSnackbar(currentProduct ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(
+        currentProduct ? 'Producto actualizado correctamente' : 'Producto creado correctamente',
+        {
+          variant: 'success',
+          autoHideDuration: 3000,
+        }
+      );
+
       router.push(paths.dashboard.product.root);
-      console.info('DATA', data);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar(
+        'Ocurrió un error inesperado. Intentá nuevamente.',
+        {
+          variant: 'error',
+          autoHideDuration: 5000,
+        }
+      );
     }
   });
 
