@@ -3,35 +3,29 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import Divider from '@mui/material/Divider';
+// import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import { Upload } from 'src/components/upload';
+// import InputAdornment from '@mui/material/InputAdornment';
+// import FormControlLabel from '@mui/material/FormControlLabel';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
 import { useResponsive } from 'src/hooks/use-responsive';
 
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
+import { Upload } from 'src/components/upload';
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
-  RHFSelect,
-  RHFEditor,
-  RHFUpload,
-  RHFSwitch,
   RHFTextField,
-  RHFMultiSelect,
   RHFAutocomplete,
-  RHFMultiCheckbox,
 } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
@@ -47,7 +41,7 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [includeTaxes, setIncludeTaxes] = useState(false);
+  // const [includeTaxes, setIncludeTaxes] = useState(false);
 
   const [commerces, setCommerces] = useState([]);
   useEffect(() => {
@@ -107,11 +101,20 @@ export default function ProductNewEditForm({ currentProduct }) {
     reset,
     watch,
     setValue,
+    setError,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  const values = watch();
+  // const values = watch();
+
+  const isDuplicateProductCodeValidatorKey = (validatorKey) =>
+  typeof validatorKey === 'string' &&
+  /product[_-]?code/i.test(validatorKey) &&
+  /(exist|duplicate|already|repeated|duplicated)/i.test(validatorKey);
+
+  const DUPLICATE_PRODUCT_CODE_MSG =
+    'No se pudo crear el producto: Código de producto no disponible.';
 
   useEffect(() => {
     if (currentProduct) {
@@ -130,14 +133,11 @@ export default function ProductNewEditForm({ currentProduct }) {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
       const url = currentProduct
         ? `${VITE_API_COMIDIN}/product/${currentProduct.id}`
         : `${VITE_API_COMIDIN}/product`;
 
       const method = currentProduct ? 'PUT' : 'POST';
-      data.image_url = currentProduct ? data.image_url : data.image_url;
 
       const response = await fetch(url, {
         method,
@@ -148,18 +148,69 @@ export default function ProductNewEditForm({ currentProduct }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al enviar los datos');
+        let errorPayload = null;
+
+        try {
+          errorPayload = await response.json();
+        } catch (_) {
+          // ignore
+        }
+
+        const validatorKey =
+          errorPayload?.validator_key ||
+          errorPayload?.validatorKey ||
+          errorPayload?.error?.validator_key ||
+          errorPayload?.errors?.[0]?.validator_key;
+
+        if (isDuplicateProductCodeValidatorKey(validatorKey)) {
+          setError('product_code', {
+            type: 'manual',
+            message: 'Código de producto ya cargado con anterioridad',
+          });
+
+          enqueueSnackbar(
+            'No se pudo crear el producto porque el código ya existe.',
+            {
+              variant: 'error',
+              autoHideDuration: 5000,
+            }
+          );
+
+          return;
+        }
+
+        enqueueSnackbar(
+          DUPLICATE_PRODUCT_CODE_MSG,
+          {
+            variant: 'error',
+            autoHideDuration: 5000,
+          }
+        );
+
+        return;
       }
 
-      const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
+      await response.json();
 
       reset();
-      enqueueSnackbar(currentProduct ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(
+        currentProduct ? 'Producto actualizado correctamente' : 'Producto creado correctamente',
+        {
+          variant: 'success',
+          autoHideDuration: 3000,
+        }
+      );
+
       router.push(paths.dashboard.product.root);
-      console.info('DATA', data);
     } catch (error) {
       console.error(error);
+      enqueueSnackbar(
+        'Ocurrió un error inesperado. Intentá nuevamente.',
+        {
+          variant: 'error',
+          autoHideDuration: 5000,
+        }
+      );
     }
   });
 
@@ -238,9 +289,9 @@ export default function ProductNewEditForm({ currentProduct }) {
     setValue('image_url', []);
   }, [setValue]); */
 
-  const handleChangeIncludeTaxes = useCallback((event) => {
-    setIncludeTaxes(event.target.checked);
-  }, []);
+  // const handleChangeIncludeTaxes = useCallback((event) => {
+  //   setIncludeTaxes(event.target.checked);
+  // }, []);
 
   useEffect(() => {
     if (authUser.user.role_id !== 1) {
@@ -435,86 +486,86 @@ export default function ProductNewEditForm({ currentProduct }) {
     </>
   );
 
-  const renderPricing = (
-    <>
-      {mdUp && (
-        <Grid md={4}>
-          <Typography variant="h6" sx={{ mb: 0.5 }}>
-            Pricing
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Price related inputs
-          </Typography>
-        </Grid>
-      )}
+  // const renderPricing = (
+  //   <>
+  //     {mdUp && (
+  //       <Grid md={4}>
+  //         <Typography variant="h6" sx={{ mb: 0.5 }}>
+  //           Pricing
+  //         </Typography>
+  //         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+  //           Price related inputs
+  //         </Typography>
+  //       </Grid>
+  //     )}
 
-      <Grid xs={12} md={8}>
-        <Card>
-          {!mdUp && <CardHeader title="Pricing" />}
+  //     <Grid xs={12} md={8}>
+  //       <Card>
+  //         {!mdUp && <CardHeader title="Pricing" />}
 
-          <Stack spacing={3} sx={{ p: 3 }}>
-            <RHFTextField
-              name="price"
-              label="Regular Price"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-              }}
-            />
+  //         <Stack spacing={3} sx={{ p: 3 }}>
+  //           <RHFTextField
+  //             name="price"
+  //             label="Regular Price"
+  //             placeholder="0.00"
+  //             type="number"
+  //             InputLabelProps={{ shrink: true }}
+  //             InputProps={{
+  //               startAdornment: (
+  //                 <InputAdornment position="start">
+  //                   <Box component="span" sx={{ color: 'text.disabled' }}>
+  //                     $
+  //                   </Box>
+  //                 </InputAdornment>
+  //               ),
+  //             }}
+  //           />
 
-            <RHFTextField
-              name="priceSale"
-              label="Sale Price"
-              placeholder="0.00"
-              type="number"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      $
-                    </Box>
-                  </InputAdornment>
-                ),
-              }}
-            />
+  //           <RHFTextField
+  //             name="priceSale"
+  //             label="Sale Price"
+  //             placeholder="0.00"
+  //             type="number"
+  //             InputLabelProps={{ shrink: true }}
+  //             InputProps={{
+  //               startAdornment: (
+  //                 <InputAdornment position="start">
+  //                   <Box component="span" sx={{ color: 'text.disabled' }}>
+  //                     $
+  //                   </Box>
+  //                 </InputAdornment>
+  //               ),
+  //             }}
+  //           />
 
-            <FormControlLabel
-              control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
-              label="Price includes taxes"
-            />
+  //           <FormControlLabel
+  //             control={<Switch checked={includeTaxes} onChange={handleChangeIncludeTaxes} />}
+  //             label="Price includes taxes"
+  //           />
 
-            {!includeTaxes && (
-              <RHFTextField
-                name="taxes"
-                label="Tax (%)"
-                placeholder="0.00"
-                type="number"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        %
-                      </Box>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-          </Stack>
-        </Card>
-      </Grid>
-    </>
-  );
+  //           {!includeTaxes && (
+  //             <RHFTextField
+  //               name="taxes"
+  //               label="Tax (%)"
+  //               placeholder="0.00"
+  //               type="number"
+  //               InputLabelProps={{ shrink: true }}
+  //               InputProps={{
+  //                 startAdornment: (
+  //                   <InputAdornment position="start">
+  //                     <Box component="span" sx={{ color: 'text.disabled' }}>
+  //                       %
+  //                     </Box>
+  //                   </InputAdornment>
+  //                 ),
+  //               }}
+  //             />
+  //           )}
+  //         </Stack>
+  //       </Card>
+  //     </Grid>
+  //   </>
+  // );
 
   const renderActions = (
     <>
@@ -523,7 +574,7 @@ export default function ProductNewEditForm({ currentProduct }) {
         {/* <FormControlLabel control={<Switch defaultChecked />} sx={{ flexGrow: 1, pl: 3 }} /> */}
 
         <LoadingButton type="submit" variant="contained" loading={isSubmitting}>
-          {!currentProduct ? 'Create Product' : 'Save Changes'}
+          {!currentProduct ? 'Crear Producto' : 'Guardar Cambios'}
         </LoadingButton>
       </Grid>
     </>

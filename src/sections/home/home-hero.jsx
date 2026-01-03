@@ -3,7 +3,6 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Rating from '@mui/material/Rating';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
@@ -12,7 +11,7 @@ import { alpha, styled, useTheme } from '@mui/material/styles';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { HEADER } from 'src/layouts/config-layout';
-import { bgBlur, bgGradient, textGradient } from 'src/theme/css';
+import { bgGradient, textGradient } from 'src/theme/css';
 
 import { varFade, MotionContainer } from 'src/components/animate';
 
@@ -21,8 +20,9 @@ import { varFade, MotionContainer } from 'src/components/animate';
 const StyledRoot = styled('div')(({ theme }) => ({
   ...bgGradient({
     color: alpha('#95541B', theme.palette.mode === 'light' ? 0.9 : 0.94),
-    startColor: '#95541B', 
-    endColor: '#7B4016',
+    startColor: '#FEFAE0',
+    endColor: '#D67030',
+    direction: 'to right top'
   }),
   width: '100%',
   height: '100vh',
@@ -56,7 +56,7 @@ const StyledTextGradient = styled(m.h1)(({ theme }) => ({
   textAlign: 'center',
   backgroundSize: '400%',
   fontSize: `${64 / 16}rem`,
-  fontFamily: theme.typography.fontSecondaryFamily,
+  fontFamily: theme.typography.fontFamily,
   [theme.breakpoints.up('md')]: {
     fontSize: `${96 / 16}rem`,
   },
@@ -86,31 +86,31 @@ const StyledEllipseBottom = styled('div')(({ theme }) => ({
   backgroundColor: alpha(theme.palette.primary.darker, 0.12),
 }));
 
-const StyledPolygon = styled('div')(({ opacity = 1, anchor = 'left', theme }) => ({
-  ...bgBlur({
-    opacity,
-    color: theme.palette.background.default,
-  }),
-  zIndex: 9,
-  bottom: 0,
-  height: 80,
-  width: '50%',
-  position: 'absolute',
-  clipPath: 'polygon(0% 0%, 100% 100%, 0% 100%)',
-  ...(anchor === 'left' && {
-    left: 0,
-    ...(theme.direction === 'rtl' && {
-      transform: 'scale(-1, 1)',
-    }),
-  }),
-  ...(anchor === 'right' && {
-    right: 0,
-    transform: 'scaleX(-1)',
-    ...(theme.direction === 'rtl' && {
-      transform: 'scaleX(1)',
-    }),
-  }),
-}));
+// const StyledPolygon = styled('div')(({ opacity = 1, anchor = 'left', theme }) => ({
+//   ...bgBlur({
+//     opacity,
+//     color: theme.palette.background.default,
+//   }),
+//   zIndex: 9,
+//   bottom: 0,
+//   height: 80,
+//   width: '50%',
+//   position: 'absolute',
+//   clipPath: 'polygon(0% 0%, 100% 100%, 0% 100%)',
+//   ...(anchor === 'left' && {
+//     left: 0,
+//     ...(theme.direction === 'rtl' && {
+//       transform: 'scale(-1, 1)',
+//     }),
+//   }),
+//   ...(anchor === 'right' && {
+//     right: 0,
+//     transform: 'scaleX(-1)',
+//     ...(theme.direction === 'rtl' && {
+//       transform: 'scaleX(1)',
+//     }),
+//   }),
+// }));
 
 // ----------------------------------------------------------------------
 
@@ -175,6 +175,7 @@ export default function HomeHero() {
           variant="h2"
           sx={{
             textAlign: 'center',
+            fontFamily: theme.typography.fontFamily,
           }}
         >
           Comenzá a <br />
@@ -200,24 +201,6 @@ export default function HomeHero() {
         <Typography variant="body2" sx={{ textAlign: 'center' }}>
           Supermercados, tiendas, restaurantes, y mucho más!
         </Typography>
-      </m.div>
-
-      <m.div variants={varFade().in}>
-        <Stack
-          spacing={0.75}
-          direction="row"
-          alignItems="center"
-          justifyContent="center"
-          sx={{ my: 3 }}
-        >
-          <Rating readOnly value={4.95} precision={0.1} max={5} />
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            <Box component="strong" sx={{ mr: 0.5, color: 'text.primary' }}>
-              4.96/5
-            </Box>
-            (99+ reviews)
-          </Typography>
-        </Stack>
       </m.div>
     </Stack>
   );
@@ -308,14 +291,14 @@ export default function HomeHero() {
     </Stack>
   );
 
-  const renderPolygons = (
-    <>
-      <StyledPolygon />
-      <StyledPolygon anchor="right" opacity={0.48} />
-      <StyledPolygon anchor="right" opacity={0.48} sx={{ height: 48, zIndex: 10 }} />
-      <StyledPolygon anchor="right" sx={{ zIndex: 11, height: 24 }} />
-    </>
-  );
+  // const renderPolygons = (
+  //   <>
+  //     <StyledPolygon />
+  //     <StyledPolygon anchor="right" opacity={0.48} />
+  //     <StyledPolygon anchor="right" opacity={0.48} sx={{ height: 48, zIndex: 10 }} />
+  //     <StyledPolygon anchor="right" sx={{ zIndex: 11, height: 24 }} />
+  //   </>
+  // );
 
   const renderEllipses = (
     <>

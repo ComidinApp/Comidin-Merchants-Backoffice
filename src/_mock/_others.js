@@ -47,19 +47,7 @@ export const _faqs = [
     value: 'panel6',
     heading: '¿Cómo me registro en la aplicación?',
     detail: _mock.description(5),
-  },
-  {
-    id: _mock.id(6),
-    value: 'panel7',
-    heading: '¿?',
-    detail: _mock.description(6),
-  },
-  {
-    id: _mock.id(7),
-    value: 'panel8',
-    heading: '¿?',
-    detail: _mock.description(7),
-  },
+  }
 ]
 // ----------------------------------------------------------------------
 

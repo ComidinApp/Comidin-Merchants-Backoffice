@@ -4,54 +4,92 @@ import PropTypes from 'prop-types';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
-import { useMockedUser } from 'src/hooks/use-mocked-user';
-
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { ForbiddenIllustration } from 'src/assets/illustrations';
 
 import { varBounce, MotionContainer } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
-export default function RoleBasedGuard({ hasContent, roles, children, sx }) {
-  // Logic here to get current user role
-  const { user } = useMockedUser();
+/**
+ * Mapeo de role_id numérico a nombre de rol.
+ * Ajustar según los roles definidos en el backend.
+ */
+const ROLE_ID_TO_NAME = {
+  1: 'admin',
+  2: 'supervisor',
+  3: 'delivery',
+  6: 'new_user',
+};
 
-  // const currentRole = 'user';
-  const currentRole = user?.role; // admin;
+// ----------------------------------------------------------------------
 
-  if (typeof roles !== 'undefined' && !roles.includes(currentRole)) {
-    return hasContent ? (
-      <Container component={MotionContainer} sx={{ textAlign: 'center', ...sx }}>
-        <m.div variants={varBounce().in}>
-          <Typography variant="h3" sx={{ mb: 2 }}>
-            Permission Denied
-          </Typography>
-        </m.div>
+/**
+ * Guard que protege contenido basado en roles.
+ *
+ * @param {Object} props
+ * @param {string[]} props.roles - Array de nombres de roles permitidos (ej: ['admin', 'supervisor'])
+ * @param {number[]} props.allowedRoleIds - Alternativa: Array de role_ids permitidos (ej: [1, 2])
+ * @param {boolean} props.hasContent - Si es true, muestra mensaje de "Acceso Denegado"
+ * @param {React.ReactNode} props.children - Contenido a proteger
+ * @param {Object} props.sx - Estilos adicionales para el container de error
+ */
+export default function RoleBasedGuard({ hasContent, roles, allowedRoleIds, children, sx }) {
+  const { user } = useAuthContext();
 
-        <m.div variants={varBounce().in}>
-          <Typography sx={{ color: 'text.secondary' }}>
-            You do not have permission to access this page
-          </Typography>
-        </m.div>
+  const currentRoleId = user?.role_id;
+  const currentRoleName = ROLE_ID_TO_NAME[currentRoleId] || 'unknown';
 
-        <m.div variants={varBounce().in}>
-          <ForbiddenIllustration
-            sx={{
-              height: 260,
-              my: { xs: 5, sm: 10 },
-            }}
-          />
-        </m.div>
-      </Container>
-    ) : null;
+  // Verificar acceso por role_id numérico (preferido)
+  if (typeof allowedRoleIds !== 'undefined' && !allowedRoleIds.includes(currentRoleId)) {
+    return renderAccessDenied(hasContent, sx);
+  }
+
+  // Verificar acceso por nombre de rol
+  if (typeof roles !== 'undefined' && !roles.includes(currentRoleName)) {
+    return renderAccessDenied(hasContent, sx);
   }
 
   return <> {children} </>;
 }
 
+// ----------------------------------------------------------------------
+
+function renderAccessDenied(hasContent, sx) {
+  if (!hasContent) return null;
+
+  return (
+    <Container component={MotionContainer} sx={{ textAlign: 'center', ...sx }}>
+      <m.div variants={varBounce().in}>
+        <Typography variant="h3" sx={{ mb: 2 }}>
+          Acceso Denegado
+        </Typography>
+      </m.div>
+
+      <m.div variants={varBounce().in}>
+        <Typography sx={{ color: 'text.secondary' }}>
+          No tienes permisos para acceder a esta página
+        </Typography>
+      </m.div>
+
+      <m.div variants={varBounce().in}>
+        <ForbiddenIllustration
+          sx={{
+            height: 260,
+            my: { xs: 5, sm: 10 },
+          }}
+        />
+      </m.div>
+    </Container>
+  );
+}
+
+// ----------------------------------------------------------------------
+
 RoleBasedGuard.propTypes = {
   children: PropTypes.node,
   hasContent: PropTypes.bool,
   roles: PropTypes.arrayOf(PropTypes.string),
+  allowedRoleIds: PropTypes.arrayOf(PropTypes.number),
   sx: PropTypes.object,
 };

@@ -32,7 +32,7 @@ export default function HomeAdvertisement() {
         variants={varFade().inDown}
         sx={{ color: 'common.white', mb: 5, typography: 'h2' }}
       >
-        Sumá tu comercio 
+        Sumá tu comercio
         <br /> y comenzá a vender!
       </Box>
 
@@ -48,7 +48,7 @@ export default function HomeAdvertisement() {
             variant="contained"
             target="_blank"
             rel="noopener"
-            href={paths.minimalUI}
+            href={paths.auth.cognito.register}
             sx={{
               color: 'grey.800',
               bgcolor: 'common.white',

@@ -1,10 +1,10 @@
 import { useState } from 'react';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
-import { SplashScreen } from 'src/components/loading-screen';
 
 import { useRouter } from 'src/routes/hooks';
 
@@ -14,7 +14,8 @@ import { useAuthContext } from 'src/auth/hooks';
 
 import Label from 'src/components/label';
 import { useSnackbar } from 'src/components/snackbar';
-import { usePopover } from 'src/components/custom-popover';
+// import { usePopover } from 'src/components/custom-popover';
+import { SplashScreen } from 'src/components/loading-screen';
 // ----------------------------------------------------------------------
 
 export default function NavUpgrade() {
@@ -28,7 +29,7 @@ export default function NavUpgrade() {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const popover = usePopover();
+  // const popover = usePopover();
 
   const [logoutLoading, setLogoutLoading] = useState(false);
 

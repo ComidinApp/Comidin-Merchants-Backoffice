@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -11,7 +11,6 @@ import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
@@ -21,7 +20,8 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { isAfter, isBetween } from 'src/utils/format-time';
 
 import { useGetOrders } from 'src/api/orders';
-import { _orders, ORDER_STATUS_OPTIONS } from 'src/_mock';
+import { ORDER_STATUS_OPTIONS } from 'src/_mock';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -47,7 +47,7 @@ import OrderTableFiltersResult from '../order-table-filters-result';
 
 // ----------------------------------------------------------------------
 
-const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ORDER_STATUS_OPTIONS];
+const STATUS_OPTIONS = [{ value: 'all', label: 'Todos' }, ...ORDER_STATUS_OPTIONS];
 
 const defaultFilters = {
   name: '',
@@ -83,7 +83,7 @@ export default function OrderListView() {
   const confirm = useBoolean();
 
   const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
-  const { orders, ordersLoading } = useGetOrders(commerceId);
+  const { orders } = useGetOrders(commerceId);
 
   const [tableData, setTableData] = useState([]);
 
@@ -135,7 +135,7 @@ export default function OrderListView() {
     (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar('¡Eliminado con éxito!');
 
       setTableData(deleteRow);
 
@@ -257,7 +257,7 @@ export default function OrderListView() {
                 )
               }
               action={
-                <Tooltip title="Delete">
+                <Tooltip title="Eliminar">
                   <IconButton color="primary" onClick={confirm.onTrue}>
                     <Iconify icon="solar:trash-bin-trash-bold" />
                   </IconButton>
@@ -326,10 +326,11 @@ export default function OrderListView() {
       <ConfirmDialog
         open={confirm.value}
         onClose={confirm.onFalse}
-        title="Delete"
+        title="Eliminar pedidos"
         content={
           <>
-            Are you sure want to delete <strong> {table.selected.length} </strong> items?
+            ¿Estás seguro de que querés eliminar <strong>{table.selected.length}</strong>{' '}
+            {table.selected.length === 1 ? 'pedido?' : 'pedidos?'}
           </>
         }
         action={
@@ -341,7 +342,7 @@ export default function OrderListView() {
               confirm.onFalse();
             }}
           >
-            Delete
+            Eliminar
           </Button>
         }
       />
@@ -364,23 +365,42 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   inputData = stabilizedThis.map((el) => el[0]);
 
+  // Filtrar por nombre de cliente, email o número de pedido
   if (name) {
-    inputData = inputData.filter(
-      (order) =>
-        order.orderNumber.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        order.customer.name.toLowerCase().indexOf(name.toLowerCase()) !== -1 ||
-        order.customer.email.toLowerCase().indexOf(name.toLowerCase()) !== -1
-    );
+    const searchLower = name.toLowerCase();
+    inputData = inputData.filter((order) => {
+      // Número de pedido (id) - tanto el original como el formateado con ceros
+      const orderId = order.id?.toString() || '';
+      const orderIdFormatted = order.id?.toString().padStart(4, '0') || '';
+      // Nombre completo del usuario
+      const userName = `${order.user?.first_name || ''} ${order.user?.last_name || ''}`.toLowerCase();
+      // Email del usuario
+      const userEmail = order.user?.email?.toLowerCase() || '';
+      // Nombre del comercio
+      const commerceName = order.commerce?.name?.toLowerCase() || '';
+
+      return (
+        orderId.includes(searchLower) ||
+        orderIdFormatted.includes(searchLower) ||
+        userName.includes(searchLower) ||
+        userEmail.includes(searchLower) ||
+        commerceName.includes(searchLower)
+      );
+    });
   }
 
+  // Filtrar por estado
   if (status !== 'all') {
     inputData = inputData.filter((order) => order.status === status);
   }
 
-  if (!dateError) {
-    if (startDate && endDate) {
-      inputData = inputData.filter((order) => isBetween(order.createdAt, startDate, endDate));
-    }
+  // Filtrar por rango de fechas
+  if (!dateError && startDate && endDate) {
+    inputData = inputData.filter((order) => {
+      // Usar created_at en lugar de createdAt
+      const orderDate = order.created_at;
+      return orderDate ? isBetween(orderDate, startDate, endDate) : false;
+    });
   }
 
   return inputData;

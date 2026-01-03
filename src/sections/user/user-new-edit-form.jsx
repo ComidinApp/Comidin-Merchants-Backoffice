@@ -1,9 +1,8 @@
 import * as Yup from 'yup';
 import PropTypes from 'prop-types';
-import { useMemo, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -17,6 +16,9 @@ import { useRouter } from 'src/routes/hooks';
 
 import { countries } from 'src/assets/data';
 import { VITE_S3_ASSETS_AVATAR } from 'src/config-global';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+// ✅ Reutilizamos el fetch de beneficios (mismo endpoint: /subscriptions/commerce/:id/benefits)
+import { fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
 
 import { useSnackbar } from 'src/components/snackbar';
 import FormProvider, {
@@ -24,9 +26,6 @@ import FormProvider, {
   RHFUploadAvatar,
   RHFAutocomplete,
 } from 'src/components/hook-form';
-
-// ✅ Reutilizamos el fetch de beneficios (mismo endpoint: /subscriptions/commerce/:id/benefits)
-import { fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
@@ -586,7 +585,16 @@ export default function UserNewEditForm({ currentUser }) {
                   disabled={formLocked}
                 />
 
-                <RHFTextField name="national_id" label="DNI" disabled={formLocked} />
+                <RHFTextField
+                  name="national_id"
+                  label="DNI"
+                  disabled={formLocked}
+                  inputProps={{
+                    maxLength: 8,
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                  }}
+                />
                 <RHFTextField name="city" label="Ciudad" disabled={formLocked} />
                 <RHFTextField name="address" label="Dirección" disabled={formLocked} />
                 <RHFTextField name="postal_code" label="Código postal" disabled={formLocked} />

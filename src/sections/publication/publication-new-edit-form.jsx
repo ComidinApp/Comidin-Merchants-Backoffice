@@ -3,42 +3,41 @@ import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
-import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
 import Stack from '@mui/material/Stack';
+import Avatar from '@mui/material/Avatar';
 import Switch from '@mui/material/Switch';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Unstable_Grid2';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import DialogTitle from '@mui/material/DialogTitle';
+import ListItemText from '@mui/material/ListItemText';
+import DialogContent from '@mui/material/DialogContent';
 import InputAdornment from '@mui/material/InputAdornment';
+import ListItemButton from '@mui/material/ListItemButton';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemButton from '@mui/material/ListItemButton';
-import DialogContent from '@mui/material/DialogContent';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
-import { useResponsive } from 'src/hooks/use-responsive';
 import { useBoolean } from 'src/hooks/use-boolean';
+import { useResponsive } from 'src/hooks/use-responsive';
+
 import { useGetProducts } from 'src/api/product';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+// ✅ NUEVO: validar cupo + beneficios al entrar
+import { canCreatePublication, fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
-
 import FormProvider, { RHFTextField } from 'src/components/hook-form';
-
-// ✅ NUEVO: validar cupo + beneficios al entrar
-import { canCreatePublication, fetchBenefitsByCommerceId } from 'src/api/publicationLimits';
 
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
@@ -130,7 +129,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       .typeError('El stock debe ser un número')
       .required('El stock es obligatorio')
       .integer('El stock debe ser un número entero')
-      .min(0, 'El stock no puede ser negativo'),
+      .min(1, 'El stock no puede ser negativo'),
 
     is_active: Yup.string()
       .required('El estado es obligatorio')

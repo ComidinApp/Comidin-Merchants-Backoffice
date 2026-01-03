@@ -1,4 +1,3 @@
-import { _mock } from 'src/_mock';
 
 // TO GET THE USER FROM THE AUTHCONTEXT, YOU CAN USE
 

@@ -96,7 +96,7 @@ export default function ProductFilters({
       sx={{ py: 2, pr: 1, pl: 2.5 }}
     >
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
-        Filters
+        Filtros
       </Typography>
 
       <Tooltip title="Reset">
@@ -136,7 +136,7 @@ export default function ProductFilters({
   const renderCategory = (
     <Stack>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Category
+        Categoría
       </Typography>
       {categoryOptions.map((option) => (
         <FormControlLabel
@@ -175,7 +175,7 @@ export default function ProductFilters({
   const renderPrice = (
     <Stack>
       <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
-        Price
+        Precio
       </Typography>
 
       <Stack direction="row" spacing={5} sx={{ my: 2 }}>
@@ -202,7 +202,7 @@ export default function ProductFilters({
 
   const renderRating = (
     <Stack spacing={2} alignItems="flex-start">
-      <Typography variant="subtitle2">Rating</Typography>
+      <Typography variant="subtitle2">Calificación</Typography>
 
       {ratingOptions.map((item, index) => (
         <Stack
@@ -240,7 +240,7 @@ export default function ProductFilters({
         }
         onClick={onOpen}
       >
-        Filters
+        Filtros
       </Button>
 
       <Drawer

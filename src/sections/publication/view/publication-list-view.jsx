@@ -1,6 +1,5 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -22,13 +21,14 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { esES_DataGrid } from 'src/locales/data-grid-es';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import {
-  useGetPublications,
   deletePublication,
+  useGetPublications,
 } from 'src/api/publications';
 
-import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
-
+import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
 import EmptyContent from 'src/components/empty-content';
@@ -42,19 +42,45 @@ import {
   RenderCellStock,
   RenderCellPrice,
   RenderCellCommerce,
-  RenderCellDiscountedPrice,
   RenderCellDiscount,
-  RenderCellPublish,
-  RenderCellPublication,
   RenderCellCreatedAt,
+  RenderCellPublication,
+  RenderCellDiscountedPrice,
 } from '../publication-table-row';
 
 // ----------------------------------------------------------------------
 
+// Opciones de estado
 const PUBLISH_OPTIONS = [
   { value: 'active', label: 'Activo' },
   { value: 'inactive', label: 'Inactivo' },
 ];
+
+// Helper para normalizar el estado de is_active (puede venir como boolean, number, string)
+const getPublishStatus = (isActive) => {
+  // Maneja: true, 1, "1", "true", "active"
+  if (isActive === true || isActive === 1 || isActive === '1' || isActive === 'true' || isActive === 'active') {
+    return 'active';
+  }
+  return 'inactive';
+};
+
+// Opciones de stock basadas en cantidad
+const STOCK_OPTIONS = [
+  { value: 'in_stock', label: 'En stock' },
+  { value: 'low_stock', label: 'Bajo stock' },
+  { value: 'out_of_stock', label: 'Sin stock' },
+];
+
+// Helper para determinar el estado del stock
+const getStockStatus = (availableStock) => {
+  if (availableStock === '0') {
+    console.log('sin stock');
+    return 'out_of_stock';
+  }
+  if (availableStock <= 5) return 'low_stock';
+  return 'in_stock';
+};
 
 const defaultFilters = {
   publish: [],
@@ -107,6 +133,8 @@ export default function PublicationListView() {
   const dataFiltered = applyFilter({
     inputData: tableData,
     filters,
+    getStockStatusFn: getStockStatus,
+    getPublishStatusFn: getPublishStatus,
   });
 
   const canReset = !isEqual(defaultFilters, filters);
@@ -191,12 +219,12 @@ export default function PublicationListView() {
     [router]
   );
 
-  const handleViewRow = useCallback(
-    (id) => {
-      router.push(paths.dashboard.publication.details(id));
-    },
-    [router]
-  );
+  // const handleViewRow = useCallback(
+  //   (id) => {
+  //     router.push(paths.dashboard.publication.details(id));
+  //   },
+  //   [router]
+  // );
 
   const columns = [
     {
@@ -210,6 +238,8 @@ export default function PublicationListView() {
       flex: 1,
       minWidth: 360,
       hideable: false,
+      // valueGetter permite que el quick filter y filtros funcionen
+      valueGetter: (params) => params.row.product?.name || '',
       renderCell: (params) => <RenderCellPublication params={params} />,
     },
     ...(authUser.user.role_id === 1
@@ -219,6 +249,7 @@ export default function PublicationListView() {
             headerName: 'Comercio',
             width: 140,
             editable: false,
+            valueGetter: (params) => params.row.commerce?.name || '',
             renderCell: (params) => <RenderCellCommerce params={params} />,
           },
         ]
@@ -227,45 +258,81 @@ export default function PublicationListView() {
       field: 'expiration_date',
       headerName: 'Fecha de vencimiento',
       width: 160,
+      type: 'date',
+      valueGetter: (params) => params.row.expiration_date ? new Date(params.row.expiration_date) : null,
       renderCell: (params) => <RenderCellCreatedAt params={params} />,
     },
     {
-      field: 'stock',
+      field: 'available_stock',
       headerName: 'Stock',
-      width: 160,
-      type: 'singleSelect',
-      valueOptions: PRODUCT_STOCK_OPTIONS,
+      width: 120,
+      type: 'number',
+      valueGetter: (params) => params.row.available_stock ?? 0,
       renderCell: (params) => <RenderCellStock params={params} />,
+    },
+    {
+      field: 'stock_status',
+      headerName: 'Estado Stock',
+      width: 140,
+      type: 'singleSelect',
+      valueOptions: STOCK_OPTIONS,
+      valueGetter: (params) => getStockStatus(params.row.available_stock ?? 0),
+      renderCell: (params) => {
+        const status = getStockStatus(params.row.available_stock ?? 0);
+        const option = STOCK_OPTIONS.find((opt) => opt.value === status);
+        return (
+          <Label
+            variant="soft"
+            color={
+              (status === 'in_stock' && 'success') ||
+              (status === 'low_stock' && 'warning') ||
+              'error'
+            }
+          >
+            {option?.label || status}
+          </Label>
+        );
+      },
     },
     {
       field: 'price',
       headerName: 'Precio',
       width: 140,
-      editable: true,
+      type: 'number',
+      valueGetter: (params) => params.row.price ?? 0,
       renderCell: (params) => <RenderCellPrice params={params} />,
     },
     {
       field: 'discount_percentaje',
       headerName: 'Descuento',
       width: 140,
-      editable: true,
+      type: 'number',
+      valueGetter: (params) => params.row.discount_percentaje ?? 0,
       renderCell: (params) => <RenderCellDiscount params={params} />,
     },
     {
       field: 'discounted_price',
       headerName: 'Precio con descuento',
       width: 160,
-      editable: true,
+      type: 'number',
+      valueGetter: (params) => params.row.discounted_price ?? 0,
       renderCell: (params) => <RenderCellDiscountedPrice params={params} />,
     },
     {
       field: 'is_active',
-      headerName: 'Activo',
+      headerName: 'Estado',
       width: 110,
       type: 'singleSelect',
-      editable: true,
       valueOptions: PUBLISH_OPTIONS,
-      renderCell: (params) => <RenderCellPublish params={params} />,
+      valueGetter: (params) => getPublishStatus(params.row.is_active),
+      renderCell: (params) => {
+        const status = getPublishStatus(params.row.is_active);
+        return (
+          <Label variant="soft" color={status === 'active' ? 'success' : 'default'}>
+            {status === 'active' ? 'Activo' : 'Inactivo'}
+          </Label>
+        );
+      },
     },
     {
       type: 'actions',
@@ -365,6 +432,7 @@ export default function PublicationListView() {
             }}
             columnVisibilityModel={columnVisibilityModel}
             onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
+            localeText={esES_DataGrid}
             slots={{
               toolbar: () => (
                 <>
@@ -372,7 +440,7 @@ export default function PublicationListView() {
                     <PublicationTableToolbar
                       filters={filters}
                       onFilters={handleFilters}
-                      stockOptions={PRODUCT_STOCK_OPTIONS}
+                      stockOptions={STOCK_OPTIONS}
                       publishOptions={PUBLISH_OPTIONS}
                     />
 
@@ -396,9 +464,9 @@ export default function PublicationListView() {
                         </Button>
                       )}
 
-                      <GridToolbarColumnsButton />
-                      <GridToolbarFilterButton />
-                      <GridToolbarExport />
+                    <GridToolbarColumnsButton />
+                    <GridToolbarFilterButton />
+                    <GridToolbarExport />
                     </Stack>
                   </GridToolbarContainer>
 
@@ -457,19 +525,23 @@ export default function PublicationListView() {
 
 // ----------------------------------------------------------------------
 
-function applyFilter({ inputData, filters }) {
+function applyFilter({ inputData, filters, getStockStatusFn, getPublishStatusFn }) {
   const { stock, publish } = filters;
 
+  // Filtrar por estado de stock
   if (stock.length) {
-    inputData = inputData.filter((publication) =>
-      stock.includes(publication.inventoryType)
-    );
+    inputData = inputData.filter((publication) => {
+      const stockStatus = getStockStatusFn(publication.available_stock ?? 0);
+      return stock.includes(stockStatus);
+    });
   }
 
+  // Filtrar por estado activo/inactivo
   if (publish.length) {
-    inputData = inputData.filter((publication) =>
-      publish.includes(publication.publish)
-    );
+    inputData = inputData.filter((publication) => {
+      const publishStatus = getPublishStatusFn(publication.is_active);
+      return publish.includes(publishStatus);
+    });
   }
 
   return inputData;

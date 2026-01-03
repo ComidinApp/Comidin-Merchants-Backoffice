@@ -20,7 +20,7 @@ export const grey = {
 export const primary = {
   lighter: '#FFE6BB',
   light: '#F29D4C',
-  main: '#DDA15E',
+  main: '#D67030',
   dark: '#D67030',
   darker: '#C2672D',
   contrastText: '#FEFAE0',
@@ -74,6 +74,11 @@ export const error = {
 export const common = {
   black: '#000000',
   white: '#FFFFFF',
+  orange: '#D67030',
+  orangeDark: '#BC6C25',
+  green: '#9BA646',
+  greenDark: '#606C38',
+  lightBrown: '#FEFAE0',
 };
 
 export const action = {

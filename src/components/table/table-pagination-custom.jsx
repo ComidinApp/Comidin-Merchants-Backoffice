@@ -11,6 +11,7 @@ export default function TablePaginationCustom({
   dense,
   onChangeDense,
   rowsPerPageOptions = [5, 10, 25, 50, 100],
+  labelRowsPerPage = 'Filas por página:',
   sx,
   ...other
 }) {
@@ -19,6 +20,10 @@ export default function TablePaginationCustom({
       <TablePagination
         rowsPerPageOptions={rowsPerPageOptions}
         component="div"
+        labelRowsPerPage={labelRowsPerPage}
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`
+        }
         {...other}
         sx={{
           borderTopColor: 'transparent',
@@ -47,5 +52,6 @@ TablePaginationCustom.propTypes = {
   dense: PropTypes.bool,
   onChangeDense: PropTypes.func,
   rowsPerPageOptions: PropTypes.arrayOf(PropTypes.number),
+  labelRowsPerPage: PropTypes.string,
   sx: PropTypes.object,
 };

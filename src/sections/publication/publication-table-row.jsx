@@ -5,7 +5,6 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Avatar from '@mui/material/Avatar';
 import ListItemText from '@mui/material/ListItemText';
-import LinearProgress from '@mui/material/LinearProgress';
 
 import { fCurrency } from 'src/utils/format-number';
 import { fTime, fDate } from 'src/utils/format-time';
@@ -56,9 +55,10 @@ RenderCellDiscount.propTypes = {
 };
 
 export function RenderCellPublish({ params }) {
+  const isActive = params.row.is_active;
   return (
-    <Label variant="soft" color={(params.row.is_active === 'active' && 'info') || 'default'}>
-      {params.row.is_active}
+    <Label variant="soft" color={isActive ? 'success' : 'default'}>
+      {isActive ? 'Activo' : 'Inactivo'}
     </Label>
   );
 }

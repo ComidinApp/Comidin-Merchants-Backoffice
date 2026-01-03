@@ -1,15 +1,14 @@
 import PropTypes from 'prop-types';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
-import IconButton from '@mui/material/IconButton';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
+
 import Iconify from 'src/components/iconify';
 
 import { _mock } from '../../_mock';
@@ -130,7 +129,7 @@ export default function OrderDetailsInfo({
   let paymentIcon;
   let iconColor;
 
-  if (payment === 'cash') {
+  if (payment === 'cash' || payment === 'efectivo') {
     paymentText = 'Efectivo';
     paymentIcon = 'mdi:cash';
     iconColor = 'green';
@@ -140,7 +139,7 @@ export default function OrderDetailsInfo({
     iconColor = '#00BFFF';
   } else {
     paymentText = payment;
-    paymentIcon = 'logos:mastercard';
+    paymentIcon = 'mdi:cash';
   }
   const renderPayment = (
     <>

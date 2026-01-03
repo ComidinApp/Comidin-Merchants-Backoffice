@@ -23,9 +23,9 @@ import {
 import EmptyContent from 'src/components/empty-content';
 import { useSettingsContext } from 'src/components/settings';
 
+import CartIcon from '../common/cart-icon';
 import PublicationList from '../publication-list';
 import PublicationSort from '../publication-sort';
-import CartIcon from '../common/cart-icon';
 import PublicationSearch from '../publication-search';
 import PublicationFilters from '../publication-filters';
 import { useCheckoutContext } from '../../checkout/context';

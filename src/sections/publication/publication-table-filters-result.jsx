@@ -11,6 +11,18 @@ import Iconify from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
+// Mapeo de valores a etiquetas
+const STOCK_LABELS = {
+  in_stock: 'En stock',
+  low_stock: 'Bajo stock',
+  out_of_stock: 'Sin stock',
+};
+
+const PUBLISH_LABELS = {
+  active: 'Activo',
+  inactive: 'Inactivo',
+};
+
 export default function PublicationTableFiltersResult({
   filters,
   onFilters,
@@ -43,7 +55,7 @@ export default function PublicationTableFiltersResult({
       <Box sx={{ typography: 'body2' }}>
         <strong>{results}</strong>
         <Box component="span" sx={{ color: 'text.secondary', ml: 0.25 }}>
-          results found
+          resultados encontrados
         </Box>
       </Box>
 
@@ -51,17 +63,22 @@ export default function PublicationTableFiltersResult({
         {!!filters.stock.length && (
           <Block label="Stock:">
             {filters.stock.map((item) => (
-              <Chip key={item} label={item} size="small" onDelete={() => handleRemoveStock(item)} />
+              <Chip
+                key={item}
+                label={STOCK_LABELS[item] || item}
+                size="small"
+                onDelete={() => handleRemoveStock(item)}
+              />
             ))}
           </Block>
         )}
 
         {!!filters.publish.length && (
-          <Block label="Publish:">
+          <Block label="Estado:">
             {filters.publish.map((item) => (
               <Chip
                 key={item}
-                label={item}
+                label={PUBLISH_LABELS[item] || item}
                 size="small"
                 onDelete={() => handleRemovePublish(item)}
               />
@@ -74,7 +91,7 @@ export default function PublicationTableFiltersResult({
           onClick={onResetFilters}
           startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
         >
-          Clear
+          Limpiar
         </Button>
       </Stack>
     </Stack>

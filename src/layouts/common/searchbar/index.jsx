@@ -4,17 +4,17 @@ import { memo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
-import Stack from '@mui/material/Stack';
+// import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
-import IconButton from '@mui/material/IconButton';
+// import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Dialog, { dialogClasses } from '@mui/material/Dialog';
 
 import { useRouter } from 'src/routes/hooks';
 
 import { useBoolean } from 'src/hooks/use-boolean';
-import { useResponsive } from 'src/hooks/use-responsive';
+// import { useResponsive } from 'src/hooks/use-responsive';
 import { useEventListener } from 'src/hooks/use-event-listener';
 
 import Label from 'src/components/label';
@@ -35,7 +35,7 @@ function Searchbar() {
 
   const search = useBoolean();
 
-  const lgUp = useResponsive('up', 'lg');
+  // const lgUp = useResponsive('up', 'lg');
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -106,15 +106,15 @@ function Searchbar() {
       ));
   };
 
-  const renderButton = (
-    <Stack direction="row" alignItems="center">
-      <IconButton onClick={search.onTrue}>
-        <Iconify icon="eva:search-fill" />
-      </IconButton>
+  // const renderButton = (
+  //   <Stack direction="row" alignItems="center">
+  //     <IconButton onClick={search.onTrue}>
+  //       <Iconify icon="eva:search-fill" />
+  //     </IconButton>
 
-      {lgUp && <Label sx={{ px: 0.75, fontSize: 12, color: 'text.secondary' }}>⌘K</Label>}
-    </Stack>
-  );
+  //     {lgUp && <Label sx={{ px: 0.75, fontSize: 12, color: 'text.secondary' }}>⌘K</Label>}
+  //   </Stack>
+  // );
 
   return (
     <>

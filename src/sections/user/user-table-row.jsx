@@ -1,6 +1,5 @@
 // src/sections/user/user-table-row.jsx
 import PropTypes from 'prop-types';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
@@ -13,6 +12,8 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';

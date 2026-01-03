@@ -12,17 +12,19 @@ import Checkbox from '@mui/material/Checkbox';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
 import { fCurrency } from 'src/utils/format-number';
 import { fDate, fTime } from 'src/utils/format-time';
 
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
+
 import { _mock } from '../../_mock';
 
 // ----------------------------------------------------------------------
@@ -113,6 +115,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             (status === 'pending' && 'warning') ||
             (status === 'confirmed' && 'info') ||
             (status === 'cancelled' && 'error') ||
+            (status === 'CLAIMED' && 'error') ||
             'default'
           }
         >
@@ -122,6 +125,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             if (status === 'confirmed') return 'Confirmado';
             if (status === 'refunded') return 'Devuelto';
             if (status === 'cancelled') return 'Cancelado';
+            if (status === 'CLAIMED') return 'Reclamado';
             return status;
           })()}
         </Label>

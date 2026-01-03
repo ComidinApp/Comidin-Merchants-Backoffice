@@ -73,7 +73,7 @@ export default function FileManagerFilters({
     <TextField
       value={filters.name}
       onChange={handleFilterName}
-      placeholder="Search..."
+      placeholder="Buscar..."
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">

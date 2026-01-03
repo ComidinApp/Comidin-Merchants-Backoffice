@@ -1,6 +1,5 @@
 import isEqual from 'lodash/isEqual';
-import { useState, useCallback, useEffect } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { useState, useEffect, useCallback } from 'react';
 
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -19,6 +18,8 @@ import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
+
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -86,7 +87,7 @@ export default function UserListView() {
 
   const [tableData, setTableData] = useState([]);
 
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   const [filters, setFilters] = useState(defaultFilters);
 

@@ -2,20 +2,22 @@
 // (o: src/sections/pricing/components/PricingCard.jsx)
 
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import MuiAlert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
 import { alpha } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
+import Typography from '@mui/material/Typography';
 
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { PlanFreeIcon, PlanStarterIcon, PlanPremiumIcon } from 'src/assets/icons';
+
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 const API_BASE = import.meta.env.VITE_API_COMIDIN || '';
 
@@ -467,7 +469,7 @@ export default function PricingCard({ card, sx, ...other }) {
           size="large"
           variant="contained"
           disabled={disableSubscribe}
-          color={starter ? 'primary' : 'inherit'}
+          color='primary'
           onClick={handleSubscribe}
         >
           {buttonLabel}

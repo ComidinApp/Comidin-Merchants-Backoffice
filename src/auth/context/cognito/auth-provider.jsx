@@ -1,15 +1,17 @@
 import PropTypes from 'prop-types';
-import { useMemo, useEffect, useReducer, useCallback } from 'react';
-import { paths } from 'src/routes/paths';
 import { useNavigate } from 'react-router-dom';
-import { useSnackbar } from 'src/components/snackbar';
-import axios, { endpoints } from 'src/utils/axios';
+import { useMemo, useEffect, useReducer, useCallback } from 'react';
+import { CognitoUser, CognitoUserPool, AuthenticationDetails } from 'amazon-cognito-identity-js';
+
+import { paths } from 'src/routes/paths';
+
 import {
-  sendEmployeeVerificationCode,
   getEmployee,
   changeEmployeePassword,
+  sendEmployeeVerificationCode,
 } from 'src/api/employee';
-import { CognitoUserPool, CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
+
+import { useSnackbar } from 'src/components/snackbar';
 
 import { AuthContext } from './auth-context';
 

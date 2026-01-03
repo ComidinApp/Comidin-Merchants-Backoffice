@@ -1,19 +1,15 @@
 import { m } from 'framer-motion';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
 import { alpha, useTheme } from '@mui/material/styles';
 
-import { paths } from 'src/routes/paths';
-
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { bgGradient, textGradient } from 'src/theme/css';
 
-import Iconify from 'src/components/iconify';
 import { varFade, MotionViewport } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
@@ -45,33 +41,6 @@ export default function HomeForDesigner() {
           Descargá la app y empezá a ahorrar
         </Typography>
       </m.div>
-
-      <m.div variants={varFade().inUp}>
-        <Button
-          color="inherit"
-          size="large"
-          variant="contained"
-          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
-          target="_blank"
-          rel="noopener"
-          href={paths.figma}
-        >
-          Play Store
-        </Button>
-
-        <Button
-          color="inherit"
-          size="large"
-          variant="contained"
-          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
-          target="_blank"
-          rel="noopener"
-          href={paths.figma}
-          sx={{ ml: 2 }} // Añade margen a la izquierda (opcional)
-        >
-          Apple Store
-        </Button>
-      </m.div>
     </Box>
   );
 
@@ -85,11 +54,6 @@ export default function HomeForDesigner() {
         width: '80%',
         objectFit: 'cover',
         position: 'absolute',
-        boxShadow: `-80px 80px 80px ${
-          theme.palette.mode === 'light'
-            ? alpha(theme.palette.grey[500], 0.48)
-            : alpha(theme.palette.common.black, 0.24)
-        }`,
       }}
     />
   );
@@ -103,7 +67,7 @@ export default function HomeForDesigner() {
         ...bgGradient({
           startColor: `${theme.palette.grey[900]} 25%`,
           endColor: alpha(theme.palette.grey[900], 0),
-          imgUrl: '/assets/images/home/for_designer.webp',
+          imgUrl: '/assets/images/home/for_designer_comidin.webp',
         }),
         ...(mdUp && {
           ...bgGradient({

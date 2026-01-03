@@ -1,6 +1,7 @@
 import useSWR from 'swr';
-import { useMemo } from 'react';
 import axios from 'axios';
+import { useMemo } from 'react';
+
 import { fetcher, endpoints } from 'src/utils/axios';
 
 // ----------------------------------------------------------------------

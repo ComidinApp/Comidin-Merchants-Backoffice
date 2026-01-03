@@ -22,7 +22,7 @@ export function responsiveFontSizes({ sm, md, lg }) {
   };
 }
 
-export const primaryFont = 'Public Sans, sans-serif';
+export const primaryFont = '"Baloo 2", sans-serif';
 export const secondaryFont = 'Barlow, sans-serif';
 
 // ----------------------------------------------------------------------

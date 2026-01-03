@@ -57,14 +57,14 @@ RHFUploadBox.propTypes = {
 
 // Si querés, podés dejar este límite como referencia, pero ya no lo usamos
 // directamente en el drop. La validación fuerte está en el formulario.
-const DEFAULT_MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
+// const DEFAULT_MAX_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
 
 export function RHFUpload({ name, multiple, helperText, maxSize, ...other }) {
   const { control } = useFormContext();
 
   // Solo lo usamos si en algún momento querés mostrarlo como dato,
   // pero no se lo pasamos al componente Upload para no mezclar validaciones.
-  const effectiveMaxSize = maxSize || DEFAULT_MAX_SIZE_BYTES;
+  // const effectiveMaxSize = maxSize || DEFAULT_MAX_SIZE_BYTES;
 
   return (
     <Controller

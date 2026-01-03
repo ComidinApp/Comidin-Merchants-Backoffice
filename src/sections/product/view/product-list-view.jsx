@@ -1,6 +1,5 @@
 import isEqual from 'lodash/isEqual';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
@@ -22,8 +21,9 @@ import { RouterLink } from 'src/routes/components';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
-import { useGetProducts, deleteProduct, deleteProducts } from 'src/api/product';
-import { PRODUCT_STOCK_OPTIONS } from 'src/_mock';
+import { esES_DataGrid } from 'src/locales/data-grid-es';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { deleteProduct, useGetProducts, deleteProducts } from 'src/api/product';
 
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'src/components/snackbar';
@@ -32,25 +32,20 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 
-import ProductTableToolbar from '../product-table-toolbar';
 import ProductTableFiltersResult from '../product-table-filters-result';
 import {
-  RenderCellStock,
-  RenderCellPrice,
+  RenderCellCode,
+  RenderCellProduct,
   RenderCellCommerce,
   RenderCellProductCategory,
-  RenderCellCode,
-  RenderCellPublish,
-  RenderCellProduct,
-  RenderCellCreatedAt,
 } from '../product-table-row';
 
 // ----------------------------------------------------------------------
 
-const PUBLISH_OPTIONS = [
-  { value: 'published', label: 'Published' },
-  { value: 'draft', label: 'Draft' },
-];
+// const PUBLISH_OPTIONS = [
+//   { value: 'published', label: 'Published' },
+//   { value: 'draft', label: 'Draft' },
+// ];
 
 const defaultFilters = {
   publish: [],
@@ -174,12 +169,12 @@ const handleDeleteRows = useCallback(
     [router]
   );
 
-  const handleViewRow = useCallback(
-    (id) => {
-      router.push(paths.dashboard.product.details(id));
-    },
-    [router]
-  );
+  // const handleViewRow = useCallback(
+  //   (id) => {
+  //     router.push(paths.dashboard.product.details(id));
+  //   },
+  //   [router]
+  // );
 
   const columns = [
     {
@@ -270,13 +265,13 @@ const handleDeleteRows = useCallback(
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:pen-bold" />}
-          label="Edit"
+          label="Editar"
           onClick={() => handleEditRow(params.row.id)}
         />,
         <GridActionsCellItem
           showInMenu
           icon={<Iconify icon="solar:trash-bin-trash-bold" />}
-          label="Delete"
+          label="Borrar"
           onClick={() => {
             handleDeleteRow(params.row.id);
           }}
@@ -352,18 +347,12 @@ const handleDeleteRows = useCallback(
             }}
             columnVisibilityModel={columnVisibilityModel}
             onColumnVisibilityModelChange={(newModel) => setColumnVisibilityModel(newModel)}
+            localeText={esES_DataGrid}
             slots={{
               toolbar: () => (
                 <>
                   <GridToolbarContainer>
-                    {/* <ProductTableToolbar
-                      filters={filters}
-                      onFilters={handleFilters}
-                      stockOptions={PRODUCT_STOCK_OPTIONS}
-                      publishOptions={PUBLISH_OPTIONS}
-                    /> */}
-
-                    <GridToolbarQuickFilter style={{ width: '700px', height: '50px' }} />
+                    <GridToolbarQuickFilter sx={{ width: '700px', height: '50px' }} />
 
                     <Stack
                       spacing={1}
@@ -400,8 +389,8 @@ const handleDeleteRows = useCallback(
                   )}
                 </>
               ),
-              noRowsOverlay: () => <EmptyContent title="No Data" />,
-              noResultsOverlay: () => <EmptyContent title="No results found" />,
+              noRowsOverlay: () => <EmptyContent title="Sin datos" />,
+              noResultsOverlay: () => <EmptyContent title="No se encontraron resultados" />,
             }}
             slotProps={{
               columnsPanel: {
@@ -415,10 +404,11 @@ const handleDeleteRows = useCallback(
       <ConfirmDialog
         open={confirmRows.value}
         onClose={confirmRows.onFalse}
-        title="Delete"
+        title="Eliminar productos"
         content={
           <>
-            Are you sure want to delete <strong> {selectedRowIds.length} </strong> items?
+            ¿Estás seguro de que querés eliminar <strong>{selectedRowIds.length}</strong>{' '}
+            {selectedRowIds.length === 1 ? 'producto?' : 'productos?'}
           </>
         }
         action={
@@ -426,7 +416,7 @@ const handleDeleteRows = useCallback(
             variant="contained"
             color="error"
             onClick={() => {
-           
+
 
               handleDeleteRows();
               confirmRows.onFalse();

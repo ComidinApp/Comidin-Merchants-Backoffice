@@ -22,32 +22,32 @@ import { varFade, MotionViewport } from 'src/components/animate';
 
 const CATEGORIES = [
   {
-    label: 'Managing your account',
+    label: 'Gestionar tu cuenta',
     icon: '/assets/icons/faqs/ic_account.svg',
     href: '#',
   },
   {
-    label: 'Payment',
+    label: 'Pago',
     icon: '/assets/icons/faqs/ic_payment.svg',
     href: '#',
   },
   {
-    label: 'Delivery',
+    label: 'Entrega',
     icon: '/assets/icons/faqs/ic_delivery.svg',
     href: '#',
   },
   {
-    label: 'Problem with the Product',
+    label: 'Problema con el producto',
     icon: '/assets/icons/faqs/ic_package.svg',
     href: '#',
   },
   {
-    label: 'Return & Refund',
+    label: 'Devolución y reembolso',
     icon: '/assets/icons/faqs/ic_refund.svg',
     href: '#',
   },
   {
-    label: 'Guarantees and assurances',
+    label: 'Garantías y aseguramientos',
     icon: '/assets/icons/faqs/ic_assurances.svg',
     href: '#',
   },

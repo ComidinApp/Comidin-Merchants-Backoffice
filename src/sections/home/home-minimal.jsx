@@ -48,12 +48,6 @@ export default function HomeMinimal() {
           mb: { xs: 5, md: 10 },
         }}
       >
-        <m.div variants={varFade().inUp}>
-          <Typography component="div" variant="overline" sx={{ color: 'text.disabled' }}>
-            Minimal UI
-          </Typography>
-        </m.div>
-
         <m.div variants={varFade().inDown}>
           <Typography variant="h2">Con tu comercio tendrás...</Typography>
         </m.div>

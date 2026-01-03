@@ -53,7 +53,7 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
         }}
       >
         <DatePicker
-          label="Start date"
+          label="Fecha inicio"
           value={filters.startDate}
           onChange={handleFilterStartDate}
           slotProps={{
@@ -67,14 +67,14 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
         />
 
         <DatePicker
-          label="End date"
+          label="Fecha fin"
           value={filters.endDate}
           onChange={handleFilterEndDate}
           slotProps={{
             textField: {
               fullWidth: true,
               error: dateError,
-              helperText: dateError && 'End date must be later than start date',
+              helperText: dateError && 'La fecha fin debe ser posterior a la fecha inicio',
             },
           }}
           sx={{
@@ -91,7 +91,7 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
             fullWidth
             value={filters.name}
             onChange={handleFilterName}
-            placeholder="Search customer or order number..."
+            placeholder="Buscar cliente o número de pedido..."
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -119,7 +119,7 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
           }}
         >
           <Iconify icon="solar:printer-minimalistic-bold" />
-          Print
+          Imprimir
         </MenuItem>
 
         <MenuItem
@@ -128,7 +128,7 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
           }}
         >
           <Iconify icon="solar:import-bold" />
-          Import
+          Importar
         </MenuItem>
 
         <MenuItem
@@ -137,7 +137,7 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
           }}
         >
           <Iconify icon="solar:export-bold" />
-          Export
+          Exportar
         </MenuItem>
       </CustomPopover>
     </>

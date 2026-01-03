@@ -90,18 +90,18 @@ export default function AuthClassicLayout({ children, image, title }) {
       sx={{
         ...bgGradient({
           color: alpha(
-            theme.palette.background.default,
+            theme.palette.background.orange,
             theme.palette.mode === 'light' ? 0.88 : 0.94
           ),
           imgUrl: '/assets/background/overlay_2.jpg',
-          startColor: '#95541B', // Color inicial del gradiente
-          endColor: '#C28150', // Color final del gradiente
-          gradientDirection: 'to right', // Dirección del gradiente
+          startColor: theme.palette.common.lightBrown, // Color inicial del gradiente
+          endColor: theme.palette.common.lightBrown, // Color final del gradiente
+          gradientDirection: 'to top right', // Dirección del gradiente
         }),
-        
+
       }}
     >
-      <Typography variant="h3" sx={{ maxWidth: 480, textAlign: 'center' }}>
+      <Typography variant="h3" sx={{ maxWidth: 480, textAlign: 'center', color: 'common.orange' }}>
         {title || '¡Bienvenido de vuelta!'}
       </Typography>
 
