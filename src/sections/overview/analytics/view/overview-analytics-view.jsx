@@ -102,34 +102,33 @@ export default function OverviewAnalyticsView() {
 
   const hasReportsAccess = benefits?.access_reports === true;
 
-  // ---------- Beneficios ----------
+  // ---------- Beneficios (FIX build: siempre retorna cleanup) ----------
   useEffect(() => {
+    let alive = true;
+
     if (userCommerceId == null) {
       setBenefits(null);
       setBenefitsError('No se pudo determinar tu comercio (commerceId).');
-      return;
+    } else {
+      setBenefitsLoading(true);
+      setBenefitsError('');
+
+      fetchBenefitsByCommerceId(Number(userCommerceId))
+        .then((b) => {
+          if (alive) setBenefits(b);
+        })
+        .catch((err) => {
+          if (alive) {
+            setBenefits(null);
+            setBenefitsError(
+              err?.message || 'No se pudieron cargar los beneficios del plan.'
+            );
+          }
+        })
+        .finally(() => {
+          if (alive) setBenefitsLoading(false);
+        });
     }
-
-    let alive = true;
-    setBenefitsLoading(true);
-    setBenefitsError('');
-
-    fetchBenefitsByCommerceId(Number(userCommerceId))
-      .then((b) => {
-        if (alive) setBenefits(b);
-      })
-      .catch((err) => {
-        console.error('[Benefits] error', err);
-        if (alive) {
-          setBenefits(null);
-          setBenefitsError(
-            err?.message || 'No se pudieron cargar los beneficios del plan.'
-          );
-        }
-      })
-      .finally(() => {
-        if (alive) setBenefitsLoading(false);
-      });
 
     return () => {
       alive = false;
