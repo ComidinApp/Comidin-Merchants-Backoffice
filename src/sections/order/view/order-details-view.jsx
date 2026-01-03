@@ -8,7 +8,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { paths } from 'src/routes/paths';
 
 import { useGetOrder } from 'src/api/orders';
-import { _orders, ORDER_STATUS_OPTIONS } from 'src/_mock';
+import { ORDER_STATUS_OPTIONS } from 'src/_mock';
 
 import { useSettingsContext } from 'src/components/settings';
 
@@ -22,8 +22,6 @@ import OrderDetailsHistory from '../order-details-history';
 export default function OrderDetailsView({ id }) {
   const settings = useSettingsContext();
   const { order, orderLoading } = useGetOrder(id);
-
-  const currentOrder = _orders[0];
 
   const [status, setStatus] = useState('');
 
@@ -57,14 +55,10 @@ export default function OrderDetailsView({ id }) {
           <Stack spacing={3} direction={{ xs: 'column-reverse', md: 'column' }}>
             <OrderDetailsItems
               items={order.order_details}
-              /* taxes={currentOrder.taxes}
-              shipping={currentOrder.shipping}
-              discount={currentOrder.discount}
-              subTotal={currentOrder.subTotal} */
               totalAmount={Number(order.total_amount)}
             />
 
-            <OrderDetailsHistory history={currentOrder.history} />
+            <OrderDetailsHistory orderHistory={order.order_history} currentStatus={order.status} />
           </Stack>
         </Grid>
 

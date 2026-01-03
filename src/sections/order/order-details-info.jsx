@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
+// import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import CardHeader from '@mui/material/CardHeader';
@@ -61,14 +61,14 @@ export default function OrderDetailsInfo({
             </Box>
           </Box> */}
 
-          <Button
+          {/* <Button
             size="small"
             color="error"
             startIcon={<Iconify icon="mingcute:add-line" />}
             sx={{ mt: 1 }}
           >
             Agregar a la Blacklist
-          </Button>
+          </Button> */}
         </Stack>
       </Stack>
     </>

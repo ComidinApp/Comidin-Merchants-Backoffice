@@ -113,13 +113,13 @@ export default function OrderDetailsToolbar({
             {statusTranslations[status] || status}
           </Button>
 
-          <Button
+          {/* <Button
             color="inherit"
             variant="outlined"
             startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
           >
             Imprimir
-          </Button>
+          </Button> */}
 
           {/* <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
             Edit
