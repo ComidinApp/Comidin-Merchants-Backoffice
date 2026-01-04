@@ -21,6 +21,7 @@ const CommerceDetailsPage = lazy(() => import('src/pages/dashboard/commerce/deta
 const CommerceListPage = lazy(() => import('src/pages/dashboard/commerce/list'));
 const CommerceCreatePage = lazy(() => import('src/pages/dashboard/commerce/new'));
 const CommerceEditPage = lazy(() => import('src/pages/dashboard/commerce/edit'));
+const MyCommercePage = lazy(() => import('src/pages/dashboard/commerce/my-commerce'));
 // PUBLICATION
 const PublicationDetailsPage = lazy(() => import('src/pages/dashboard/publication/details'));
 const PublicationListPage = lazy(() => import('src/pages/dashboard/publication/list'));
@@ -75,6 +76,15 @@ export const dashboardRoutes = [
           { path: 'new', element: <ProductCreatePage /> },
           { path: ':id/edit', element: <ProductEditPage /> },
         ],
+      },
+      // MI COMERCIO - Supervisores y admins (role_id = 1, 2)
+      {
+        path: 'my-commerce',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[1, 2]} hasContent>
+            <MyCommercePage />
+          </RoleBasedGuard>
+        ),
       },
       // COMERCIOS - Solo administradores (role_id = 1)
       {

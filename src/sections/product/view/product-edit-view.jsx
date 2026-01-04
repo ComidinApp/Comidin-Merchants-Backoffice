@@ -21,11 +21,11 @@ export default function ProductEditView({ id }) {
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Edit"
+        heading="Editar producto"
         links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
+          { name: 'Incio', href: paths.dashboard.root },
           {
-            name: 'Product',
+            name: 'Productos',
             href: paths.dashboard.product.root,
           },
           { name: currentProduct?.name },

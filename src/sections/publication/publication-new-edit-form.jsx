@@ -54,11 +54,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
   authUser?.user?.commerce_id ??
   authUser?.user?.commerceId ??
   null;
-  
+
   const { products } = useGetProducts(commerceId);
 
-  const [price, setPrice] = useState(currentPublication?.price || 0);
-  const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || 0);
+  const [price, setPrice] = useState(currentPublication?.price || null);
+  const [discount, setDiscount] = useState(currentPublication?.discount_percentaje || null);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   // ✅ estados de validación al ingresar
@@ -149,10 +149,10 @@ export default function PublicationNewEditForm({ currentPublication }) {
     () => ({
       commerce_id: currentPublication?.commerce_id || '',
       product_id: currentPublication?.product_id || '',
-      price: currentPublication?.price || 0,
+      price: currentPublication?.price || null,
       discount_percentaje: currentPublication?.discount_percentaje || 0,
       discounted_price: currentPublication?.discounted_price || 0,
-      available_stock: currentPublication?.available_stock || 0,
+      available_stock: currentPublication?.available_stock || 1,
       expiration_date: currentPublication?.expiration_date
         ? new Date(currentPublication.expiration_date)
         : null,
@@ -187,6 +187,24 @@ export default function PublicationNewEditForm({ currentPublication }) {
     if (currentPublication) reset(defaultValues);
   }, [currentPublication, defaultValues, reset]);
 
+  // Sincronizar estados locales cuando currentPublication cargue
+  useEffect(() => {
+    if (currentPublication) {
+      setPrice(currentPublication.price || null);
+      setDiscount(currentPublication.discount_percentaje || 0);
+    }
+  }, [currentPublication]);
+
+  // Sincronizar producto seleccionado cuando currentPublication y products estén disponibles
+  useEffect(() => {
+    if (currentPublication?.product_id && products.length > 0) {
+      const product = products.find((p) => p.id === currentPublication.product_id);
+      if (product) {
+        setSelectedProduct(product);
+      }
+    }
+  }, [currentPublication, products]);
+
   useEffect(() => {
     if (currentPublication?.product_id) setValue('product_id', currentPublication.product_id);
   }, [currentPublication, setValue]);
@@ -201,6 +219,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
       // si estás editando, no bloqueamos la pantalla por cupo (solo aplica a crear)
       if (isEdit) {
         setLimitBlock({ blocked: false, message: '' });
+        setBenefitsLoaded(true);
+        setScreenLoading(false);
         return;
       }
 
@@ -210,6 +230,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
           blocked: true,
           message: 'No se pudo determinar tu comercio para validar tu suscripción.',
         });
+        setScreenLoading(false);
         return;
       }
 
@@ -254,7 +275,9 @@ export default function PublicationNewEditForm({ currentPublication }) {
         setCanAddStock(true);
         console.warn('[Publication] validateOnEnter falló:', e);
       } finally {
-        if (alive) setScreenLoading(false);
+        if (alive) {
+          setScreenLoading(false);
+        }
       }
     }
 
@@ -299,15 +322,15 @@ export default function PublicationNewEditForm({ currentPublication }) {
       shouldDirty: true,
     });
 
-    if (discount) {
-      const basePrice = Number(numeric || 0);
-      const discounted = basePrice - (basePrice * discount) / 100;
-      setValue(
-        'discounted_price',
-        Number.isNaN(discounted) ? 0 : Number(discounted.toFixed(2)),
-        { shouldValidate: true, shouldDirty: true }
-      );
-    }
+    // Siempre actualizar el precio con descuento (incluso si descuento es 0)
+    const basePrice = Number(numeric || 0);
+    const currentDiscount = Number(discount) || 0;
+    const discounted = basePrice - (basePrice * currentDiscount) / 100;
+    setValue(
+      'discounted_price',
+      Number.isNaN(discounted) ? 0 : Number(discounted.toFixed(2)),
+      { shouldValidate: true, shouldDirty: true }
+    );
   };
 
   const handleDiscountChange = (event) => {

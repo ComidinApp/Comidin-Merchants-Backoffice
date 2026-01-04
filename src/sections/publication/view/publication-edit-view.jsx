@@ -21,11 +21,11 @@ export default function PublicationEditView({ id }) {
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Edit"
+        heading="Editar publicacion"
         links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
+          { name: 'Incio', href: paths.dashboard.root },
           {
-            name: 'Publication',
+            name: 'Publicaciones',
             href: paths.dashboard.publication.root,
           },
           { name: currentPublication?.name },

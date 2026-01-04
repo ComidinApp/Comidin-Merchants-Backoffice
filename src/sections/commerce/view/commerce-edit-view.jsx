@@ -21,11 +21,11 @@ export default function CommerceEditView({ id }) {
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Edit"
+        heading="Editar comercio"
         links={[
           { name: 'Dashboard', href: paths.dashboard.root },
           {
-            name: 'Commerce',
+            name: 'Comercios',
             href: paths.dashboard.commerce.root,
           },
           { name: currentCommerce?.name },

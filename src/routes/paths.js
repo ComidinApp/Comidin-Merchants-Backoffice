@@ -148,6 +148,7 @@ export const paths = {
     },
     commerce: {
       root: `${ROOTS.DASHBOARD}/commerce`,
+      myCommerce: `${ROOTS.DASHBOARD}/my-commerce`,
       details: (id) => `${ROOTS.DASHBOARD}/commerce/${id}`,
       edit: (id) => `${ROOTS.DASHBOARD}/commerce/${id}/edit`,
       demo: {

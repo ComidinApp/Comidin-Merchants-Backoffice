@@ -38,17 +38,17 @@ export default function UserEditView({ id }) {
   return (
     <Container maxWidth={settings.themeStretch ? false : 'lg'}>
       <CustomBreadcrumbs
-        heading="Edit"
+        heading="Editar usuario"
         links={[
           {
-            name: 'Dashboard',
+            name: 'Inicio',
             href: paths.dashboard.root,
           },
           {
-            name: 'User',
+            name: 'Usuario',
             href: paths.dashboard.user.root,
           },
-          { name: currentUser?.first_name || 'Loading...' }, // Manejar el caso en que no haya un currentUser
+          { name: currentUser?.first_name || 'Cargando...' }, // Manejar el caso en que no haya un currentUser
         ]}
         sx={{
           mb: { xs: 3, md: 5 },
@@ -58,7 +58,7 @@ export default function UserEditView({ id }) {
       {currentUser ? (
         <UserNewEditForm currentUser={currentUser} />
       ) : (
-        <p>Loading user data...</p> // Mostrar mensaje de carga si no hay datos
+        <p>Cargando datos del usuario...</p> // Mostrar mensaje de carga si no hay datos
       )}
     </Container>
   );

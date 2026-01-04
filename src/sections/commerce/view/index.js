@@ -1,3 +1,4 @@
+export { default as MyCommerceView } from './my-commerce-view';
 export { default as CommerceEditView } from './commerce-edit-view';
 export { default as CommerceShopView } from './commerce-shop-view';
 export { default as CommerceListView } from './commerce-list-view';

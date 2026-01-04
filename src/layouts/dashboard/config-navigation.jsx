@@ -70,11 +70,18 @@ export function useNavData() {
       {
         subheader: t('administracion'),
         items: [
+          // MI COMERCIO - Supervisores y admins
+          [1, 2].includes(user?.user?.role_id) && {
+            title: t('mi comercio'),
+            path: paths.dashboard.commerce.myCommerce,
+            icon: ICONS.banking,
+          },
+
           // COMERCIOS - Solo administradores
           user?.user?.role_id === 1 && {
             title: t('comercios'),
             path: paths.dashboard.commerce.root,
-            icon: ICONS.banking,
+            icon: ICONS.folder,
           },
 
           // USER

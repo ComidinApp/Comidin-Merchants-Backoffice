@@ -662,7 +662,6 @@ export default function CognitoRegisterView() {
           <RHFTextField
             select
             name="commerce_category_id"
-            label="Categoría del Comercio"
             SelectProps={{ native: true }}
             fullWidth
           >
