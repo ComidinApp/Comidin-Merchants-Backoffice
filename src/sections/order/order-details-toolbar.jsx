@@ -18,33 +18,59 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-const statusTranslations = {
-  pending: 'Pendiente',
-  completed: 'Completado',
-  confirmed: 'Confirmado',
-  refunded: 'Devuelto',
-  cancelled: 'Cancelado',
+
+const STATUS_LABELS_ES = {
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmado',
+  COMPLETED: 'Completado',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Devuelto',
   CLAIMED: 'Reclamado',
 };
+
+
+const STATUS_TRANSITIONS = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['COMPLETED'],
+  COMPLETED: ['REFUNDED', 'CLAIMED'],
+  CANCELLED: [],
+  REFUNDED: [],
+  CLAIMED: [],
+};
+
+const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
 
 export default function OrderDetailsToolbar({
   status,
   backLink,
   createdAt,
   orderNumber,
-  statusOptions,
+  statusOptions, 
   onChangeStatus,
 }) {
   const popover = usePopover();
 
+  const currentStatus = normalizeStatus(status);
+  const allowedNextStatuses = STATUS_TRANSITIONS[currentStatus] || [];
+
+  // Opciones que se muestran en el menú, basadas en el estado actual
+  const statusOptionsFiltered = allowedNextStatuses.map((value) => ({
+    value,
+    label: STATUS_LABELS_ES[value] || value,
+  }));
+
+  const isFinalState = statusOptionsFiltered.length === 0;
+
   const handleChangeStatus = async (newStatus) => {
+    const nextStatus = normalizeStatus(newStatus);
+
     try {
       const response = await axios.put(`${VITE_API_COMIDIN}/order/status/${orderNumber}`, {
-        status: newStatus,
+        status: nextStatus,
       });
 
       if (response.status === 200) {
-        onChangeStatus(newStatus);
+        onChangeStatus(nextStatus);
         popover.onClose();
       } else {
         console.error('Error al actualizar el estado');
@@ -78,15 +104,16 @@ export default function OrderDetailsToolbar({
               <Label
                 variant="soft"
                 color={
-                  (status === 'completed' && 'success') ||
-                  (status === 'pending' && 'warning') ||
-                  (status === 'confirmed' && 'info') ||
-                  (status === 'cancelled' && 'error') ||
-                  (status === 'CLAIMED' && 'error') ||
+                  (currentStatus === 'COMPLETED' && 'success') ||
+                  (currentStatus === 'PENDING' && 'warning') ||
+                  (currentStatus === 'CONFIRMED' && 'info') ||
+                  (currentStatus === 'CANCELLED' && 'error') ||
+                  (currentStatus === 'CLAIMED' && 'error') ||
+                  (currentStatus === 'REFUNDED' && 'default') ||
                   'default'
                 }
               >
-                {statusTranslations[status] || status}
+                {STATUS_LABELS_ES[currentStatus] || currentStatus}
               </Label>
             </Stack>
 
@@ -108,18 +135,19 @@ export default function OrderDetailsToolbar({
             variant="outlined"
             endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
             onClick={popover.onOpen}
-            sx={{ textTransform: 'capitalize' }}
+            sx={{ textTransform: 'none' }}
+            disabled={isFinalState}
           >
-            {statusTranslations[status] || status}
+            {STATUS_LABELS_ES[currentStatus] || currentStatus}
           </Button>
 
-          {/* <Button
+          <Button
             color="inherit"
             variant="outlined"
             startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
           >
             Imprimir
-          </Button> */}
+          </Button>
 
           {/* <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
             Edit
@@ -131,12 +159,12 @@ export default function OrderDetailsToolbar({
         open={popover.open}
         onClose={popover.onClose}
         arrow="top-right"
-        sx={{ width: 140 }}
+        sx={{ width: 180 }}
       >
-        {statusOptions.map((option) => (
+        {statusOptionsFiltered.map((option) => (
           <MenuItem
             key={option.value}
-            selected={option.value === status}
+            selected={normalizeStatus(option.value) === currentStatus}
             onClick={() => handleChangeStatus(option.value)}
           >
             {option.label}
