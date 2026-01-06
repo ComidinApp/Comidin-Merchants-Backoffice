@@ -20,7 +20,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { isAfter, isBetween } from 'src/utils/format-time';
 
 import { useGetOrders } from 'src/api/orders';
-import { ORDER_STATUS_OPTIONS } from 'src/_mock';
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Label from 'src/components/label';
@@ -47,7 +46,26 @@ import OrderTableFiltersResult from '../order-table-filters-result';
 
 // ----------------------------------------------------------------------
 
-const STATUS_OPTIONS = [{ value: 'all', label: 'Todos' }, ...ORDER_STATUS_OPTIONS];
+const STATUS_LABELS_ES = {
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmado',
+  COMPLETED: 'Completado',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Devuelto',
+  CLAIMED: 'Reclamado',
+};
+
+const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'PENDING', label: STATUS_LABELS_ES.PENDING },
+  { value: 'CONFIRMED', label: STATUS_LABELS_ES.CONFIRMED },
+  { value: 'COMPLETED', label: STATUS_LABELS_ES.COMPLETED },
+  { value: 'CANCELLED', label: STATUS_LABELS_ES.CANCELLED },
+  { value: 'REFUNDED', label: STATUS_LABELS_ES.REFUNDED },
+  { value: 'CLAIMED', label: STATUS_LABELS_ES.CLAIMED },
+];
 
 const defaultFilters = {
   name: '',
@@ -166,7 +184,9 @@ export default function OrderListView() {
 
   const handleFilterStatus = useCallback(
     (event, newValue) => {
-      handleFilters('status', newValue);
+      // Guardamos el filtro normalizado, excepto 'all'
+      const next = newValue === 'all' ? 'all' : normalizeStatus(newValue);
+      handleFilters('status', next);
     },
     [handleFilters]
   );
@@ -208,17 +228,16 @@ export default function OrderListView() {
                       ((tab.value === 'all' || tab.value === filters.status) && 'filled') || 'soft'
                     }
                     color={
-                      (tab.value === 'completed' && 'success') ||
-                      (tab.value === 'pending' && 'warning') ||
-                      (tab.value === 'confirmed' && 'info') ||
-                      (tab.value === 'cancelled' && 'error') ||
+                      (tab.value === 'COMPLETED' && 'success') ||
+                      (tab.value === 'PENDING' && 'warning') ||
+                      (tab.value === 'CONFIRMED' && 'info') ||
+                      (tab.value === 'CANCELLED' && 'error') ||
+                      (tab.value === 'CLAIMED' && 'error') ||
                       'default'
                     }
                   >
-                    {['completed', 'pending', 'cancelled', 'refunded', 'confirmed'].includes(
-                      tab.value
-                    )
-                      ? tableData.filter((user) => user.status === tab.value).length
+                    {tab.value !== 'all'
+                      ? tableData.filter((o) => normalizeStatus(o.status) === tab.value).length
                       : tableData.length}
                   </Label>
                 }
@@ -226,20 +245,13 @@ export default function OrderListView() {
             ))}
           </Tabs>
 
-          <OrderTableToolbar
-            filters={filters}
-            onFilters={handleFilters}
-            //
-            dateError={dateError}
-          />
+          <OrderTableToolbar filters={filters} onFilters={handleFilters} dateError={dateError} />
 
           {canReset && (
             <OrderTableFiltersResult
               filters={filters}
               onFilters={handleFilters}
-              //
               onResetFilters={handleResetFilters}
-              //
               results={dataFiltered.length}
               sx={{ p: 2.5, pt: 0 }}
             />
@@ -316,7 +328,6 @@ export default function OrderListView() {
             rowsPerPage={table.rowsPerPage}
             onPageChange={table.onChangePage}
             onRowsPerPageChange={table.onChangeRowsPerPage}
-            //
             dense={table.dense}
             onChangeDense={table.onChangeDense}
           />
@@ -355,6 +366,8 @@ export default function OrderListView() {
 function applyFilter({ inputData, comparator, filters, dateError }) {
   const { status, name, startDate, endDate } = filters;
 
+  const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
+
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
   stabilizedThis.sort((a, b) => {
@@ -369,14 +382,10 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   if (name) {
     const searchLower = name.toLowerCase();
     inputData = inputData.filter((order) => {
-      // Número de pedido (id) - tanto el original como el formateado con ceros
       const orderId = order.id?.toString() || '';
       const orderIdFormatted = order.id?.toString().padStart(4, '0') || '';
-      // Nombre completo del usuario
       const userName = `${order.user?.first_name || ''} ${order.user?.last_name || ''}`.toLowerCase();
-      // Email del usuario
       const userEmail = order.user?.email?.toLowerCase() || '';
-      // Nombre del comercio
       const commerceName = order.commerce?.name?.toLowerCase() || '';
 
       return (
@@ -389,15 +398,14 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
     });
   }
 
-  // Filtrar por estado
+  // Filtrar por estado (robusto ante mayúsculas/minúsculas)
   if (status !== 'all') {
-    inputData = inputData.filter((order) => order.status === status);
+    inputData = inputData.filter((order) => normalizeStatus(order.status) === normalizeStatus(status));
   }
 
   // Filtrar por rango de fechas
   if (!dateError && startDate && endDate) {
     inputData = inputData.filter((order) => {
-      // Usar created_at en lugar de createdAt
       const orderDate = order.created_at;
       return orderDate ? isBetween(orderDate, startDate, endDate) : false;
     });

@@ -29,6 +29,17 @@ import { _mock } from '../../_mock';
 
 // ----------------------------------------------------------------------
 
+const STATUS_LABELS_ES = {
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmado',
+  COMPLETED: 'Completado',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Devuelto',
+  CLAIMED: 'Reclamado',
+};
+
+const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
+
 export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, onDeleteRow }) {
   const { order_details, status, id, commerce, created_at, user, items_quantity, total_amount } =
     row;
@@ -51,6 +62,18 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
   }
 
   const randomAvatar = _mock.image.avatar(stringToNumber(user.email));
+
+  const statusKey = normalizeStatus(status);
+
+  const statusText = STATUS_LABELS_ES[statusKey] || String(status || '');
+
+  const statusColor =
+    (statusKey === 'COMPLETED' && 'success') ||
+    (statusKey === 'PENDING' && 'warning') ||
+    (statusKey === 'CONFIRMED' && 'info') ||
+    (statusKey === 'CANCELLED' && 'error') ||
+    (statusKey === 'CLAIMED' && 'error') ||
+    'default';
 
   const renderPrimary = (
     <TableRow hover selected={selected}>
@@ -108,26 +131,8 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
       <TableCell> {fCurrency(total_amount)} </TableCell>
 
       <TableCell>
-        <Label
-          variant="soft"
-          color={
-            (status === 'completed' && 'success') ||
-            (status === 'pending' && 'warning') ||
-            (status === 'confirmed' && 'info') ||
-            (status === 'cancelled' && 'error') ||
-            (status === 'CLAIMED' && 'error') ||
-            'default'
-          }
-        >
-          {(() => {
-            if (status === 'pending') return 'Pendiente';
-            if (status === 'completed') return 'Completado';
-            if (status === 'confirmed') return 'Confirmado';
-            if (status === 'refunded') return 'Devuelto';
-            if (status === 'cancelled') return 'Cancelado';
-            if (status === 'CLAIMED') return 'Reclamado';
-            return status;
-          })()}
+        <Label variant="soft" color={statusColor}>
+          {statusText}
         </Label>
       </TableCell>
 
@@ -150,7 +155,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
             popover.onClose();
           }}
           startIcon={<Iconify icon="solar:eye-bold" />}
-          sx={{ minWidth: 0, padding: '8px 16px' }} // Ajusta el estilo según lo necesites
+          sx={{ minWidth: 0, padding: '8px 16px' }}
         >
           {/* Detalle */}
         </Button>
@@ -168,7 +173,7 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
           sx={{ bgcolor: 'background.neutral' }}
         >
           <Stack component={Paper} sx={{ m: 1.5 }}>
-            {order_details.map((item) => (
+            {(order_details || []).map((item) => (
               <Stack
                 key={item.id}
                 direction="row"
@@ -181,14 +186,14 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
                 }}
               >
                 <Avatar
-                  src={item.publication.product.image_url}
+                  src={item.publication?.product?.image_url}
                   variant="rounded"
                   sx={{ width: 48, height: 48, mr: 2 }}
                 />
 
                 <ListItemText
-                  primary={item.publication.product.name}
-                  secondary={`$${item.publication.discounted_price}`}
+                  primary={item.publication?.product?.name}
+                  secondary={`$${item.publication?.discounted_price}`}
                   primaryTypographyProps={{
                     typography: 'body2',
                   }}
@@ -222,17 +227,6 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
         arrow="right-top"
         sx={{ width: 140 }}
       >
-        {/* <MenuItem
-          onClick={() => {
-            confirm.onTrue();
-            popover.onClose();
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
-        </MenuItem> */}
-
         <MenuItem
           onClick={() => {
             onViewRow();

@@ -18,7 +18,6 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
-// Labels ES (como los dejaste)
 const STATUS_LABELS_ES = {
   PENDING: 'Pendiente',
   CONFIRMED: 'Confirmado',
@@ -28,7 +27,6 @@ const STATUS_LABELS_ES = {
   CLAIMED: 'Reclamado',
 };
 
-// Transiciones permitidas (front UX)
 const STATUS_TRANSITIONS = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['COMPLETED'],
@@ -45,18 +43,14 @@ export default function OrderDetailsToolbar({
   backLink,
   createdAt,
   orderNumber,
-  statusOptions, // lo mantenemos para compatibilidad, pero filtramos por flujo
+  statusOptions,
   onChangeStatus,
 }) {
   const popover = usePopover();
 
   const currentStatus = normalizeStatus(status);
-
-  // Opciones permitidas según el estado actual (flujo)
   const allowedNextStatuses = STATUS_TRANSITIONS[currentStatus] || [];
 
-  // Si querés que además respete las statusOptions que viene de afuera:
-  // (ej: si alguien te pasa opciones más limitadas)
   const incomingOptions = Array.isArray(statusOptions) ? statusOptions : [];
   const incomingSet = new Set(incomingOptions.map((o) => normalizeStatus(o?.value)));
 
@@ -90,13 +84,7 @@ export default function OrderDetailsToolbar({
 
   return (
     <>
-      <Stack
-        spacing={3}
-        direction={{ xs: 'column', md: 'row' }}
-        sx={{
-          mb: { xs: 3, md: 5 },
-        }}
-      >
+      <Stack spacing={3} direction={{ xs: 'column', md: 'row' }} sx={{ mb: { xs: 3, md: 5 } }}>
         <Stack spacing={1} direction="row" alignItems="flex-start">
           <IconButton component={RouterLink} href={backLink}>
             <Iconify icon="eva:arrow-ios-back-fill" />
@@ -129,13 +117,7 @@ export default function OrderDetailsToolbar({
           </Stack>
         </Stack>
 
-        <Stack
-          flexGrow={1}
-          spacing={1.5}
-          direction="row"
-          alignItems="center"
-          justifyContent="flex-end"
-        >
+        <Stack flexGrow={1} spacing={1.5} direction="row" alignItems="center" justifyContent="flex-end">
           <Button
             color="inherit"
             variant="outlined"
@@ -147,22 +129,13 @@ export default function OrderDetailsToolbar({
             {STATUS_LABELS_ES[currentStatus] || currentStatus}
           </Button>
 
-          <Button
-            color="inherit"
-            variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-          >
+          <Button color="inherit" variant="outlined" startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}>
             Imprimir
           </Button>
         </Stack>
       </Stack>
 
-      <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
-        arrow="top-right"
-        sx={{ width: 180 }}
-      >
+      <CustomPopover open={popover.open} onClose={popover.onClose} arrow="top-right" sx={{ width: 180 }}>
         {statusOptionsFiltered.map((option) => (
           <MenuItem
             key={option.value}
