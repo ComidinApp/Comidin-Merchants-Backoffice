@@ -18,6 +18,7 @@ import CustomPopover, { usePopover } from 'src/components/custom-popover';
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
 
+// Etiquetas ES (Primera letra mayúscula)
 const STATUS_LABELS_ES = {
   PENDING: 'Pendiente',
   CONFIRMED: 'Confirmado',
@@ -27,6 +28,7 @@ const STATUS_LABELS_ES = {
   CLAIMED: 'Reclamado',
 };
 
+// Flujo permitido (front)
 const STATUS_TRANSITIONS = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['COMPLETED'],
@@ -43,23 +45,19 @@ export default function OrderDetailsToolbar({
   backLink,
   createdAt,
   orderNumber,
-  statusOptions,
+  statusOptions, // se mantiene para compatibilidad, pero ya NO se usa para filtrar
   onChangeStatus,
 }) {
   const popover = usePopover();
 
   const currentStatus = normalizeStatus(status);
+
+  // ✅ Opciones SOLO según el flujo permitido (no dependemos de statusOptions)
   const allowedNextStatuses = STATUS_TRANSITIONS[currentStatus] || [];
-
-  const incomingOptions = Array.isArray(statusOptions) ? statusOptions : [];
-  const incomingSet = new Set(incomingOptions.map((o) => normalizeStatus(o?.value)));
-
-  const statusOptionsFiltered = allowedNextStatuses
-    .filter((st) => (incomingSet.size ? incomingSet.has(st) : true))
-    .map((value) => ({
-      value,
-      label: STATUS_LABELS_ES[value] || value,
-    }));
+  const statusOptionsFiltered = allowedNextStatuses.map((value) => ({
+    value,
+    label: STATUS_LABELS_ES[value] || value,
+  }));
 
   const isFinalState = statusOptionsFiltered.length === 0;
 
@@ -72,6 +70,7 @@ export default function OrderDetailsToolbar({
       });
 
       if (response.status === 200) {
+        // Guardamos en el estado local el status normalizado (MAYÚSCULAS)
         onChangeStatus(nextStatus);
         popover.onClose();
       } else {
@@ -84,7 +83,13 @@ export default function OrderDetailsToolbar({
 
   return (
     <>
-      <Stack spacing={3} direction={{ xs: 'column', md: 'row' }} sx={{ mb: { xs: 3, md: 5 } }}>
+      <Stack
+        spacing={3}
+        direction={{ xs: 'column', md: 'row' }}
+        sx={{
+          mb: { xs: 3, md: 5 },
+        }}
+      >
         <Stack spacing={1} direction="row" alignItems="flex-start">
           <IconButton component={RouterLink} href={backLink}>
             <Iconify icon="eva:arrow-ios-back-fill" />
@@ -117,7 +122,13 @@ export default function OrderDetailsToolbar({
           </Stack>
         </Stack>
 
-        <Stack flexGrow={1} spacing={1.5} direction="row" alignItems="center" justifyContent="flex-end">
+        <Stack
+          flexGrow={1}
+          spacing={1.5}
+          direction="row"
+          alignItems="center"
+          justifyContent="flex-end"
+        >
           <Button
             color="inherit"
             variant="outlined"
@@ -129,13 +140,22 @@ export default function OrderDetailsToolbar({
             {STATUS_LABELS_ES[currentStatus] || currentStatus}
           </Button>
 
-          <Button color="inherit" variant="outlined" startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}>
+          <Button
+            color="inherit"
+            variant="outlined"
+            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
+          >
             Imprimir
           </Button>
         </Stack>
       </Stack>
 
-      <CustomPopover open={popover.open} onClose={popover.onClose} arrow="top-right" sx={{ width: 180 }}>
+      <CustomPopover
+        open={popover.open}
+        onClose={popover.onClose}
+        arrow="top-right"
+        sx={{ width: 180 }}
+      >
         {statusOptionsFiltered.map((option) => (
           <MenuItem
             key={option.value}
@@ -156,5 +176,5 @@ OrderDetailsToolbar.propTypes = {
   onChangeStatus: PropTypes.func,
   orderNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   status: PropTypes.string,
-  statusOptions: PropTypes.array,
+  statusOptions: PropTypes.array, // compat, ya no se usa
 };
