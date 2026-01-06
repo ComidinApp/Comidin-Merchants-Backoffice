@@ -135,7 +135,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
       .required('El estado es obligatorio')
       .oneOf(['active', 'inactive'], 'Estado inválido'),
 
-    expiration_date: Yup.date()
+expiration_date: Yup.date()
   .typeError('La fecha de vencimiento es obligatoria')
   .required('La fecha de vencimiento es obligatoria')
   .test(
@@ -145,10 +145,11 @@ export default function PublicationNewEditForm({ currentPublication }) {
       if (!value) return false;
 
       const selected = new Date(value);
-      const now = new Date();
 
-      // margen de tolerancia de 1 minuto (UX > matemática)
-      return selected.getTime() > now.getTime() - 60 * 1000;
+      const now = new Date();
+      now.setSeconds(0, 0); // 🔥 clave: normalizamos
+
+      return selected.getTime() >= now.getTime();
     }
   ),
 
