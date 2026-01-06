@@ -1,23 +1,50 @@
-import axios from 'axios';
-import PropTypes from 'prop-types';
+import { useState, useEffect, useCallback } from 'react';
 
-import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Card from '@mui/material/Card';
+import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
-import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
+import { alpha } from '@mui/material/styles';
+import Container from '@mui/material/Container';
+import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
+import TableContainer from '@mui/material/TableContainer';
 
-import { RouterLink } from 'src/routes/components';
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
 
-import { fDateTime } from 'src/utils/format-time';
+import { useBoolean } from 'src/hooks/use-boolean';
+
+import { isAfter, isBetween } from 'src/utils/format-time';
+
+import { useGetOrders } from 'src/api/orders';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
-import CustomPopover, { usePopover } from 'src/components/custom-popover';
+import Scrollbar from 'src/components/scrollbar';
+import { useSnackbar } from 'src/components/snackbar';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+import { useSettingsContext } from 'src/components/settings';
+import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
+import {
+  useTable,
+  emptyRows,
+  TableNoData,
+  getComparator,
+  TableEmptyRows,
+  TableHeadCustom,
+  TableSelectedAction,
+  TablePaginationCustom,
+} from 'src/components/table';
+
+import OrderTableRow from '../order-table-row';
+import OrderTableToolbar from '../order-table-toolbar';
+import OrderTableFiltersResult from '../order-table-filters-result';
 
 // ----------------------------------------------------------------------
-const { VITE_API_COMIDIN } = import.meta.env;
-
 
 const STATUS_LABELS_ES = {
   PENDING: 'Pendiente',
@@ -28,158 +55,360 @@ const STATUS_LABELS_ES = {
   CLAIMED: 'Reclamado',
 };
 
-
-const STATUS_TRANSITIONS = {
-  PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['COMPLETED'],
-  COMPLETED: ['REFUNDED', 'CLAIMED'],
-  CANCELLED: [],
-  REFUNDED: [],
-  CLAIMED: [],
-};
-
 const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
 
-export default function OrderDetailsToolbar({
-  status,
-  backLink,
-  createdAt,
-  orderNumber,
-  statusOptions, 
-  onChangeStatus,
-}) {
-  const popover = usePopover();
 
-  const currentStatus = normalizeStatus(status);
-  const allowedNextStatuses = STATUS_TRANSITIONS[currentStatus] || [];
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'PENDING', label: STATUS_LABELS_ES.PENDING },
+  { value: 'CONFIRMED', label: STATUS_LABELS_ES.CONFIRMED },
+  { value: 'COMPLETED', label: STATUS_LABELS_ES.COMPLETED },
+  { value: 'CANCELLED', label: STATUS_LABELS_ES.CANCELLED },
+  { value: 'REFUNDED', label: STATUS_LABELS_ES.REFUNDED },
+  { value: 'CLAIMED', label: STATUS_LABELS_ES.CLAIMED },
+];
 
-  // Opciones que se muestran en el menú, basadas en el estado actual
-  const statusOptionsFiltered = allowedNextStatuses.map((value) => ({
-    value,
-    label: STATUS_LABELS_ES[value] || value,
-  }));
+const defaultFilters = {
+  name: '',
+  status: 'all',
+  startDate: null,
+  endDate: null,
+};
 
-  const isFinalState = statusOptionsFiltered.length === 0;
+// ----------------------------------------------------------------------
 
-  const handleChangeStatus = async (newStatus) => {
-    const nextStatus = normalizeStatus(newStatus);
+export default function OrderListView() {
+  const authUser = useAuthContext();
 
-    try {
-      const response = await axios.put(`${VITE_API_COMIDIN}/order/status/${orderNumber}`, {
-        status: nextStatus,
-      });
+  const TABLE_HEAD = [
+    { id: 'order_id', label: 'Nro Pedido', width: 150 },
+    ...(authUser.user.role_id === 1 ? [{ id: 'company', label: 'Comercio', width: 220 }] : []),
+    { id: 'name', label: 'Usuario' },
+    { id: 'createdAt', label: 'Fecha', width: 140 },
+    { id: 'totalQuantity', label: 'Items', width: 120, align: 'center' },
+    { id: 'totalAmount', label: 'Precio', width: 140 },
+    { id: 'status', label: 'Estado', width: 110 },
+    { id: '', width: 88 },
+  ];
 
-      if (response.status === 200) {
-        onChangeStatus(nextStatus);
-        popover.onClose();
-      } else {
-        console.error('Error al actualizar el estado');
-      }
-    } catch (error) {
-      console.error('Error al realizar la solicitud', error);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const table = useTable({ defaultOrderBy: 'order_id', defaultOrder: 'desc' });
+
+  const settings = useSettingsContext();
+
+  const router = useRouter();
+
+  const confirm = useBoolean();
+
+  const commerceId = authUser.user.role_id === 1 ? null : authUser.user.commerce.id;
+  const { orders } = useGetOrders(commerceId);
+
+  const [tableData, setTableData] = useState([]);
+
+  useEffect(() => {
+    if (orders) {
+      setTableData(orders);
     }
-  };
+  }, [orders]);
+
+  const [filters, setFilters] = useState(defaultFilters);
+
+  const dateError = isAfter(filters.startDate, filters.endDate);
+
+  const dataFiltered = applyFilter({
+    inputData: tableData,
+    comparator: getComparator(table.order, table.orderBy),
+    filters,
+    dateError,
+  });
+
+  const dataInPage = dataFiltered.slice(
+    table.page * table.rowsPerPage,
+    table.page * table.rowsPerPage + table.rowsPerPage
+  );
+
+  const denseHeight = table.dense ? 56 : 56 + 20;
+
+  const canReset =
+    !!filters.name || filters.status !== 'all' || (!!filters.startDate && !!filters.endDate);
+
+  const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
+
+  const handleFilters = useCallback(
+    (name, value) => {
+      table.onResetPage();
+      setFilters((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    },
+    [table]
+  );
+
+  const handleResetFilters = useCallback(() => {
+    setFilters(defaultFilters);
+  }, []);
+
+  const handleDeleteRow = useCallback(
+    (id) => {
+      const deleteRow = tableData.filter((row) => row.id !== id);
+
+      enqueueSnackbar('¡Eliminado con éxito!');
+
+      setTableData(deleteRow);
+
+      table.onUpdatePageDeleteRow(dataInPage.length);
+    },
+    [dataInPage.length, enqueueSnackbar, table, tableData]
+  );
+
+  const handleDeleteRows = useCallback(() => {
+    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
+
+    enqueueSnackbar('Delete success!');
+
+    setTableData(deleteRows);
+
+    table.onUpdatePageDeleteRows({
+      totalRowsInPage: dataInPage.length,
+      totalRowsFiltered: dataFiltered.length,
+    });
+  }, [dataFiltered.length, dataInPage.length, enqueueSnackbar, table, tableData]);
+
+  const handleViewRow = useCallback(
+    (id) => {
+      router.push(paths.dashboard.order.details(id));
+    },
+    [router]
+  );
+
+  const handleFilterStatus = useCallback(
+    (event, newValue) => {
+      handleFilters('status', newValue);
+    },
+    [handleFilters]
+  );
 
   return (
     <>
-      <Stack
-        spacing={3}
-        direction={{ xs: 'column', md: 'row' }}
-        sx={{
-          mb: { xs: 3, md: 5 },
-        }}
-      >
-        <Stack spacing={1} direction="row" alignItems="flex-start">
-          <IconButton component={RouterLink} href={backLink}>
-            <Iconify icon="eva:arrow-ios-back-fill" />
-          </IconButton>
+      <Container maxWidth={settings.themeStretch ? false : 'lg'}>
+        <CustomBreadcrumbs
+          heading="Lista de Pedidos"
+          links={[
+            {
+              name: '',
+              href: paths.dashboard.root,
+            },
+          ]}
+          sx={{
+            mb: { xs: 3, md: 5 },
+          }}
+        />
 
-          <Stack spacing={0.5}>
-            <Stack spacing={1} direction="row" alignItems="center">
-              <Typography variant="h4">
-                {' '}
-                Pedido {orderNumber.toString().padStart(4, '0')}{' '}
-              </Typography>
-
-              <Label
-                variant="soft"
-                color={
-                  (currentStatus === 'COMPLETED' && 'success') ||
-                  (currentStatus === 'PENDING' && 'warning') ||
-                  (currentStatus === 'CONFIRMED' && 'info') ||
-                  (currentStatus === 'CANCELLED' && 'error') ||
-                  (currentStatus === 'CLAIMED' && 'error') ||
-                  (currentStatus === 'REFUNDED' && 'default') ||
-                  'default'
+        <Card>
+          <Tabs
+            value={filters.status}
+            onChange={handleFilterStatus}
+            sx={{
+              px: 2.5,
+              boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
+            }}
+          >
+            {STATUS_OPTIONS.map((tab) => (
+              <Tab
+                key={tab.value}
+                iconPosition="end"
+                value={tab.value}
+                label={tab.label}
+                icon={
+                  <Label
+                    variant={((tab.value === 'all' || tab.value === filters.status) && 'filled') || 'soft'}
+                    color={
+                      (tab.value === 'COMPLETED' && 'success') ||
+                      (tab.value === 'PENDING' && 'warning') ||
+                      (tab.value === 'CONFIRMED' && 'info') ||
+                      (tab.value === 'CANCELLED' && 'error') ||
+                      (tab.value === 'CLAIMED' && 'error') ||
+                      'default'
+                    }
+                  >
+                    {tab.value !== 'all'
+                      ? tableData.filter((o) => normalizeStatus(o.status) === tab.value).length
+                      : tableData.length}
+                  </Label>
                 }
-              >
-                {STATUS_LABELS_ES[currentStatus] || currentStatus}
-              </Label>
-            </Stack>
+              />
+            ))}
+          </Tabs>
 
-            <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-              {fDateTime(createdAt)}
-            </Typography>
-          </Stack>
-        </Stack>
+          <OrderTableToolbar
+            filters={filters}
+            onFilters={handleFilters}
+            dateError={dateError}
+          />
 
-        <Stack
-          flexGrow={1}
-          spacing={1.5}
-          direction="row"
-          alignItems="center"
-          justifyContent="flex-end"
-        >
+          {canReset && (
+            <OrderTableFiltersResult
+              filters={filters}
+              onFilters={handleFilters}
+              onResetFilters={handleResetFilters}
+              results={dataFiltered.length}
+              sx={{ p: 2.5, pt: 0 }}
+            />
+          )}
+
+          <TableContainer sx={{ position: 'relative', overflow: 'unset' }}>
+            <TableSelectedAction
+              dense={table.dense}
+              numSelected={table.selected.length}
+              rowCount={dataFiltered.length}
+              onSelectAllRows={(checked) =>
+                table.onSelectAllRows(
+                  checked,
+                  dataFiltered.map((row) => row.id)
+                )
+              }
+              action={
+                <Tooltip title="Eliminar">
+                  <IconButton color="primary" onClick={confirm.onTrue}>
+                    <Iconify icon="solar:trash-bin-trash-bold" />
+                  </IconButton>
+                </Tooltip>
+              }
+            />
+
+            <Scrollbar>
+              <Table size={table.dense ? 'small' : 'medium'} sx={{ minWidth: 960 }}>
+                <TableHeadCustom
+                  order={table.order}
+                  orderBy={table.orderBy}
+                  headLabel={TABLE_HEAD}
+                  rowCount={dataFiltered.length}
+                  numSelected={table.selected.length}
+                  onSort={table.onSort}
+                  onSelectAllRows={(checked) =>
+                    table.onSelectAllRows(
+                      checked,
+                      dataFiltered.map((row) => row.id)
+                    )
+                  }
+                />
+
+                <TableBody>
+                  {dataFiltered
+                    .slice(
+                      table.page * table.rowsPerPage,
+                      table.page * table.rowsPerPage + table.rowsPerPage
+                    )
+                    .map((row) => (
+                      <OrderTableRow
+                        key={row.id}
+                        row={row}
+                        selected={table.selected.includes(row.id)}
+                        onSelectRow={() => table.onSelectRow(row.id)}
+                        onDeleteRow={() => handleDeleteRow(row.id)}
+                        onViewRow={() => handleViewRow(row.id)}
+                      />
+                    ))}
+
+                  <TableEmptyRows
+                    height={denseHeight}
+                    emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
+                  />
+
+                  <TableNoData notFound={notFound} />
+                </TableBody>
+              </Table>
+            </Scrollbar>
+          </TableContainer>
+
+          <TablePaginationCustom
+            count={dataFiltered.length}
+            page={table.page}
+            rowsPerPage={table.rowsPerPage}
+            onPageChange={table.onChangePage}
+            onRowsPerPageChange={table.onChangeRowsPerPage}
+            dense={table.dense}
+            onChangeDense={table.onChangeDense}
+          />
+        </Card>
+      </Container>
+
+      <ConfirmDialog
+        open={confirm.value}
+        onClose={confirm.onFalse}
+        title="Eliminar pedidos"
+        content={
+          <>
+            ¿Estás seguro de que querés eliminar <strong>{table.selected.length}</strong>{' '}
+            {table.selected.length === 1 ? 'pedido?' : 'pedidos?'}
+          </>
+        }
+        action={
           <Button
-            color="inherit"
-            variant="outlined"
-            endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
-            onClick={popover.onOpen}
-            sx={{ textTransform: 'none' }}
-            disabled={isFinalState}
+            variant="contained"
+            color="error"
+            onClick={() => {
+              handleDeleteRows();
+              confirm.onFalse();
+            }}
           >
-            {STATUS_LABELS_ES[currentStatus] || currentStatus}
+            Eliminar
           </Button>
-
-          <Button
-            color="inherit"
-            variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-          >
-            Imprimir
-          </Button>
-
-          {/* <Button color="inherit" variant="contained" startIcon={<Iconify icon="solar:pen-bold" />}>
-            Edit
-          </Button> */}
-        </Stack>
-      </Stack>
-
-      <CustomPopover
-        open={popover.open}
-        onClose={popover.onClose}
-        arrow="top-right"
-        sx={{ width: 180 }}
-      >
-        {statusOptionsFiltered.map((option) => (
-          <MenuItem
-            key={option.value}
-            selected={normalizeStatus(option.value) === currentStatus}
-            onClick={() => handleChangeStatus(option.value)}
-          >
-            {option.label}
-          </MenuItem>
-        ))}
-      </CustomPopover>
+        }
+      />
     </>
   );
 }
 
-OrderDetailsToolbar.propTypes = {
-  backLink: PropTypes.string,
-  createdAt: PropTypes.instanceOf(Date),
-  onChangeStatus: PropTypes.func,
-  orderNumber: PropTypes.string,
-  status: PropTypes.string,
-  statusOptions: PropTypes.array,
-};
+// ----------------------------------------------------------------------
+
+function applyFilter({ inputData, comparator, filters, dateError }) {
+  const { status, name, startDate, endDate } = filters;
+
+  const stabilizedThis = inputData.map((el, index) => [el, index]);
+
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
+
+  inputData = stabilizedThis.map((el) => el[0]);
+
+  // Filtrar por nombre de cliente, email o número de pedido
+  if (name) {
+    const searchLower = name.toLowerCase();
+    inputData = inputData.filter((order) => {
+      const orderId = order.id?.toString() || '';
+      const orderIdFormatted = order.id?.toString().padStart(4, '0') || '';
+      const userName = `${order.user?.first_name || ''} ${order.user?.last_name || ''}`.toLowerCase();
+      const userEmail = order.user?.email?.toLowerCase() || '';
+      const commerceName = order.commerce?.name?.toLowerCase() || '';
+
+      return (
+        orderId.includes(searchLower) ||
+        orderIdFormatted.includes(searchLower) ||
+        userName.includes(searchLower) ||
+        userEmail.includes(searchLower) ||
+        commerceName.includes(searchLower)
+      );
+    });
+  }
+
+  // Filtrar por estado (normalizado a MAYÚSCULAS)
+  if (status !== 'all') {
+    inputData = inputData.filter((order) => normalizeStatus(order.status) === status);
+  }
+
+  // Filtrar por rango de fechas
+  if (!dateError && startDate && endDate) {
+    inputData = inputData.filter((order) => {
+      const orderDate = order.created_at;
+      return orderDate ? isBetween(orderDate, startDate, endDate) : false;
+    });
+  }
+
+  return inputData;
+}
