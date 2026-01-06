@@ -184,7 +184,6 @@ export default function OrderListView() {
 
   const handleFilterStatus = useCallback(
     (event, newValue) => {
-      // Guardamos el filtro normalizado, excepto 'all'
       const next = newValue === 'all' ? 'all' : normalizeStatus(newValue);
       handleFilters('status', next);
     },
@@ -366,8 +365,6 @@ export default function OrderListView() {
 function applyFilter({ inputData, comparator, filters, dateError }) {
   const { status, name, startDate, endDate } = filters;
 
-  const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
-
   const stabilizedThis = inputData.map((el, index) => [el, index]);
 
   stabilizedThis.sort((a, b) => {
@@ -400,7 +397,9 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
 
   // Filtrar por estado (robusto ante mayúsculas/minúsculas)
   if (status !== 'all') {
-    inputData = inputData.filter((order) => normalizeStatus(order.status) === normalizeStatus(status));
+    inputData = inputData.filter(
+      (order) => normalizeStatus(order.status) === normalizeStatus(status)
+    );
   }
 
   // Filtrar por rango de fechas
