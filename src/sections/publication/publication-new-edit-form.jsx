@@ -136,9 +136,22 @@ export default function PublicationNewEditForm({ currentPublication }) {
       .oneOf(['active', 'inactive'], 'Estado inválido'),
 
     expiration_date: Yup.date()
-      .typeError('La fecha de vencimiento es obligatoria')
-      .required('La fecha de vencimiento es obligatoria')
-      .min(new Date(), 'La fecha de vencimiento no puede estar en el pasado'),
+  .typeError('La fecha de vencimiento es obligatoria')
+  .required('La fecha de vencimiento es obligatoria')
+  .test(
+    'future-datetime',
+    'La fecha y hora de vencimiento deben ser posteriores al momento actual',
+    (value) => {
+      if (!value) return false;
+
+      const selected = new Date(value);
+      const now = new Date();
+
+      // margen de tolerancia de 1 minuto (UX > matemática)
+      return selected.getTime() > now.getTime() - 60 * 1000;
+    }
+  ),
+
   });
 
   // ----------------------------------------------------------------------
@@ -511,14 +524,25 @@ export default function PublicationNewEditForm({ currentPublication }) {
                 </DialogContent>
               </Dialog>
 
-              <DateTimePicker
-                label="Fecha y hora de vencimiento"
-                value={values.expiration_date}
-                onChange={(newValue) =>
-                  setValue('expiration_date', newValue, { shouldValidate: true })
-                }
-                slotProps={{ textField: { fullWidth: true, disabled: formLocked } }}
-              />
+<DateTimePicker
+  label="Fecha y hora de vencimiento"
+  value={values.expiration_date}
+  onChange={(newValue) =>
+    setValue('expiration_date', newValue, {
+      shouldValidate: true,
+      shouldDirty: true,
+    })
+  }
+  slotProps={{
+    textField: {
+      fullWidth: true,
+      disabled: formLocked,
+      error: Boolean(methods.formState.errors.expiration_date),
+      helperText: methods.formState.errors.expiration_date?.message,
+    },
+  }}
+/>
+
 
               <RHFTextField
                 name="available_stock"
