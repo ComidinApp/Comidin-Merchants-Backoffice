@@ -40,16 +40,36 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
-const toMillis = (v) => {
-  if (!v) return NaN;
-  if (v instanceof Date) return v.getTime();
-  if (typeof v?.toDate === 'function') return v.toDate().getTime();
-  if (typeof v?.valueOf === 'function') {
-    const ms = v.valueOf();
-    if (typeof ms === 'number') return ms;
+const toLocalDate = (v) => {
+  if (!v) return null;
+
+  if (v instanceof Date) {
+    return new Date(v.getFullYear(), v.getMonth(), v.getDate(), v.getHours(), v.getMinutes(), 0, 0);
   }
+
+  if (
+    typeof v?.year === 'function' &&
+    typeof v?.month === 'function' &&
+    typeof v?.date === 'function' &&
+    typeof v?.hour === 'function' &&
+    typeof v?.minute === 'function'
+  ) {
+    return new Date(v.year(), v.month(), v.date(), v.hour(), v.minute(), 0, 0);
+  }
+
+  if (typeof v?.toJSDate === 'function') {
+    const d = v.toJSDate();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0, 0);
+  }
+
+  if (typeof v?.toDate === 'function') {
+    const d = v.toDate();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0, 0);
+  }
+
   const d = new Date(v);
-  return d.getTime();
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0, 0);
 };
 
 export default function PublicationNewEditForm({ currentPublication }) {
@@ -144,13 +164,21 @@ export default function PublicationNewEditForm({ currentPublication }) {
         'future-datetime',
         'La fecha y hora de vencimiento deben ser posteriores al momento actual',
         (value) => {
-          const selectedMs = toMillis(value);
-          if (Number.isNaN(selectedMs)) return false;
+          const selected = toLocalDate(value);
+          if (!selected) return false;
 
           const now = new Date();
-          now.setSeconds(0, 0);
+          const nowLocal = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            now.getHours(),
+            now.getMinutes(),
+            0,
+            0
+          );
 
-          return selectedMs >= now.getTime();
+          return selected.getTime() >= nowLocal.getTime();
         }
       ),
   });
@@ -367,12 +395,12 @@ export default function PublicationNewEditForm({ currentPublication }) {
       const method = isEdit ? 'PUT' : 'POST';
 
       if (data.expiration_date) {
-        const ms = toMillis(data.expiration_date);
-        if (Number.isNaN(ms)) {
+        const local = toLocalDate(data.expiration_date);
+        if (!local) {
           enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
           return;
         }
-        data.expiration_date = new Date(ms).toISOString();
+        data.expiration_date = local.toISOString();
       }
 
       const response = await fetch(url, {
@@ -484,6 +512,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
               <DateTimePicker
                 label="Fecha y hora de vencimiento"
                 value={values.expiration_date}
+                minDateTime={new Date()}
                 onChange={(newValue) =>
                   setValue('expiration_date', newValue, {
                     shouldValidate: true,
