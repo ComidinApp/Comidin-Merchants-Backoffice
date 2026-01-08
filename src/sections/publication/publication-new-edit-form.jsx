@@ -223,9 +223,29 @@ export default function PublicationNewEditForm({ currentPublication }) {
       setScreenLoading(true);
 
       try {
-        const [b, limit] = await Promise.all([
-          fetchBenefitsByCommerceId(Number(commerceId)).catch(() => null),
-          canCreatePublication({ commerceId: Number(commerceId) }).catch(() => null),
+        const benefitsPromise = fetchBenefitsByCommerceId(Number(commerceId)).catch(() => null);
+
+        const limitPromise = canCreatePublication({ commerceId: Number(commerceId) }).catch((e) => {
+          console.error('[Publication] canCreatePublication falló:', e);
+          return null;
+        });
+
+        const publicationsPromise = fetch(
+          `${VITE_API_COMIDIN}/publication/commerce/${Number(commerceId)}`,
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+          .then((r) => r.json())
+          .catch((e) => {
+            console.error('[Publication] fetch publicaciones falló:', e);
+            return null;
+          });
+
+        const [b, limit, publications] = await Promise.all([
+          benefitsPromise,
+          limitPromise,
+          publicationsPromise,
         ]);
 
         if (!alive) return;
@@ -236,6 +256,27 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
         if (!allowStock) {
           setValue('available_stock', 1, { shouldValidate: true, shouldDirty: true });
+        }
+
+        const maxPublications = Number(b?.max_publications);
+        const hasMax = Number.isFinite(maxPublications) && maxPublications > 0;
+
+        let activeCount = null;
+
+        if (Array.isArray(publications)) {
+          activeCount = publications.filter((p) => p?.is_active === 'active').length;
+        }
+
+        if (hasMax && typeof activeCount === 'number') {
+          if (activeCount >= maxPublications) {
+            setLimitBlock({
+              blocked: true,
+              message: `Alcanzaste el máximo de publicaciones activas permitidas (${maxPublications}).`,
+            });
+          } else {
+            setLimitBlock({ blocked: false, message: '' });
+          }
+          return;
         }
 
         if (limit && limit.allowed === false) {
