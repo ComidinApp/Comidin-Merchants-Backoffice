@@ -24,6 +24,8 @@ import ListItemButton from '@mui/material/ListItemButton';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
+import { useLocation } from 'react-router-dom';
+
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
@@ -42,6 +44,7 @@ const { VITE_API_COMIDIN } = import.meta.env;
 
 export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
+  const location = useLocation();
   const authUser = useAuthContext();
   const dialog = useBoolean();
   const mdUp = useResponsive('up', 'md');
@@ -189,9 +192,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
   useEffect(() => {
     if (currentPublication?.product_id && products.length > 0) {
       const product = products.find((p) => p.id === currentPublication.product_id);
-      if (product) {
-        setSelectedProduct(product);
-      }
+      if (product) setSelectedProduct(product);
     }
   }, [currentPublication, products]);
 
@@ -254,9 +255,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
         setCanAddStock(true);
         console.warn('[Publication] validateOnEnter falló:', e);
       } finally {
-        if (alive) {
-          setScreenLoading(false);
-        }
+        if (alive) setScreenLoading(false);
       }
     }
 
@@ -265,7 +264,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
     return () => {
       alive = false;
     };
-  }, [commerceId, isEdit, setValue]);
+  }, [commerceId, isEdit, setValue, location.key]);
 
   const stockLocked = benefitsLoaded && !canAddStock;
   const formLocked = Boolean(limitBlock.blocked) || screenLoading;
@@ -341,39 +340,34 @@ export default function PublicationNewEditForm({ currentPublication }) {
         return;
       }
 
-      if (!isEdit && stockLocked) {
-        data.available_stock = 1;
-      }
-
       const url = isEdit
         ? `${VITE_API_COMIDIN}/publication/${currentPublication.id}`
         : `${VITE_API_COMIDIN}/publication`;
 
       const method = isEdit ? 'PUT' : 'POST';
 
-const payload = { ...data };
+      const payload = { ...data };
 
-if (payload.expiration_date) {
-  const d = payload.expiration_date;
+      if (payload.expiration_date) {
+        const d = payload.expiration_date;
 
-  if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
-    enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
-    return;
-  }
+        if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
+          enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
+          return;
+        }
 
-  payload.expiration_date = d.toISOString();
-}
+        payload.expiration_date = d.toISOString();
+      }
 
-if (!isEdit && stockLocked) {
-  payload.available_stock = 1;
-}
+      if (!isEdit && stockLocked) {
+        payload.available_stock = 1;
+      }
 
-const response = await fetch(url, {
-  method,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload),
-});
-
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       const text = await response.text();
 
@@ -386,6 +380,7 @@ const response = await fetch(url, {
         isEdit ? '¡Publicación actualizada con éxito!' : '¡Publicación creada con éxito!',
         { variant: 'success' }
       );
+
       router.push(paths.dashboard.publication.root);
     } catch (error) {
       console.error('Error al guardar publicación:', error);
