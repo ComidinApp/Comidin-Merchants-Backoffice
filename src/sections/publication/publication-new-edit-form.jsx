@@ -40,38 +40,6 @@ import FormProvider, { RHFTextField } from 'src/components/hook-form';
 
 const { VITE_API_COMIDIN } = import.meta.env;
 
-const toLocalDate = (v) => {
-  if (!v) return null;
-
-  if (v instanceof Date) {
-    return new Date(v.getFullYear(), v.getMonth(), v.getDate(), v.getHours(), v.getMinutes(), 0, 0);
-  }
-
-  if (
-    typeof v?.year === 'function' &&
-    typeof v?.month === 'function' &&
-    typeof v?.date === 'function' &&
-    typeof v?.hour === 'function' &&
-    typeof v?.minute === 'function'
-  ) {
-    return new Date(v.year(), v.month(), v.date(), v.hour(), v.minute(), 0, 0);
-  }
-
-  if (typeof v?.toJSDate === 'function') {
-    const d = v.toJSDate();
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0, 0);
-  }
-
-  if (typeof v?.toDate === 'function') {
-    const d = v.toDate();
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0, 0);
-  }
-
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return null;
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0, 0);
-};
-
 export default function PublicationNewEditForm({ currentPublication }) {
   const router = useRouter();
   const authUser = useAuthContext();
@@ -92,6 +60,8 @@ export default function PublicationNewEditForm({ currentPublication }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const [screenLoading, setScreenLoading] = useState(false);
+
+  const [minDateTime] = useState(() => new Date());
 
   const [limitBlock, setLimitBlock] = useState({
     blocked: false,
@@ -158,27 +128,15 @@ export default function PublicationNewEditForm({ currentPublication }) {
       .required('El estado es obligatorio')
       .oneOf(['active', 'inactive'], 'Estado inválido'),
 
-    expiration_date: Yup.mixed()
+    expiration_date: Yup.date()
+      .nullable()
       .required('La fecha de vencimiento es obligatoria')
       .test(
         'future-datetime',
         'La fecha y hora de vencimiento deben ser posteriores al momento actual',
         (value) => {
-          const selected = toLocalDate(value);
-          if (!selected) return false;
-
-          const now = new Date();
-          const nowLocal = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate(),
-            now.getHours(),
-            now.getMinutes(),
-            0,
-            0
-          );
-
-          return selected.getTime() >= nowLocal.getTime();
+          if (!(value instanceof Date) || Number.isNaN(value.getTime())) return false;
+          return value.getTime() > Date.now() - 30_000;
         }
       ),
   });
@@ -294,7 +252,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
         setLimitBlock({ blocked: false, message: '' });
         setBenefitsLoaded(true);
         setCanAddStock(true);
-        // eslint-disable-next-line no-console
         console.warn('[Publication] validateOnEnter falló:', e);
       } finally {
         if (alive) {
@@ -395,12 +352,14 @@ export default function PublicationNewEditForm({ currentPublication }) {
       const method = isEdit ? 'PUT' : 'POST';
 
       if (data.expiration_date) {
-        const local = toLocalDate(data.expiration_date);
-        if (!local) {
+        const d = data.expiration_date;
+
+        if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
           enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
           return;
         }
-        data.expiration_date = local.toISOString();
+
+        data.expiration_date = d.toISOString();
       }
 
       const response = await fetch(url, {
@@ -422,7 +381,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
       );
       router.push(paths.dashboard.publication.root);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Error al guardar publicación:', error);
       enqueueSnackbar('Ocurrió un error al guardar la publicación.', { variant: 'error' });
     }
@@ -512,7 +470,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
               <DateTimePicker
                 label="Fecha y hora de vencimiento"
                 value={values.expiration_date}
-                minDateTime={new Date()}
+                minDateTime={minDateTime}
                 onChange={(newValue) =>
                   setValue('expiration_date', newValue, {
                     shouldValidate: true,
