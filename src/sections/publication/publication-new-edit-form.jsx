@@ -351,22 +351,29 @@ export default function PublicationNewEditForm({ currentPublication }) {
 
       const method = isEdit ? 'PUT' : 'POST';
 
-      if (data.expiration_date) {
-        const d = data.expiration_date;
+const payload = { ...data };
 
-        if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
-          enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
-          return;
-        }
+if (payload.expiration_date) {
+  const d = payload.expiration_date;
 
-        data.expiration_date = d.toISOString();
-      }
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) {
+    enqueueSnackbar('La fecha de vencimiento es inválida.', { variant: 'error' });
+    return;
+  }
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+  payload.expiration_date = d.toISOString();
+}
+
+if (!isEdit && stockLocked) {
+  payload.available_stock = 1;
+}
+
+const response = await fetch(url, {
+  method,
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload),
+});
+
 
       const text = await response.text();
 
