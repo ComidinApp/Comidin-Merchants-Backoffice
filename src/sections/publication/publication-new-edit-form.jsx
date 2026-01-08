@@ -271,7 +271,7 @@ export default function PublicationNewEditForm({ currentPublication }) {
           if (activeCount >= maxPublications) {
             setLimitBlock({
               blocked: true,
-              message: `Alcanzaste el máximo de publicaciones activas permitidas (${maxPublications}).`,
+              message: `Alcanzaste el máximo de publicaciones activas permitidas (${maxPublications}) para tu suscripción.`,
             });
           } else {
             setLimitBlock({ blocked: false, message: '' });
