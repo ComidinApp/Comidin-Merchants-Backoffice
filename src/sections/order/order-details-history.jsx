@@ -85,8 +85,8 @@ export default function OrderDetailsHistory({ orderHistory, currentStatus }) {
     );
 
   return (
-    <Card>
-      <CardHeader title="Historial" />
+    <Card sx={{ border: '2px solid #C2672D' }}>
+      <CardHeader title="Historial" sx={{ color: "#C2672D", fontWeight: 'bold' }} />
       <Stack spacing={3} sx={{ p: 3 }}>
         {renderTimeline}
       </Stack>

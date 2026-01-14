@@ -248,7 +248,7 @@ export default function UserListView() {
           }}
         />
 
-        <Card>
+        <Card sx={{ borderColor: 'common.orangeDark', borderWidth: 2, borderStyle: 'solid', borderRadius: 2 }}>
           <Tabs
             value={filters.status}
             onChange={handleFilterStatus}

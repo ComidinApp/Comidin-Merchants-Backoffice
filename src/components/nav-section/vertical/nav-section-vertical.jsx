@@ -57,7 +57,7 @@ function Group({ subheader, items, slotProps }) {
               cursor: 'pointer',
               typography: 'overline',
               display: 'inline-flex',
-              color: 'text.disabled',
+              color: "#95541B",
               mb: `${slotProps?.gap || 4}px`,
               p: (theme) => theme.spacing(2, 1, 1, 1.5),
               transition: (theme) =>

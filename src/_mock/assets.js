@@ -246,27 +246,6 @@ export const _postTitles = [
   'Salva buena comida del desperdicio',
   'Menos desperdicio, más planeta',
   'Cada grano cuenta, no lo deseches',
-  /* 'How to Master the Art of Public Speaking',
-  'The Future of Artificial Intelligence: Trends and Insights',
-  'Delicious Recipes for a Vegan Diet',
-  "A Beginner's Guide to Investing in Stocks",
-  'The Impact of Social Media on Society',
-  '10 Must-Visit Destinations for Adventure Travelers',
-  'The Benefits of Mindfulness Meditation',
-  'The Importance of Mental Health Awareness',
-  'Building a Strong Personal Brand: Tips and Strategies',
-  '10 Effective Strategies for Digital Marketing Success',
-  'Unveiling the Secrets of Successful Entrepreneurs',
-  'The Rise of Remote Work and its Impact on the Workforce',
-  'The Art of Landscape Photography: Techniques and Inspiration',
-  'Understanding Blockchain Technology and its Potential Applications',
-  'How to Create Engaging Content for Social Media',
-  'The Role of Artificial Intelligence in Healthcare',
-  '10 Home Organization Hacks for a Clutter-Free Space',
-  'Exploring the History and Culture of [City/Region]',
-  'The Power of Positive Thinking: Transform Your Mindset',
-  'The Influence of Music on Mood and Emotions',
-  'Travel Photography Tips: Capturing Memories Around the World', */
 ];
 
 // ----------------------------------------------------------------------
@@ -446,30 +425,9 @@ export const _taskNames = [
 // ----------------------------------------------------------------------
 
 export const _sentences = [
-  'Fomenta el consumo de productos locales y de temporada.',
-  'Combina la sostenibilidad con el disfrute de la comida.',
-  'Date una segunda oportunidad! Transforma las sobras en nuevas recetas.',
-  /* 'The aroma of freshly brewed coffee filled the air, awakening my senses.',
-  'The children giggled with joy as they ran through the sprinklers on a hot summer day.',
-  'He carefully crafted a beautiful sculpture out of clay, his hands skillfully shaping the intricate details.',
-  'The concert was a mesmerizing experience, with the music filling the venue and the crowd cheering in delight.',
-  'The waves crashed against the shore, creating a soothing symphony of sound.',
-  'The scent of blooming flowers wafted through the garden, creating a fragrant paradise.',
-  'She gazed up at the night sky, marveling at the twinkling stars that dotted the darkness.',
-  'The professor delivered a captivating lecture, engaging the students with thought-provoking ideas.',
-  'The hiker trekked through the dense forest, guided by the soft glow of sunlight filtering through the trees.',
-  'The delicate butterfly gracefully fluttered from flower to flower, sipping nectar with its slender proboscis.',
-  'The aroma of freshly baked cookies filled the kitchen, tempting everyone with its irresistible scent.',
-  "The majestic waterfall cascaded down the rocks, creating a breathtaking display of nature's power.",
-  'The actor delivered a powerful performance, moving the audience to tears with his emotional portrayal.',
-  'The book transported me to a magical world, where imagination knew no bounds.',
-  'The scent of rain filled the air as dark clouds gathered overhead, promising a refreshing downpour.',
-  'The chef skillfully plated the dish, turning simple ingredients into a work of culinary art.',
-  'The newborn baby let out a tiny cry, announcing its arrival to the world.',
-  'The athlete sprinted across the finish line, arms raised in victory as the crowd erupted in applause.',
-  'The ancient ruins stood as a testament to a civilization long gone, their grandeur still awe-inspiring.',
-  'The artist dipped the brush into vibrant paint, bringing the canvas to life with bold strokes and vivid colors.',
-  'The laughter of children echoed through the playground, filling the atmosphere with pure joy.', */
+  'Fomenta el consumo de productos locales.',
+  'Impulsa la sostenibilidad.',
+  'Transformá las sobras en nuevas recetas.',
 ];
 
 // ----------------------------------------------------------------------

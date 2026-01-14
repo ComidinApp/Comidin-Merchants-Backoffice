@@ -53,7 +53,7 @@ export default function AdminSubscriptionsView() {
   }, [commerces]);
 
   // Combinar suscripciones con datos de comercios
-  const enrichedSubscriptions = useMemo(() => 
+  const enrichedSubscriptions = useMemo(() =>
     (subscriptions || []).map((sub) => ({
       ...sub,
       commerce: commercesMap[sub.commerce_id] || null,
@@ -139,7 +139,7 @@ export default function AdminSubscriptionsView() {
       </Box>
 
       {/* Tabla de suscripciones */}
-      <Card>
+      <Card sx={{ borderColor: 'common.orangeDark', borderWidth: 2, borderStyle: 'solid', borderRadius: 2 }}>
         <Scrollbar>
           <TableContainer sx={{ minWidth: 800 }}>
             <Table>

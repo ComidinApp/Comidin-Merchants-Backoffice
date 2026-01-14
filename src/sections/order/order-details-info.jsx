@@ -36,6 +36,7 @@ export default function OrderDetailsInfo({
     <>
       <CardHeader
         title="Informacion del Cliente"
+        sx={{ color: "#C2672D", fontWeight: 'bold' }}
         /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
@@ -74,33 +75,11 @@ export default function OrderDetailsInfo({
     </>
   );
 
-  const renderDelivery = (
-    <>
-      <CardHeader title="Delivery" />
-      <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
-        {/* Encargado del envío */}
-        <Stack direction="row" alignItems="center">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Encargado del envio
-          </Box>
-          <Box>{delivery === 'pickup' ? 'Consumidor' : commerce.name}</Box>
-        </Stack>
-
-        {/* Tipo */}
-        <Stack direction="row" alignItems="center">
-          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
-            Tipo
-          </Box>
-          <Box>{delivery === 'pickup' ? 'Retiro en local' : 'Entrega a domicilio'}</Box>
-        </Stack>
-      </Stack>
-    </>
-  );
-
   const renderShipping = (
     <>
       <CardHeader
-        title="Entrega"
+        title="Direccion del usuario"
+        sx={{ color: "#C2672D", fontWeight: 'bold' }}
         /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
@@ -145,6 +124,7 @@ export default function OrderDetailsInfo({
     <>
       <CardHeader
         title="Pago"
+        sx={{ color: "#C2672D", fontWeight: 'bold' }}
         /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />
@@ -170,12 +150,8 @@ export default function OrderDetailsInfo({
   );
 
   return (
-    <Card>
+    <Card sx={{ border: '2px solid #C2672D' }}>
       {renderCustomer}
-
-      <Divider sx={{ borderStyle: 'dashed' }} />
-
-      {renderDelivery}
 
       <Divider sx={{ borderStyle: 'dashed' }} />
 

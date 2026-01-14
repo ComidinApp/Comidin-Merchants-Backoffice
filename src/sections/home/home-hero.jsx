@@ -11,19 +11,13 @@ import { alpha, styled, useTheme } from '@mui/material/styles';
 import { useResponsive } from 'src/hooks/use-responsive';
 
 import { HEADER } from 'src/layouts/config-layout';
-import { bgGradient, textGradient } from 'src/theme/css';
 
 import { varFade, MotionContainer } from 'src/components/animate';
 
 // ----------------------------------------------------------------------
 
 const StyledRoot = styled('div')(({ theme }) => ({
-  ...bgGradient({
-    color: alpha('#95541B', theme.palette.mode === 'light' ? 0.9 : 0.94),
-    startColor: '#FEFAE0',
-    endColor: '#D67030',
-    direction: 'to right top'
-  }),
+  backgroundColor: '#FEFAE0',
   width: '100%',
   height: '100vh',
   position: 'relative',
@@ -40,25 +34,6 @@ const StyledWrapper = styled('div')(({ theme }) => ({
   position: 'relative',
   [theme.breakpoints.up('md')]: {
     marginTop: HEADER.H_DESKTOP_OFFSET,
-  },
-}));
-
-const StyledTextGradient = styled(m.h1)(({ theme }) => ({
-  ...textGradient(
-    `300deg, ${theme.palette.primary.main} 0%, ${theme.palette.warning.main} 25%, ${theme.palette.primary.main} 50%, ${theme.palette.warning.main} 75%, ${theme.palette.primary.main} 100%`
-  ),
-  padding: 0,
-  marginTop: 8,
-  lineHeight: 1,
-  fontWeight: 900,
-  marginBottom: 24,
-  letterSpacing: 8,
-  textAlign: 'center',
-  backgroundSize: '400%',
-  fontSize: `${64 / 16}rem`,
-  fontFamily: theme.typography.fontFamily,
-  [theme.breakpoints.up('md')]: {
-    fontSize: `${96 / 16}rem`,
   },
 }));
 
@@ -172,34 +147,28 @@ export default function HomeHero() {
     >
       <m.div variants={varFade().in}>
         <Typography
-          variant="h2"
+          variant="h4"
           sx={{
             textAlign: 'center',
             fontFamily: theme.typography.fontFamily,
           }}
         >
-          Comenzá a <br />
-          vender con
+          Salvá comida con
         </Typography>
       </m.div>
 
       <m.div variants={varFade().in}>
-        <StyledTextGradient
-          animate={{ backgroundPosition: '200% center' }}
-          transition={{
-            repeatType: 'reverse',
-            ease: 'linear',
-            duration: 20,
-            repeat: Infinity,
-          }}
-        >
-          Comidín
-        </StyledTextGradient>
+      <Box
+            component="img"
+            src="/logo/logo_comidin.svg"
+            alt="Comidin"
+            sx={{ width: 630, mt: 'auto', mb: 2 }}
+          />
       </m.div>
 
       <m.div variants={varFade().in}>
-        <Typography variant="body2" sx={{ textAlign: 'center' }}>
-          Supermercados, tiendas, restaurantes, y mucho más!
+        <Typography variant="body3" sx={{ textAlign: 'center' }}>
+          Supermercados, restaurantes, panaderías, verdulerías
         </Typography>
       </m.div>
     </Stack>
@@ -267,11 +236,11 @@ export default function HomeHero() {
           component={m.img}
           animate={{ y: ['100%', '0%'] }}
           transition={transition}
-          alt={lightMode ? 'light_2' : 'dark_2'}
+          alt={lightMode ? 'light_3' : 'dark_2'}
           src={
             lightMode
-              ? `/assets/images/home/hero/light_2.webp`
-              : `/assets/images/home/hero/light_2.webp`
+              ? `/assets/images/home/hero/light_3.webp`
+              : `/assets/images/home/hero/light_3.webp`
           }
           sx={{ position: 'absolute', mt: -5 }}
         />
@@ -282,8 +251,8 @@ export default function HomeHero() {
           alt={lightMode ? 'light_2' : 'dark_2'}
           src={
             lightMode
-              ? `/assets/images/home/hero/light_2.webp`
-              : `/assets/images/home/hero/light_2.webp`
+              ? `/assets/images/home/hero/light_3.webp`
+              : `/assets/images/home/hero/light_3.webp`
           }
           sx={{ position: 'absolute' }}
         />

@@ -45,22 +45,18 @@ export default function AboutVision() {
       sx={{
         pb: 10,
         position: 'relative',
-        bgcolor: 'background.neutral',
-        '&:before': {
-          top: 0,
-          left: 0,
-          width: 1,
-          content: "''",
-          position: 'absolute',
-          height: { xs: 80, md: 120 },
-          bgcolor: 'background.default',
-        },
+        bgcolor: 'background.white',
       }}
     >
+      <m.div variants={varFade().inUp}>
+          <Typography variant="h2" sx={{ textAlign: 'center', maxWidth: 800, mx: 'auto', color: 'common.orangeDark', marginBottom: 3, marginTop: 5 }}>
+            Conoce Comidín
+          </Typography>
+        </m.div>
       <Container component={MotionViewport}>
         <Box
           sx={{
-            marginTop:'20px',
+            paddingTop:'20px',
             mb: 10,
             borderRadius: 2,
             display: 'flex',

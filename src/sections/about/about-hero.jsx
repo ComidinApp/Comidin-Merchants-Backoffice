@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
 
 import { varFade, MotionContainer } from 'src/components/animate';
 
@@ -22,14 +21,14 @@ export default function AboutHero() {
         backgroundPosition: 'center',
         backgroundImage:
           'url(/assets/images/about/hero_comidin.webp)',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
         backgroundBlendMode: 'overlay',
       }}
     >
       <Container component={MotionContainer}>
         <Box
           sx={{
-            bottom: { md: 80 },
+            bottom: { md: 180 },
             position: { md: 'absolute' },
             textAlign: {
               xs: 'center',
@@ -37,28 +36,14 @@ export default function AboutHero() {
             },
           }}
         >
-          <TextAnimate text="¿Quiénes" variants={varFade().inRight} sx={{ color: 'primary.main' }} />
+          <TextAnimate text="Sobre" variants={varFade().inRight} sx={{ color: 'primary.main' }} />
 
           <br />
 
-          <Stack spacing={2} display="inline-flex" direction="row" sx={{ color: 'common.white' }}>
-            <TextAnimate text="somos" />
-            <TextAnimate text="parte?" />
+          <Stack spacing={2} display="inline-flex" direction="row" sx={{ color: 'primary.main' }}>
+            <TextAnimate text="nosotros," />
+            <TextAnimate text="Comidín" />
           </Stack>
-
-          <m.div variants={varFade().inRight}>
-            <Typography
-              variant="h4"
-              sx={{
-                mt: 3,
-                color: 'common.white',
-                fontWeight: 'fontWeightSemiBold',
-              }}
-            >
-              Trabajemos juntos para un planeta
-              <br /> más verde y próspero
-            </Typography>
-          </m.div>
         </Box>
       </Container>
     </Box>

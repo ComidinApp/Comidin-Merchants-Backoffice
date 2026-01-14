@@ -79,7 +79,7 @@ export default function CognitoLoginView() {
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5, color: 'common.greenDark' }}>
-      <Typography variant="h4">Inicia sesión en Comidin</Typography>
+      <Typography variant="h4">Iniciá sesión en Comidin</Typography>
     </Stack>
   );
 

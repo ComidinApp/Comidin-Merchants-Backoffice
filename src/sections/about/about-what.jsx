@@ -33,7 +33,7 @@ export default function AboutWhat() {
   )}`;
 
   return (
-    <Box sx={{ backgroundColor: '#95541B', width: '100%'}}>
+    <Box sx={{ backgroundColor: '#FEFAE0', width: '100%'}}>
     <Container
       component={MotionViewport}
       sx={{
@@ -72,7 +72,7 @@ export default function AboutWhat() {
 
         <Grid xs={12} md={6} lg={5}>
           <m.div variants={varFade().inRight}>
-            <Typography variant="h2" sx={{ mb: 3, color: 'common.white' }}>
+            <Typography variant="h2" sx={{ mb: 3, color: 'common.orangeDark' }}>
               ¿Qué es Comidín?
             </Typography>
           </m.div>
@@ -80,7 +80,7 @@ export default function AboutWhat() {
           <m.div variants={varFade().inRight}>
             <Typography
               sx={{
-                color: 'common.white',
+                color: 'text.primary',
                 textAlign: 'justify',
               }}
             >
@@ -114,17 +114,6 @@ export default function AboutWhat() {
               </Box>
             ))}
           </Stack> */}
-
-          <m.div variants={varFade().inRight}>
-            {/* <Button
-              variant="outlined"
-              color="inherit"
-              size="large"
-              endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
-            >
-              Our Work
-            </Button> */}
-          </m.div>
         </Grid>
       </Grid>
     </Container>

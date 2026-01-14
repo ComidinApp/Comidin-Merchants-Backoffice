@@ -34,7 +34,14 @@ export default function AboutTeam() {
   });
 
   return (
-    <Container component={MotionViewport} sx={{ textAlign: 'center', py: { xs: 10, md: 15 } }}>
+    <Box
+      sx={{
+        p: 10,
+        position: 'relative',
+        bgcolor: 'background.orangeLight',
+      }}
+    >
+    <Container component={MotionViewport} sx={{ textAlign: 'center', py: { xs: 10, md: 5 }, width: '100%', backgroundColor: 'common.white', borderRadius: 10 }}>
       <m.div variants={varFade().inUp}>
         <Typography variant="h2" sx={{ my: 3 }}>
           Un gran equipo es la clave
@@ -46,7 +53,7 @@ export default function AboutTeam() {
           sx={{
             mx: 'auto',
             maxWidth: 640,
-            color: 'text.secondary',
+            color: 'common.orangeDark',
           }}
         >
           Comidin te brindará soporte si tienes algún problema, nuestro equipo te
@@ -101,6 +108,7 @@ export default function AboutTeam() {
         All Members
       </Button> */}
     </Container>
+    </Box>
   );
 }
 

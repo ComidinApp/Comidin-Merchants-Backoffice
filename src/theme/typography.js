@@ -57,6 +57,7 @@ export const typography = {
     lineHeight: 1.5,
     fontSize: pxToRem(20),
     ...responsiveFontSizes({ sm: 20, md: 24, lg: 24 }),
+    color: "#C2672D",
   },
   h5: {
     fontWeight: 700,
@@ -67,8 +68,16 @@ export const typography = {
   h6: {
     fontWeight: 700,
     lineHeight: 28 / 18,
-    fontSize: pxToRem(17),
+    fontSize: pxToRem(20),
     ...responsiveFontSizes({ sm: 18, md: 18, lg: 18 }),
+    color: "#C2672D",
+  },
+  h7: {
+    fontWeight: 700,
+    lineHeight: 1.5,
+    fontSize: pxToRem(24),
+    ...responsiveFontSizes({ sm: 26, md: 30, lg: 32 }),
+    color: "#C2672D",
   },
   subtitle1: {
     fontWeight: 600,
@@ -87,6 +96,12 @@ export const typography = {
   body2: {
     lineHeight: 22 / 14,
     fontSize: pxToRem(14),
+  },
+  body3: {
+    lineHeight: 22 / 14,
+    fontSize: pxToRem(16),
+    color: "#D67030",
+    fontWeight: 'bold',
   },
   caption: {
     lineHeight: 1.5,

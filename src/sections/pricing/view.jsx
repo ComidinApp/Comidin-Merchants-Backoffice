@@ -17,12 +17,12 @@ export default function PricingView() {
   // Vista de administrador: resumen de todas las suscripciones
   if (isAdmin) {
     return (
-      <Container sx={{ pt: 15, pb: 10, minHeight: 1 }}>
-        <Typography variant="h3" align="center" sx={{ mb: 2 }}>
+      <Container sx={{ pt: 5, pb: 10, minHeight: 1 }}>
+        <Typography variant="h7" align="left" sx={{ mb: 2 }}>
           Gestión de Suscripciones
         </Typography>
 
-        <Typography align="center" sx={{ color: 'text.secondary', mb: 5 }}>
+        <Typography align="left" sx={{ color: 'text.primary', mb: 5 }}>
           Resumen de todas las suscripciones de los comercios
         </Typography>
 

@@ -81,7 +81,7 @@ export const dashboardRoutes = [
       {
         path: 'my-commerce',
         element: (
-          <RoleBasedGuard allowedRoleIds={[1, 2]} hasContent>
+          <RoleBasedGuard allowedRoleIds={[1, 6]} hasContent>
             <MyCommercePage />
           </RoleBasedGuard>
         ),

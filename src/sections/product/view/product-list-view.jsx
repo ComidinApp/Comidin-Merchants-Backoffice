@@ -330,6 +330,7 @@ const handleDeleteRows = useCallback(
           }}
         >
           <DataGrid
+            sx={{ borderColor: 'common.orangeDark', borderWidth: 2, borderStyle: 'solid', borderRadius: 2 }}
             checkboxSelection
             disableRowSelectionOnClick
             rows={dataFiltered}

@@ -13,8 +13,6 @@ import { paths } from 'src/routes/paths';
 import { useOffSetTop } from 'src/hooks/use-off-set-top';
 import { useResponsive } from 'src/hooks/use-responsive';
 
-import Logo from 'src/components/logo';
-
 import NavMobile from './nav/mobile';
 import NavDesktop from './nav/desktop';
 import { HEADER } from '../config-layout';
@@ -65,7 +63,7 @@ export default function Header() {
               />
             }
           >
-            <Logo />
+            {/* <Logo /> */}
           </Badge>
 
           <Box sx={{ flexGrow: 1 }} />
@@ -85,7 +83,7 @@ export default function Header() {
                 },
               }}
             >
-              Registra tu Comercio
+              Registrá tu Comercio
             </Button>
 
             {mdUp && (

@@ -78,6 +78,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
             height: 1,
             position: 'fixed',
             width: NAV.W_VERTICAL,
+            backgroundColor: '#FEFAE0',
             borderRight: (theme) => `dashed 1px ${theme.palette.divider}`,
           }}
         >
@@ -90,6 +91,7 @@ export default function NavVertical({ openNav, onCloseNav }) {
           PaperProps={{
             sx: {
               width: NAV.W_VERTICAL,
+              backgroundColor: '#FEFAE0',
             },
           }}
         >

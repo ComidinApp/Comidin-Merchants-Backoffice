@@ -120,6 +120,7 @@ export function palette(mode) {
       default: '#FFFFFF',
       neutral: grey[200],
       orange: '#DDA15E',
+      orangeLight: '#FEFAE0',
     },
     action: {
       ...base.action,

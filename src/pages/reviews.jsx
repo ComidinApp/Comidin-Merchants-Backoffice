@@ -27,7 +27,7 @@ export default function ReviewsPage() {
   const auth = useAuthContext();
   const { isAdmin } = usePermissions();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const [data, setData] = useState({ averageRating: 0, totalRatings: 0, ratings: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -117,8 +117,8 @@ export default function ReviewsPage() {
 
     return (
       <Stack sx={{ mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Seleccionar comercio
+        <Typography variant="h4" sx={{ mb: 2 }}>
+          Seleccioná tu comercio
         </Typography>
         <Autocomplete
           value={selectedCommerce}
@@ -142,7 +142,7 @@ export default function ReviewsPage() {
               }}
             />
           )}
-          sx={{ maxWidth: 400 }}
+          sx={{ maxWidth: 400}}
         />
       </Stack>
     );
@@ -182,7 +182,7 @@ export default function ReviewsPage() {
 
         {/* Mensaje para admin cuando no ha seleccionado comercio */}
         {isAdmin && !selectedCommerce && (
-          <Typography variant="body1" textAlign="center" sx={{ mt: 4 }} color="text.secondary">
+          <Typography variant="body1" textAlign="center" sx={{ mt: 4 }} color="text.primary">
             Selecciona un comercio para ver sus reseñas.
           </Typography>
         )}
@@ -208,7 +208,7 @@ export default function ReviewsPage() {
 
             {data.ratings?.length === 0 ? (
               <Typography variant="body1" textAlign="center" sx={{ mt: 4 }} color="text.secondary">
-                {isAdmin 
+                {isAdmin
                   ? 'No hay reseñas para este comercio.'
                   : 'Aún no hay reseñas para tu comercio.'
                 }
@@ -218,8 +218,8 @@ export default function ReviewsPage() {
                 <Grid container spacing={3} sx={{ mt: 1 }}>
                   {visibleReviews.map((rv, index) => (
                     <Grid key={rv.id || `${rv.product_name}-${index}`} xs={12} sm={6} md={4}>
-                      <ReviewCard 
-                        review={rv} 
+                      <ReviewCard
+                        review={rv}
                         canDelete={isAdmin}
                         onDelete={() => handleDeleteReview(rv.id)}
                       />

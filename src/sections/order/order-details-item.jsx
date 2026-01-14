@@ -48,18 +48,6 @@ export default function OrderDetailsItems({
       </Stack>
 
       <Stack direction="row">
-        <Box sx={{ color: 'text.secondary' }}>Envio</Box>
-        <Box
-          sx={{
-            width: 160,
-            ...(shipping && { color: 'error.main' }),
-          }}
-        >
-          {shipping ? `- ${fCurrency(shipping)}` : '-'}
-        </Box>
-      </Stack>
-
-      <Stack direction="row">
         <Box sx={{ color: 'text.secondary' }}>Servicio</Box>
         <Box sx={{ width: 160 }}>{taxes ? fCurrency(taxes) : '-'}</Box>
       </Stack>
@@ -72,9 +60,10 @@ export default function OrderDetailsItems({
   );
 
   return (
-    <Card>
+    <Card sx={{ border: '2px solid #C2672D' }}>
       <CardHeader
         title="Detalle"
+        sx={{ color: "#C2672D", fontWeight: 'bold' }}
         /* action={
           <IconButton>
             <Iconify icon="solar:pen-bold" />

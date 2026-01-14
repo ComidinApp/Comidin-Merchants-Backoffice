@@ -23,7 +23,7 @@ export default function MainLayout({ children }) {
         sx={{
           flexGrow: 1,
           ...(!homePage && {
-            pt: { xs: 8, md: 10 },
+            // pt: { xs: 8, md: 10 },
           }),
         }}
       >

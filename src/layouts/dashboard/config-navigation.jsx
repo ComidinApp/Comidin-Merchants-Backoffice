@@ -10,7 +10,7 @@ import SvgColor from 'src/components/svg-color';
 // ----------------------------------------------------------------------
 
 const icon = (name) => (
-  <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1 }} />
+  <SvgColor src={`/assets/icons/navbar/${name}.svg`} sx={{ width: 1, height: 1, color: "#95541B" }} />
   // OR
   // <Iconify icon="fluent:mail-24-filled" />
   // https://icon-sets.iconify.design/solar/
@@ -71,7 +71,7 @@ export function useNavData() {
         subheader: t('administracion'),
         items: [
           // MI COMERCIO - Supervisores y admins
-          [1, 2].includes(user?.user?.role_id) && {
+          [2].includes(user?.user?.role_id) && {
             title: t('mi comercio'),
             path: paths.dashboard.commerce.myCommerce,
             icon: ICONS.banking,
