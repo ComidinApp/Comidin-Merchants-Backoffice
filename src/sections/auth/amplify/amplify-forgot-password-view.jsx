@@ -68,7 +68,7 @@ export default function AmplifyForgotPasswordView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Send Request
+        Enviar código
       </LoadingButton>
 
       <Link
@@ -82,7 +82,7 @@ export default function AmplifyForgotPasswordView() {
         }}
       >
         <Iconify icon="eva:arrow-ios-back-fill" width={16} />
-        Return to sign in
+        Volver al login
       </Link>
     </Stack>
   );
@@ -92,11 +92,10 @@ export default function AmplifyForgotPasswordView() {
       <PasswordIcon sx={{ height: 96 }} />
 
       <Stack spacing={1} sx={{ mt: 3, mb: 5 }}>
-        <Typography variant="h3">Forgot your password?</Typography>
+        <Typography variant="h3">Olvidaste tu constraseña?</Typography>
 
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Please enter the email address associated with your account and We will email you a link
-          to reset your password.
+          Por favor ingresa un direccion de email asociada a tu cuenta y te enviremos un mail con un codigo para que reestablezcas tu constraseña.
         </Typography>
       </Stack>
     </>
