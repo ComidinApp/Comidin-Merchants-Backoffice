@@ -34,7 +34,7 @@ export default function CognitoLoginView() {
   const router = useRouter();
 
   const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false); // 👈 controla pantalla de carga
+  const [loading, setLoading] = useState(false);
 
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -43,9 +43,9 @@ export default function CognitoLoginView() {
 
   const LoginSchema = Yup.object().shape({
     email: Yup.string()
-      .required('Email is required')
-      .email('Email must be a valid email address'),
-    password: Yup.string().required('Password is required'),
+      .required('El correo electrónico es obligatorio')
+      .email('Ingresá un correo electrónico válido'),
+    password: Yup.string().required('La contraseña es obligatoria'),
   });
 
   const defaultValues = {
@@ -60,6 +60,27 @@ export default function CognitoLoginView() {
 
   const { handleSubmit } = methods;
 
+  // 🔐 Mapeo de errores Cognito → mensajes controlados
+  const mapCognitoError = (error) => {
+    switch (error?.name) {
+      case 'NotAuthorizedException':
+      case 'UserNotFoundException':
+        return 'El usuario o la contraseña son incorrectos.';
+
+      case 'UserNotConfirmedException':
+        return 'Tu cuenta aún no fue confirmada. Revisá tu correo electrónico.';
+
+      case 'PasswordResetRequiredException':
+        return 'Debés restablecer tu contraseña antes de iniciar sesión.';
+
+      case 'TooManyRequestsException':
+        return 'Demasiados intentos. Esperá unos minutos y volvé a intentar.';
+
+      default:
+        return 'Ocurrió un error al iniciar sesión. Intentá nuevamente.';
+    }
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     try {
       setErrorMsg('');
@@ -73,7 +94,7 @@ export default function CognitoLoginView() {
     } catch (error) {
       console.error(error);
       setLoading(false);
-      setErrorMsg(error.message);
+      setErrorMsg(mapCognitoError(error));
     }
   });
 
@@ -85,7 +106,7 @@ export default function CognitoLoginView() {
 
   const renderForm = (
     <Stack spacing={2.5}>
-      <RHFTextField name="email" label="Email" />
+      <RHFTextField name="email" label="Correo electrónico" />
 
       <RHFTextField
         name="password"
@@ -110,7 +131,7 @@ export default function CognitoLoginView() {
         underline="always"
         sx={{ alignSelf: 'flex-end' }}
       >
-        Olvidaste tu contraseña?
+        ¿Olvidaste tu contraseña?
       </Link>
 
       <LoadingButton
@@ -119,9 +140,9 @@ export default function CognitoLoginView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={false} // la pantalla de carga la maneja el Backdrop
+        loading={false}
       >
-        Iniciar Sesión
+        Iniciar sesión
       </LoadingButton>
     </Stack>
   );
@@ -140,9 +161,16 @@ export default function CognitoLoginView() {
         {renderForm}
       </FormProvider>
 
-      {loading && ( <SplashScreen sx={{ position: 'fixed', inset: 0, zIndex: (theme) => theme.zIndex.modal + 999, }} /> )}
+      {loading && (
+        <SplashScreen
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: (theme) => theme.zIndex.modal + 999,
+          }}
+        />
+      )}
 
-      {/* 🔹 Pantalla de carga global mientras intentamos loguear */}
       <Backdrop
         sx={(theme) => ({
           color: '#fff',
