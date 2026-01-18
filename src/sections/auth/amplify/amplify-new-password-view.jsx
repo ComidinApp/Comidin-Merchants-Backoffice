@@ -39,14 +39,18 @@ export default function AmplifyNewPasswordView() {
   const { countdown, counting, startCountdown } = useCountdownSeconds(60);
 
   const VerifySchema = Yup.object().shape({
-    code: Yup.string().min(6, 'Code must be at least 6 characters').required('Code is required'),
-    email: Yup.string().required('Email is required').email('Email must be a valid email address'),
+    code: Yup.string()
+      .min(6, 'El código debe tener al menos 6 caracteres')
+      .required('El código es obligatorio'),
+    email: Yup.string()
+      .required('El correo electrónico es obligatorio')
+      .email('Ingresá un correo electrónico válido'),
     password: Yup.string()
-      .min(6, 'Password must be at least 6 characters')
-      .required('Password is required'),
+      .min(6, 'La contraseña debe tener al menos 6 caracteres')
+      .required('La contraseña es obligatoria'),
     confirmPassword: Yup.string()
-      .required('Confirm password is required')
-      .oneOf([Yup.ref('password')], 'Passwords must match'),
+      .required('La confirmación de contraseña es obligatoria')
+      .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden'),
   });
 
   const defaultValues = {
@@ -93,8 +97,8 @@ export default function AmplifyNewPasswordView() {
     <Stack spacing={3} alignItems="center">
       <RHFTextField
         name="email"
-        label="Email"
-        placeholder="example@gmail.com"
+        label="Correo electrónico"
+        placeholder="ejemplo@gmail.com"
         InputLabelProps={{ shrink: true }}
       />
 
@@ -102,7 +106,7 @@ export default function AmplifyNewPasswordView() {
 
       <RHFTextField
         name="password"
-        label="Password"
+        label="Nueva contraseña"
         type={password.value ? 'text' : 'password'}
         InputProps={{
           endAdornment: (
@@ -117,7 +121,7 @@ export default function AmplifyNewPasswordView() {
 
       <RHFTextField
         name="confirmPassword"
-        label="Confirm New Password"
+        label="Confirmar nueva contraseña"
         type={password.value ? 'text' : 'password'}
         InputProps={{
           endAdornment: (
@@ -137,11 +141,11 @@ export default function AmplifyNewPasswordView() {
         variant="contained"
         loading={isSubmitting}
       >
-        Update Password
+        Actualizar contraseña
       </LoadingButton>
 
       <Typography variant="body2">
-        {`Don’t have a code? `}
+        {'¿No tenés un código? '}
         <Link
           variant="subtitle2"
           onClick={handleResendCode}
@@ -153,7 +157,7 @@ export default function AmplifyNewPasswordView() {
             }),
           }}
         >
-          Resend code {counting && `(${countdown}s)`}
+          Reenviar código {counting && `(${countdown}s)`}
         </Link>
       </Typography>
 
@@ -168,7 +172,7 @@ export default function AmplifyNewPasswordView() {
         }}
       >
         <Iconify icon="eva:arrow-ios-back-fill" width={16} />
-        Return to sign in
+        Volver a iniciar sesión
       </Link>
     </Stack>
   );
@@ -178,12 +182,12 @@ export default function AmplifyNewPasswordView() {
       <SentIcon sx={{ height: 96 }} />
 
       <Stack spacing={1} sx={{ mt: 3, mb: 5 }}>
-        <Typography variant="h3">Request sent successfully!</Typography>
+        <Typography variant="h3">¡Solicitud enviada con éxito!</Typography>
 
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          We&apos;ve sent a 6-digit confirmation email to your email.
+          Te enviamos un correo de confirmación con un código de 6 dígitos.
           <br />
-          Please enter the code in below box to verify your email.
+          Ingresá el código en el cuadro de abajo para verificar tu correo electrónico.
         </Typography>
       </Stack>
     </>
