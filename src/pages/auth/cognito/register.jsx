@@ -8,7 +8,7 @@ export default function RegisterPage() {
   return (
     <>
       <Helmet>
-        <title> Cognito: Register</title>
+        <title> Registrá tu comercio</title>
       </Helmet>
 
       <CognitoRegisterView />

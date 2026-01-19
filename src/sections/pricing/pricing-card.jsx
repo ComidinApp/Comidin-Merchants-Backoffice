@@ -435,7 +435,9 @@ export default function PricingCard({ card, sx, ...other }) {
         spacing={5}
         sx={{
           p: 5,
+          m: 1,
           borderRadius: 2,
+          backgroundColor: 'background.paper',
           boxShadow: (theme) => ({ xs: theme.customShadows.card, md: 'none' }),
           ...(starter && {
             borderTopRightRadius: { md: 0 },

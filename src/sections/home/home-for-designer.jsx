@@ -21,11 +21,6 @@ export default function HomeForDesigner() {
 
   const renderDescription = (
     <Box sx={{ textAlign: { xs: 'center', md: 'unset' }, mt: { xs: 10, md: 20 } }}>
-      <m.div variants={varFade().inUp}>
-        <Typography component="div" variant="overline" sx={{ color: 'text.disabled' }}>
-          Pide lo que sea con la app de Comidin!
-        </Typography>
-      </m.div>
 
       <m.div variants={varFade().inUp}>
         <Typography
@@ -38,7 +33,7 @@ export default function HomeForDesigner() {
             ),
           }}
         >
-          Descargá la app y empezá a ahorrar
+          Registrate y empezá a ahorrar
         </Typography>
       </m.div>
     </Box>

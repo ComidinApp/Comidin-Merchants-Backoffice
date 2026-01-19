@@ -68,7 +68,12 @@ export default function ReviewsPage() {
       setData(r);
     } catch (e) {
       console.error(e);
-      setError(e?.message || 'Error al cargar las reseñas.');
+      // Traducir mensaje del backend si viene en inglés
+      let errorMsg = e?.message || 'Error al cargar las reseñas.';
+      if (errorMsg === 'No ratings found for this commerce.') {
+        errorMsg = 'No se encontraron reseñas para este comercio.';
+      }
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

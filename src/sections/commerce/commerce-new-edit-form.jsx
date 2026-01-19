@@ -376,6 +376,7 @@ export default function CommerceNewEditForm({ currentCommerce, isMyCommerce = fa
                 <TimePicker
                   label="Horario de apertura"
                   value={openAt}
+                  ampm={false}
                   onChange={(newValue) => {
                     setOpenAt(newValue);
                     setValue('open_at', newValue, { shouldValidate: true });
@@ -392,6 +393,7 @@ export default function CommerceNewEditForm({ currentCommerce, isMyCommerce = fa
                 <TimePicker
                   label="Horario de cierre"
                   value={closeAt}
+                  ampm={false}
                   onChange={(newValue) => {
                     setCloseAt(newValue);
                     setValue('close_at', newValue, { shouldValidate: true });

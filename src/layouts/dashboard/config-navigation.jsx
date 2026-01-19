@@ -71,7 +71,7 @@ export function useNavData() {
         subheader: t('administracion'),
         items: [
           // MI COMERCIO - Supervisores y admins
-          [2].includes(user?.user?.role_id) && {
+          [6].includes(user?.user?.role_id) && {
             title: t('mi comercio'),
             path: paths.dashboard.commerce.myCommerce,
             icon: ICONS.banking,

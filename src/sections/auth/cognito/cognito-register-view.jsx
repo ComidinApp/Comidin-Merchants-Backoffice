@@ -73,9 +73,15 @@ const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_KB * 1024;
 
 // ================== Validación Yup ==================
 const RegisterSchema = Yup.object().shape({
-  name: Yup.string().nullable().required('El nombre del comercio es requerido'),
+  name: Yup.string()
+    .nullable()
+    .required('El nombre del comercio es requerido')
+    .max(100, 'El nombre no puede superar los 100 caracteres'),
 
-  street_name: Yup.string().nullable().required('La dirección es requerida'),
+  street_name: Yup.string()
+    .nullable()
+    .required('La dirección es requerida')
+    .max(30, 'La dirección no puede superar los 30 caracteres'),
 
   open_at: Yup.date()
     .nullable()
@@ -121,9 +127,15 @@ const RegisterSchema = Yup.object().shape({
     .required('El CUIT/CUIL es requerido')
     .matches(CUIL_REGEX, 'El CUIT/CUIL debe tener 11 números, sin guiones ni puntos'),
 
-  first_name: Yup.string().nullable().required('El nombre del responsable es requerido'),
+  first_name: Yup.string()
+    .nullable()
+    .required('El nombre del responsable es requerido')
+    .max(50, 'El nombre no puede superar los 50 caracteres'),
 
-  last_name: Yup.string().nullable().required('El apellido del responsable es requerido'),
+  last_name: Yup.string()
+    .nullable()
+    .required('El apellido del responsable es requerido')
+    .max(50, 'El apellido no puede superar los 50 caracteres'),
 
   email: Yup.string().nullable().required('El email es requerido').email('Debe ser un email válido'),
 
@@ -139,6 +151,11 @@ const RegisterSchema = Yup.object().shape({
       PASSWORD_POLICY,
       'Debe tener al menos 8 caracteres, con mayúscula, minúscula, número y símbolo'
     ),
+
+  confirmPassword: Yup.string()
+    .nullable()
+    .required('Debés confirmar la contraseña')
+    .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden'),
 
   commerce_category_id: Yup.string()
     .nullable()
@@ -173,6 +190,7 @@ const defaultValues = {
   phone_number: '',
   commerce_category_id: '',
   password: '',
+  confirmPassword: '',
   image_url: '',
   image_name: '',
   available_days: [],
@@ -604,6 +622,7 @@ export default function CognitoRegisterView() {
         'email',
         'phone_number',
         'password',
+        'confirmPassword',
         'national_id',
       ]);
 
@@ -644,7 +663,11 @@ export default function CognitoRegisterView() {
 
       return (
         <Stack spacing={2.5}>
-          <RHFTextField name="name" label="Nombre del Comercio" />
+          <RHFTextField
+            name="name"
+            label="Nombre del Comercio"
+            inputProps={{ maxLength: 100 }}
+          />
 
           <RHFTextField
             name="commerce_national_id"
@@ -673,11 +696,19 @@ export default function CognitoRegisterView() {
             ))}
           </RHFTextField>
 
-          <RHFTextField name="street_name" label="Dirección" />
+          <RHFTextField
+            name="street_name"
+            label="Dirección"
+            inputProps={{ maxLength: 50 }}
+          />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <RHFTextField name="number" label="Altura" />
-            <RHFTextField name="postal_code" label="Código Postal" />
+            <RHFTextField
+              name="number"
+              label="Altura"
+              inputProps={{ maxLength: 6 }}
+            />
+            <RHFTextField name="postal_code" label="Código Postal" inputProps={{ maxLength: 6 }} />
           </Stack>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -685,6 +716,7 @@ export default function CognitoRegisterView() {
               name="open_at"
               label="Horario de Apertura"
               value={openAt}
+              ampm={false}
               onChange={(newValue) => {
                 setOpenAt(newValue);
                 setValue('open_at', newValue, { shouldValidate: true });
@@ -702,6 +734,7 @@ export default function CognitoRegisterView() {
               name="close_at"
               label="Horario de Cierre"
               value={closeAt}
+              ampm={false}
               onChange={(newValue) => {
                 setCloseAt(newValue);
                 setValue('close_at', newValue, { shouldValidate: true });
@@ -758,8 +791,16 @@ export default function CognitoRegisterView() {
       return (
         <Stack spacing={2.5}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <RHFTextField name="first_name" label="Nombre del Responsable" />
-            <RHFTextField name="last_name" label="Apellido del Responsable" />
+            <RHFTextField
+              name="first_name"
+              label="Nombre del Responsable"
+              inputProps={{ maxLength: 30 }}
+            />
+            <RHFTextField
+              name="last_name"
+              label="Apellido del Responsable"
+              inputProps={{ maxLength: 30 }}
+            />
           </Stack>
 
           <RHFTextField
@@ -817,6 +858,22 @@ export default function CognitoRegisterView() {
               errors.password?.message ||
               'Mínimo 8 caracteres, con mayúscula, minúscula, número y símbolo'
             }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={password.onToggle} edge="end">
+                    <Iconify icon={password.value ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <RHFTextField
+            name="confirmPassword"
+            label="Confirmar Contraseña"
+            type={password.value ? 'text' : 'password'}
+            helperText={errors.confirmPassword?.message}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
