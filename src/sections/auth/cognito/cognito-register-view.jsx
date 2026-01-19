@@ -22,6 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 
+import { countries } from 'src/assets/data';
 import { useAuthContext } from 'src/auth/hooks';
 import { createCommerce } from 'src/api/commerce';
 import { VITE_API_COMIDIN, VITE_S3_ASSETS_AVATAR } from 'src/config-global';
@@ -29,7 +30,7 @@ import { VITE_API_COMIDIN, VITE_S3_ASSETS_AVATAR } from 'src/config-global';
 import Iconify from 'src/components/iconify';
 import { Upload } from 'src/components/upload';
 import { SplashScreen } from 'src/components/loading-screen';
-import FormProvider, { RHFTextField } from 'src/components/hook-form';
+import FormProvider, { RHFTextField, RHFAutocomplete } from 'src/components/hook-form';
 
 // ================== CONSTANTES ==================
 
@@ -57,6 +58,8 @@ const CUIL_REGEX = /^[0-9]{11}$/;
 // Teléfono sencillo: números, espacios, + y -
 const PHONE_REGEX = /^[0-9+\s-]{6,20}$/;
 
+const POSTAL_CODE_REGEX = /^[0-9]{3,10}$/;
+
 const daysOfWeek = [
   { value: 0, label: 'Lunes' },
   { value: 1, label: 'Martes' },
@@ -77,6 +80,7 @@ const RegisterSchema = Yup.object().shape({
     .nullable()
     .required('El nombre del comercio es requerido')
     .max(100, 'El nombre no puede superar los 100 caracteres'),
+  // ================== COMERCIO (step 0) ==================
 
   street_name: Yup.string()
     .nullable()
@@ -110,23 +114,34 @@ const RegisterSchema = Yup.object().shape({
   number: Yup.string()
     .nullable()
     .required('El número de la calle es requerido')
-    .matches(/^[0-9]{1,6}$/, 'El número debe ser numérico y razonable'),
+    .matches(/^[0-9]{1,6}$/, 'La altura debe ser numérica y razonable'),
 
   postal_code: Yup.string()
     .nullable()
     .required('El código postal es requerido')
-    .matches(/^[0-9]{3,10}$/, 'El código postal debe ser numérico'),
-
-  national_id: Yup.string()
-    .nullable()
-    .required('El DNI es requerido')
-    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'),
+    .matches(POSTAL_CODE_REGEX, 'El código postal debe ser numérico'),
 
   commerce_national_id: Yup.string()
     .nullable()
     .required('El CUIT/CUIL es requerido')
     .matches(CUIL_REGEX, 'El CUIT/CUIL debe tener 11 números, sin guiones ni puntos'),
 
+  commerce_category_id: Yup.string()
+    .nullable()
+    .required('La categoría de comercio es requerida')
+    .matches(/^[0-9]+$/, 'La categoría seleccionada no es válida'),
+
+  available_days: Yup.array()
+    .nullable()
+    .of(
+      Yup.number()
+        .min(0, 'Día inválido')
+        .max(6, 'Día inválido')
+    )
+    .min(1, 'Debe seleccionar al menos un día disponible')
+    .required('Debe seleccionar los días disponibles'),
+
+  // ================== RESPONSABLE (step 1) ==================
   first_name: Yup.string()
     .nullable()
     .required('El nombre del responsable es requerido')
@@ -136,6 +151,11 @@ const RegisterSchema = Yup.object().shape({
     .nullable()
     .required('El apellido del responsable es requerido')
     .max(50, 'El apellido no puede superar los 50 caracteres'),
+
+  national_id: Yup.string()
+    .nullable()
+    .required('El DNI es requerido')
+    .matches(DNI_REGEX, 'El DNI debe tener solo números (7 u 8 dígitos)'),
 
   email: Yup.string().nullable().required('El email es requerido').email('Debe ser un email válido'),
 
@@ -157,45 +177,58 @@ const RegisterSchema = Yup.object().shape({
     .required('Debés confirmar la contraseña')
     .oneOf([Yup.ref('password')], 'Las contraseñas no coinciden'),
 
-  commerce_category_id: Yup.string()
-    .nullable()
-    .required('La categoría de comercio es requerida')
-    .matches(/^[0-9]+$/, 'La categoría seleccionada no es válida'),
+  // ✅ NUEVOS CAMPOS DEL RESPONSABLE (employee)
+  address: Yup.string().nullable().required('La dirección del responsable es requerida'),
 
+  city: Yup.string().nullable().required('La ciudad del responsable es requerida'),
+
+  country: Yup.string().nullable().required('El país del responsable es requerido'),
+
+  // Ojo: este postal_code es del responsable (employee). El de comercio ya existe arriba.
+  // Para evitar colisión de nombre, este form YA usa postal_code para comercio.
+  // ✅ Solución: mantenemos postal_code como comercio (step 0) y agregamos postal_code_employee para responsable.
+  // Pero vos pediste "postal_code" tal cual. Si lo dejás igual, vas a pisar el CP del comercio.
+  // Por consistencia y para que no rompas el payload, lo agrego como postal_code_employee y lo mapeo al submit.
+  postal_code_employee: Yup.string()
+    .nullable()
+    .required('El código postal del responsable es requerido')
+    .matches(POSTAL_CODE_REGEX, 'El código postal del responsable debe ser numérico'),
+
+  // ================== LOGO (step 2) ==================
   image_url: Yup.string().nullable().required('La imagen es requerida'),
-
-  available_days: Yup.array()
-    .nullable()
-    .of(
-      Yup.number()
-        .min(0, 'Día inválido')
-        .max(6, 'Día inválido')
-    )
-    .min(1, 'Debe seleccionar al menos un día disponible')
-    .required('Debe seleccionar los días disponibles'),
 });
 
 const defaultValues = {
+  // Comercio
   name: '',
   street_name: '',
   number: '',
   open_at: null,
   close_at: null,
   postal_code: '',
-  national_id: '',
   commerce_national_id: '',
+  commerce_category_id: '',
+  available_days: [],
+
+  // Responsable
   first_name: '',
   last_name: '',
   email: '',
   phone_number: '',
-  commerce_category_id: '',
   password: '',
   confirmPassword: '',
+  national_id: '',
+
+  // ✅ NUEVOS Responsable (employee)
+  address: '',
+  city: '',
+  country: 'Argentina',
+  postal_code_employee: '',
+
+  // Logo
   image_url: '',
   image_name: '',
-  available_days: [],
 };
-
 
 export default function CognitoRegisterView() {
   const { register: registerCognito } = useAuthContext();
@@ -206,7 +239,6 @@ export default function CognitoRegisterView() {
   const [step, setStep] = useState(0);
   const [file, setFile] = useState(null);
   const [loadingScreen, setLoadingScreen] = useState(false);
-
 
   const assets_url = VITE_S3_ASSETS_AVATAR;
   const password = useBoolean();
@@ -411,17 +443,13 @@ export default function CognitoRegisterView() {
   }, [nationalId, clearErrors, setError]);
 
   const isNationalIdBusy =
-    nationalIdStatus === 'checking' ||
-    nationalIdStatus === 'exists' ||
-    nationalIdStatus === 'invalid';
+    nationalIdStatus === 'checking' || nationalIdStatus === 'exists' || nationalIdStatus === 'invalid';
 
-  // Helper sin ternarios anidados para el helperText del DNI
   const nationalIdHelperText = () => {
     if (errors.national_id?.message) return errors.national_id.message;
     if (nationalIdStatus === 'checking') return 'Verificando documento...';
     if (nationalIdStatus === 'exists') return 'Este documento ya está registrado.';
-    if (nationalIdStatus === 'invalid')
-      return 'El DNI debe tener solo números (7 u 8 dígitos).';
+    if (nationalIdStatus === 'invalid') return 'El DNI debe tener solo números (7 u 8 dígitos).';
     return 'Sólo números, sin puntos ni espacios';
   };
 
@@ -481,16 +509,13 @@ export default function CognitoRegisterView() {
     }, 600);
   }, [phoneNumber, clearErrors, setError]);
 
-  const isPhoneBusy =
-    phoneStatus === 'checking' || phoneStatus === 'exists' || phoneStatus === 'invalid';
+  const isPhoneBusy = phoneStatus === 'checking' || phoneStatus === 'exists' || phoneStatus === 'invalid';
 
-  // Helper sin ternarios anidados para el helperText del teléfono
   const phoneHelperText = () => {
     if (errors.phone_number?.message) return errors.phone_number.message;
     if (phoneStatus === 'checking') return 'Verificando teléfono...';
     if (phoneStatus === 'exists') return 'Este teléfono ya está registrado.';
-    if (phoneStatus === 'invalid')
-      return 'El teléfono solo puede contener números, espacios, + y -';
+    if (phoneStatus === 'invalid') return 'El teléfono solo puede contener números, espacios, + y -';
     return 'Sólo números, espacios, + y - (ej: +54 11 1234-5678)';
   };
 
@@ -546,6 +571,7 @@ export default function CognitoRegisterView() {
         return;
       }
 
+      // ===== Mapeos/formatos finales =====
       data.available_days = data.available_days.join(',');
       data.is_active = true;
 
@@ -563,11 +589,18 @@ export default function CognitoRegisterView() {
         data.close_at = formattedCloseAt;
       }
 
+      // Creamos comercio
       const commerce = await createCommerce(data);
 
+      // Armamos data para employee/cognito
       data.role_id = 6;
       data.commerce_id = commerce.id;
       data.avatar_url = `${assets_url}coffe.png`;
+
+      // ✅ IMPORTANTE: el CP del responsable va en postal_code (modelo employee)
+      // Como el form ya usa postal_code para comercio, lo guardamos en postal_code_employee y lo mapeamos acá:
+      data.postal_code = data.postal_code_employee;
+      delete data.postal_code_employee;
 
       await registerCognito?.(data);
     } catch (error) {
@@ -576,9 +609,10 @@ export default function CognitoRegisterView() {
 
       const backendErrors = error?.response?.data?.errors;
       const closeAtError = Array.isArray(backendErrors)
-        ? backendErrors.find((e) =>
-            typeof e?.msg === 'string' &&
-            e.msg.toLowerCase().includes('close_at must be later than open_at'.toLowerCase())
+        ? backendErrors.find(
+            (e) =>
+              typeof e?.msg === 'string' &&
+              e.msg.toLowerCase().includes('close_at must be later than open_at'.toLowerCase())
           )
         : null;
 
@@ -591,9 +625,7 @@ export default function CognitoRegisterView() {
         setErrorMsg('La hora de cierre debe ser posterior a la hora de apertura.');
       } else {
         setErrorMsg(
-          typeof error === 'string'
-            ? error
-            : error?.message || 'Ocurrió un error al registrar el comercio.'
+          typeof error === 'string' ? error : error?.message || 'Ocurrió un error al registrar el comercio.'
         );
       }
     }
@@ -624,6 +656,12 @@ export default function CognitoRegisterView() {
         'password',
         'confirmPassword',
         'national_id',
+
+        // ✅ NUEVOS: datos del responsable
+        'address',
+        'city',
+        'country',
+        'postal_code_employee',
       ]);
 
       if (isEmailBusy || isNationalIdBusy || isPhoneBusy) {
@@ -665,16 +703,14 @@ export default function CognitoRegisterView() {
         <Stack spacing={2.5}>
           <RHFTextField
             name="name"
-            label="Nombre del Comercio"
+            label="Nombre del comercio"
             inputProps={{ maxLength: 100 }}
           />
 
           <RHFTextField
             name="commerce_national_id"
-            label="CUIT/CUIL"
-            helperText={
-              errors.commerce_national_id?.message || 'Sólo números, sin puntos ni guiones'
-            }
+            label="CUIT/CUIL del comercio"
+            helperText={errors.commerce_national_id?.message || 'Sólo números, sin puntos ni guiones'}
             inputProps={{
               maxLength: 11,
               inputMode: 'numeric',
@@ -682,12 +718,7 @@ export default function CognitoRegisterView() {
             }}
           />
 
-          <RHFTextField
-            select
-            name="commerce_category_id"
-            SelectProps={{ native: true }}
-            fullWidth
-          >
+          <RHFTextField select name="commerce_category_id" SelectProps={{ native: true }} fullWidth>
             <option value="">Seleccioná una categoría</option>
             {commerce_categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -714,7 +745,7 @@ export default function CognitoRegisterView() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TimePicker
               name="open_at"
-              label="Horario de Apertura"
+              label="Horario de apertura"
               value={openAt}
               ampm={false}
               onChange={(newValue) => {
@@ -732,7 +763,7 @@ export default function CognitoRegisterView() {
             />
             <TimePicker
               name="close_at"
-              label="Horario de Cierre"
+              label="Horario de cierre"
               value={closeAt}
               ampm={false}
               onChange={(newValue) => {
@@ -793,27 +824,50 @@ export default function CognitoRegisterView() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <RHFTextField
               name="first_name"
-              label="Nombre del Responsable"
+              label="Nombre del responsable"
               inputProps={{ maxLength: 30 }}
             />
             <RHFTextField
               name="last_name"
-              label="Apellido del Responsable"
+              label="Apellido del responsable"
+              inputProps={{ maxLength: 30 }}
+              />
+          </Stack>
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <RHFAutocomplete
+              name="country"
+              type="country"
+              label="País del responsable"
+              placeholder="Elegí un país"
+              fullWidth
+              options={countries.map((option) => option.label)}
+              getOptionLabel={(option) => option}
+            />
+            <RHFTextField name="city" label="Ciudad del responsable" placeholder="Ej: Córdoba" inputProps={{ maxLength: 30 }} />
+          </Stack>
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <RHFTextField name="address" label="Dirección del responsable" placeholder="Calle y número" inputProps={{ maxLength: 50 }} />
+            <RHFTextField name="postal_code_employee" label="Código Postal del responsable"
               inputProps={{ maxLength: 30 }}
             />
           </Stack>
 
           <RHFTextField
             name="national_id"
-            label="DNI del Responsable"
+            label="DNI del responsable"
             helperText={nationalIdHelperText()}
+            inputProps={{
+              maxLength: 8,
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+            }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   {nationalIdStatus === 'checking' && <CircularProgress size={18} />}
-                  {nationalIdStatus === 'exists' && (
-                    <Iconify icon="solar:danger-bold" width={20} />
-                  )}
+                  {nationalIdStatus === 'exists' && <Iconify icon="solar:danger-bold" width={20} />}
                   {nationalIdStatus === 'available' && (
                     <Iconify icon="solar:check-circle-bold" width={20} />
                   )}
@@ -824,7 +878,7 @@ export default function CognitoRegisterView() {
 
           <RHFTextField
             name="email"
-            label="Email del Responsable"
+            label="Email del responsable"
             InputProps={{
               endAdornment: <InputAdornment position="end">{emailAdornment()}</InputAdornment>,
             }}
@@ -833,15 +887,13 @@ export default function CognitoRegisterView() {
 
           <RHFTextField
             name="phone_number"
-            label="Teléfono del Responsable"
+            label="Teléfono del responsable"
             helperText={phoneHelperText()}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   {phoneStatus === 'checking' && <CircularProgress size={18} />}
-                  {phoneStatus === 'exists' && (
-                    <Iconify icon="solar:danger-bold" width={20} />
-                  )}
+                  {phoneStatus === 'exists' && <Iconify icon="solar:danger-bold" width={20} />}
                   {phoneStatus === 'available' && (
                     <Iconify icon="solar:check-circle-bold" width={20} />
                   )}
@@ -917,9 +969,7 @@ export default function CognitoRegisterView() {
       )}
 
       <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
-        <div key={`register-step-${step}`}>
-          {renderFormStep()}
-        </div>
+        <div key={`register-step-${step}`}>{renderFormStep()}</div>
 
         <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
           {step > 0 && (

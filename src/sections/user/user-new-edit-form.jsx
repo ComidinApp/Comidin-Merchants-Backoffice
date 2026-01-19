@@ -165,7 +165,7 @@ export default function UserNewEditForm({ currentUser }) {
       national_id: currentUser?.national_id || '',
       status: currentUser?.status || 'active',
       address: currentUser?.address || '',
-      country: currentUser?.country || '',
+      country: currentUser?.country || 'Argentina',
       postal_code: currentUser?.postal_code || '',
       commerce_id: currentUser?.commerce_id || '',
       avatar_url: currentUser?.avatar_url || getRandomAvatarImage(),
