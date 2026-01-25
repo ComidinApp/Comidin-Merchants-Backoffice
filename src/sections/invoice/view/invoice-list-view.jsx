@@ -167,7 +167,7 @@ export default function InvoiceListView() {
     (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar('Eliminado exitosamente!');
 
       setTableData(deleteRow);
 
@@ -179,7 +179,7 @@ export default function InvoiceListView() {
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
 
-    enqueueSnackbar('Delete success!');
+    enqueueSnackbar('Eliminado exitosamente!');
 
     setTableData(deleteRows);
 

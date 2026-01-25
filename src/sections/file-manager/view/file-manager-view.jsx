@@ -101,7 +101,7 @@ export default function FileManagerView() {
     (id) => {
       const deleteRow = tableData.filter((row) => row.id !== id);
 
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar('Eliminado exitosamente!');
 
       setTableData(deleteRow);
 
@@ -113,7 +113,7 @@ export default function FileManagerView() {
   const handleDeleteItems = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
 
-    enqueueSnackbar('Delete success!');
+    enqueueSnackbar('Eliminado exitosamente!');
 
     setTableData(deleteRows);
 

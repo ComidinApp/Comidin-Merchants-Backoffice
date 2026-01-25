@@ -73,7 +73,7 @@ export default function CalendarForm({ currentEvent, colorOptions, onClose }) {
           enqueueSnackbar('Update success!');
         } else {
           await createEvent(eventData);
-          enqueueSnackbar('Create success!');
+          enqueueSnackbar('Creado exitosamente!!');
         }
         onClose();
         reset();
@@ -86,7 +86,7 @@ export default function CalendarForm({ currentEvent, colorOptions, onClose }) {
   const onDelete = useCallback(async () => {
     try {
       await deleteEvent(`${currentEvent?.id}`);
-      enqueueSnackbar('Delete success!');
+      enqueueSnackbar('Eliminado exitosamente!');
       onClose();
     } catch (error) {
       console.error(error);

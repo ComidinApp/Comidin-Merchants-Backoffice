@@ -96,7 +96,7 @@ export default function PostNewEditForm({ currentPost }) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
       preview.onFalse();
-      enqueueSnackbar(currentPost ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(currentPost ? 'Update success!' : 'Creado exitosamente!!');
       router.push(paths.dashboard.post.root);
       console.info('DATA', data);
     } catch (error) {

@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import { useCallback } from 'react';
+import { getOrderStatusLabel } from "src/constants/order-status";
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -41,25 +42,29 @@ export default function OrderTableFiltersResult({
       <Box sx={{ typography: 'body2' }}>
         <strong>{results}</strong>
         <Box component="span" sx={{ color: 'text.secondary', ml: 0.25 }}>
-          results found
+          resultados
         </Box>
       </Box>
 
       <Stack flexGrow={1} spacing={1} direction="row" flexWrap="wrap" alignItems="center">
         {filters.status !== 'all' && (
-          <Block label="Status:">
-            <Chip size="small" label={filters.status} onDelete={handleRemoveStatus} />
+          <Block label="Estado:">
+            <Chip
+              size="small"
+              label={getOrderStatusLabel(filters.status)}
+              onDelete={handleRemoveStatus}
+            />
           </Block>
         )}
 
         {filters.startDate && filters.endDate && (
-          <Block label="Date:">
+          <Block label="Fecha:">
             <Chip size="small" label={shortLabel} onDelete={handleRemoveDate} />
           </Block>
         )}
 
         {!!filters.name && (
-          <Block label="Keyword:">
+          <Block label="Búsqueda:">
             <Chip label={filters.name} size="small" onDelete={handleRemoveKeyword} />
           </Block>
         )}
@@ -69,7 +74,7 @@ export default function OrderTableFiltersResult({
           onClick={onResetFilters}
           startIcon={<Iconify icon="solar:trash-bin-trash-bold" />}
         >
-          Clear
+          Limpiar
         </Button>
       </Stack>
     </Stack>

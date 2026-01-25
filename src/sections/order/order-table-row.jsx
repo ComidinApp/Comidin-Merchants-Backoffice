@@ -19,6 +19,11 @@ import { fCurrency } from 'src/utils/format-number';
 import { fDate, fTime } from 'src/utils/format-time';
 
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import {
+  normalizeOrderStatus,
+  getOrderStatusLabel,
+  getOrderStatusColor,
+} from 'src/constants/order-status';
 
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
@@ -26,19 +31,7 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
 
 import { _mock } from '../../_mock';
-
 // ----------------------------------------------------------------------
-
-const STATUS_LABELS_ES = {
-  PENDING: 'Pendiente',
-  CONFIRMED: 'Confirmado',
-  COMPLETED: 'Completado',
-  CANCELLED: 'Cancelado',
-  REFUNDED: 'Devuelto',
-  CLAIMED: 'Reclamado',
-};
-
-const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
 
 export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, onDeleteRow }) {
   const { order_details, status, id, commerce, created_at, user, items_quantity, total_amount } =
@@ -63,17 +56,10 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
 
   const randomAvatar = _mock.image.avatar(stringToNumber(user.email));
 
-  const statusKey = normalizeStatus(status);
+  const statusKey = normalizeOrderStatus(status);
 
-  const statusText = STATUS_LABELS_ES[statusKey] || String(status || '');
-
-  const statusColor =
-    (statusKey === 'COMPLETED' && 'success') ||
-    (statusKey === 'PENDING' && 'warning') ||
-    (statusKey === 'CONFIRMED' && 'info') ||
-    (statusKey === 'CANCELLED' && 'error') ||
-    (statusKey === 'CLAIMED' && 'error') ||
-    'default';
+  const statusText = getOrderStatusLabel(statusKey);
+  const statusColor = getOrderStatusColor(statusKey);
 
   const renderPrimary = (
     <TableRow hover selected={selected}>
@@ -241,11 +227,11 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
       <ConfirmDialog
         open={confirm.value}
         onClose={confirm.onFalse}
-        title="Delete"
-        content="Are you sure want to delete?"
+        title="Eliminar"
+        content="¿Seguro que querés eliminar este pedido?"
         action={
           <Button variant="contained" color="error" onClick={onDeleteRow}>
-            Delete
+            Eliminar
           </Button>
         }
       />

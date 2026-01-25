@@ -109,7 +109,7 @@ export default function TourNewEditForm({ currentTour }) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
       reset();
-      enqueueSnackbar(currentTour ? 'Update success!' : 'Create success!');
+      enqueueSnackbar(currentTour ? 'Update success!' : 'Creado exitosamente!!');
       router.push(paths.dashboard.tour.root);
       console.info('DATA', data);
     } catch (error) {

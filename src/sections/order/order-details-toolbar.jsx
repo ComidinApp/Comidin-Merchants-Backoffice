@@ -14,31 +14,15 @@ import { fDateTime } from 'src/utils/format-time';
 import Label from 'src/components/label';
 import Iconify from 'src/components/iconify';
 import CustomPopover, { usePopover } from 'src/components/custom-popover';
-
+import {
+  getAllowedNextStatuses,
+  getOrderStatusLabel,
+  isAllowedTransition,
+  formatTransitionError,
+  normalizeOrderStatus,
+} from "src/constants/order-status";
 // ----------------------------------------------------------------------
 const { VITE_API_COMIDIN } = import.meta.env;
-
-// Etiquetas ES (Primera letra mayúscula)
-const STATUS_LABELS_ES = {
-  PENDING: 'Pendiente',
-  CONFIRMED: 'Confirmado',
-  COMPLETED: 'Completado',
-  CANCELLED: 'Cancelado',
-  REFUNDED: 'Devuelto',
-  CLAIMED: 'Reclamado',
-};
-
-// Flujo permitido (front)
-const STATUS_TRANSITIONS = {
-  PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['COMPLETED'],
-  COMPLETED: ['REFUNDED', 'CLAIMED'],
-  CANCELLED: [],
-  REFUNDED: [],
-  CLAIMED: [],
-};
-
-const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
 
 export default function OrderDetailsToolbar({
   status,
@@ -50,19 +34,25 @@ export default function OrderDetailsToolbar({
 }) {
   const popover = usePopover();
 
-  const currentStatus = normalizeStatus(status);
+  const currentStatus = normalizeOrderStatus(status);
 
-  // ✅ Opciones SOLO según el flujo permitido (no dependemos de statusOptions)
-  const allowedNextStatuses = STATUS_TRANSITIONS[currentStatus] || [];
+  const allowedNextStatuses = getAllowedNextStatuses(currentStatus);
+
   const statusOptionsFiltered = allowedNextStatuses.map((value) => ({
     value,
-    label: STATUS_LABELS_ES[value] || value,
+    label: getOrderStatusLabel(value),
   }));
 
-  const isFinalState = statusOptionsFiltered.length === 0;
+  const isFinalState = allowedNextStatuses.length === 0;
 
   const handleChangeStatus = async (newStatus) => {
-    const nextStatus = normalizeStatus(newStatus);
+    const nextStatus = normalizeOrderStatus(newStatus);
+
+    if (!isAllowedTransition(currentStatus, nextStatus)) {
+      console.error(formatTransitionError(currentStatus, nextStatus));
+      popover.onClose();
+      return;
+    }
 
     try {
       const response = await axios.put(`${VITE_API_COMIDIN}/order/status/${orderNumber}`, {
@@ -70,14 +60,18 @@ export default function OrderDetailsToolbar({
       });
 
       if (response.status === 200) {
-        // Guardamos en el estado local el status normalizado (MAYÚSCULAS)
-        onChangeStatus(nextStatus);
+        onChangeStatus?.(nextStatus);
         popover.onClose();
       } else {
-        console.error('Error al actualizar el estado');
+        console.error('No se pudo actualizar el estado del pedido.');
       }
     } catch (error) {
-      console.error('Error al realizar la solicitud', error);
+      const apiMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message;
+
+      console.error(apiMsg || 'Error al actualizar el estado del pedido.');
     }
   };
 
@@ -112,7 +106,7 @@ export default function OrderDetailsToolbar({
                   'default'
                 }
               >
-                {STATUS_LABELS_ES[currentStatus] || currentStatus}
+                {getOrderStatusLabel(currentStatus)}
               </Label>
             </Stack>
 
@@ -137,7 +131,7 @@ export default function OrderDetailsToolbar({
             sx={{ textTransform: 'none' }}
             disabled={isFinalState}
           >
-            {STATUS_LABELS_ES[currentStatus] || currentStatus}
+            {getOrderStatusLabel(currentStatus)}
           </Button>
 
           <Button
@@ -159,7 +153,7 @@ export default function OrderDetailsToolbar({
         {statusOptionsFiltered.map((option) => (
           <MenuItem
             key={option.value}
-            selected={normalizeStatus(option.value) === currentStatus}
+            selected={normalizeOrderStatus(option.value) === currentStatus}
             onClick={() => handleChangeStatus(option.value)}
           >
             {option.label}

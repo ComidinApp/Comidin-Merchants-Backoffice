@@ -61,7 +61,7 @@ export default function KanbanColumn({ column, tasks, index }) {
     try {
       deleteColumn(column.id);
 
-      enqueueSnackbar('Delete success!', {
+      enqueueSnackbar('Eliminado exitosamente!', {
         anchorOrigin: { vertical: 'top', horizontal: 'center' },
       });
     } catch (error) {
@@ -95,7 +95,7 @@ export default function KanbanColumn({ column, tasks, index }) {
       try {
         deleteTask(column.id, taskId);
 
-        enqueueSnackbar('Delete success!', {
+        enqueueSnackbar('Eliminado exitosamente!', {
           anchorOrigin: { vertical: 'top', horizontal: 'center' },
         });
       } catch (error) {

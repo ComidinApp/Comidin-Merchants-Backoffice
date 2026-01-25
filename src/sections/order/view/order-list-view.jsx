@@ -11,7 +11,7 @@ import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
 import TableContainer from '@mui/material/TableContainer';
-
+import Stack from '@mui/material/Stack';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 
@@ -30,6 +30,12 @@ import { ConfirmDialog } from 'src/components/custom-dialog';
 import { useSettingsContext } from 'src/components/settings';
 import CustomBreadcrumbs from 'src/components/custom-breadcrumbs';
 import {
+  ORDER_STATUS_OPTIONS,
+  getOrderStatusLabel,
+  normalizeOrderStatus,
+  getOrderStatusColor
+} from "src/constants/order-status";
+import {
   useTable,
   emptyRows,
   TableNoData,
@@ -44,27 +50,12 @@ import OrderTableRow from '../order-table-row';
 import OrderTableToolbar from '../order-table-toolbar';
 import OrderTableFiltersResult from '../order-table-filters-result';
 
+
 // ----------------------------------------------------------------------
 
-const STATUS_LABELS_ES = {
-  PENDING: 'Pendiente',
-  CONFIRMED: 'Confirmado',
-  COMPLETED: 'Completado',
-  CANCELLED: 'Cancelado',
-  REFUNDED: 'Devuelto',
-  CLAIMED: 'Reclamado',
-};
-
-const normalizeStatus = (s) => (s || '').toString().trim().toUpperCase();
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Todos' },
-  { value: 'PENDING', label: STATUS_LABELS_ES.PENDING },
-  { value: 'CONFIRMED', label: STATUS_LABELS_ES.CONFIRMED },
-  { value: 'COMPLETED', label: STATUS_LABELS_ES.COMPLETED },
-  { value: 'CANCELLED', label: STATUS_LABELS_ES.CANCELLED },
-  { value: 'REFUNDED', label: STATUS_LABELS_ES.REFUNDED },
-  { value: 'CLAIMED', label: STATUS_LABELS_ES.CLAIMED },
+const STATUS_TABS = [
+  { value: "all", label: "Todos" },
+  ...ORDER_STATUS_OPTIONS.map((st) => ({ value: st, label: getOrderStatusLabel(st) })),
 ];
 
 const defaultFilters = {
@@ -165,7 +156,7 @@ export default function OrderListView() {
   const handleDeleteRows = useCallback(() => {
     const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
 
-    enqueueSnackbar('Delete success!');
+    enqueueSnackbar('Eliminado exitosamente!');
 
     setTableData(deleteRows);
 
@@ -184,7 +175,7 @@ export default function OrderListView() {
 
   const handleFilterStatus = useCallback(
     (event, newValue) => {
-      const next = newValue === 'all' ? 'all' : normalizeStatus(newValue);
+      const next = newValue === 'all' ? 'all' : normalizeOrderStatus(newValue);
       handleFilters('status', next);
     },
     [handleFilters]
@@ -211,38 +202,48 @@ export default function OrderListView() {
             value={filters.status}
             onChange={handleFilterStatus}
             sx={{
-              px: 2.5,
-              boxShadow: (theme) => `inset 0 -2px 0 0 ${alpha(theme.palette.grey[500], 0.08)}`,
+              px: 2,
+              "& .MuiTab-root": {
+                minHeight: 48,
+                textTransform: "none",
+                px: 1.5,
+              },
             }}
           >
-            {STATUS_OPTIONS.map((tab) => (
-              <Tab
-                key={tab.value}
-                iconPosition="end"
-                value={tab.value}
-                label={tab.label}
-                icon={
-                  <Label
-                    variant={
-                      ((tab.value === 'all' || tab.value === filters.status) && 'filled') || 'soft'
+              {STATUS_TABS.map((tab) => {
+                const count =
+                  tab.value === "all"
+                    ? tableData.length
+                    : tableData.filter(
+                        (o) =>
+                          normalizeOrderStatus(o.status) ===
+                          normalizeOrderStatus(tab.value)
+                      ).length;
+
+                return (
+                  <Tab
+                    key={tab.value}
+                    value={tab.value}
+                    label={
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <span>{tab.label}</span>
+                        <Label
+                          variant={filters.status === tab.value ? "filled" : "soft"}
+                          color={
+                            tab.value === "all"
+                              ? "default"
+                              : getOrderStatusColor(tab.value)
+                          }
+                          sx={{ ml: 0.5 }}
+                        >
+                          {count}
+                        </Label>
+                      </Stack>
                     }
-                    color={
-                      (tab.value === 'COMPLETED' && 'success') ||
-                      (tab.value === 'PENDING' && 'warning') ||
-                      (tab.value === 'CONFIRMED' && 'info') ||
-                      (tab.value === 'CANCELLED' && 'error') ||
-                      (tab.value === 'CLAIMED' && 'error') ||
-                      'default'
-                    }
-                  >
-                    {tab.value !== 'all'
-                      ? tableData.filter((o) => normalizeStatus(o.status) === tab.value).length
-                      : tableData.length}
-                  </Label>
-                }
-              />
-            ))}
-          </Tabs>
+                  />
+                );
+              })}
+            </Tabs>
 
           <OrderTableToolbar filters={filters} onFilters={handleFilters} dateError={dateError} />
 
@@ -398,7 +399,7 @@ function applyFilter({ inputData, comparator, filters, dateError }) {
   // Filtrar por estado (robusto ante mayúsculas/minúsculas)
   if (status !== 'all') {
     inputData = inputData.filter(
-      (order) => normalizeStatus(order.status) === normalizeStatus(status)
+      (order) => normalizeOrderStatus(order?.status) === normalizeOrderStatus(status)
     );
   }
 
