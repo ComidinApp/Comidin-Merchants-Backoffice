@@ -6,7 +6,7 @@ import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import IconButton from '@mui/material/IconButton';
@@ -14,9 +14,9 @@ import TableContainer from '@mui/material/TableContainer';
 import Stack from '@mui/material/Stack';
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useBoolean } from 'src/hooks/use-boolean';
-
+import Box from '@mui/material/Box';
 import { isAfter, isBetween } from 'src/utils/format-time';
 
 import { useGetOrders } from 'src/api/orders';
@@ -69,6 +69,8 @@ const defaultFilters = {
 
 export default function OrderListView() {
   const authUser = useAuthContext();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const TABLE_HEAD = [
     { id: 'order_id', label: 'Nro Pedido', width: 150 },
@@ -201,49 +203,51 @@ export default function OrderListView() {
           <Tabs
             value={filters.status}
             onChange={handleFilterStatus}
+            variant={isMobile ? 'scrollable' : 'fullWidth'}
+            scrollButtons={isMobile ? 'auto' : false}
+            allowScrollButtonsMobile
             sx={{
-              px: 2,
-              "& .MuiTab-root": {
+              px: isMobile ? 0 : 2,
+              '& .MuiTabs-flexContainer': {
+                justifyContent: isMobile ? 'flex-start' : 'space-between',
+              },
+              '& .MuiTab-root': {
                 minHeight: 48,
-                textTransform: "none",
+                textTransform: 'none',
                 px: 1.5,
+                minWidth: isMobile ? 140 : 0,
               },
             }}
           >
-              {STATUS_TABS.map((tab) => {
-                const count =
-                  tab.value === "all"
-                    ? tableData.length
-                    : tableData.filter(
-                        (o) =>
-                          normalizeOrderStatus(o.status) ===
-                          normalizeOrderStatus(tab.value)
-                      ).length;
+            {STATUS_TABS.map((tab) => {
+              const count =
+                tab.value === 'all'
+                  ? tableData.length
+                  : tableData.filter(
+                      (o) => normalizeOrderStatus(o.status) === normalizeOrderStatus(tab.value)
+                    ).length;
 
-                return (
-                  <Tab
-                    key={tab.value}
-                    value={tab.value}
-                    label={
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <span>{tab.label}</span>
-                        <Label
-                          variant={filters.status === tab.value ? "filled" : "soft"}
-                          color={
-                            tab.value === "all"
-                              ? "default"
-                              : getOrderStatusColor(tab.value)
-                          }
-                          sx={{ ml: 0.5 }}
-                        >
-                          {count}
-                        </Label>
-                      </Stack>
-                    }
-                  />
-                );
-              })}
-            </Tabs>
+              return (
+                <Tab
+                  key={tab.value}
+                  value={tab.value}
+                  label={
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ pr: 0.5 }}>
+                      <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+                        {tab.label}
+                      </Box>
+                      <Label
+                        variant={filters.status === tab.value ? 'filled' : 'soft'}
+                        color={tab.value === 'all' ? 'default' : getOrderStatusColor(tab.value)}
+                      >
+                        {count}
+                      </Label>
+                    </Stack>
+                  }
+                />
+              );
+            })}
+          </Tabs>
 
           <OrderTableToolbar filters={filters} onFilters={handleFilters} dateError={dateError} />
 
