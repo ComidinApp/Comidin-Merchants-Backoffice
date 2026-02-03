@@ -60,7 +60,7 @@ export default function OrderDetailsToolbar({
       });
 
       if (response.status === 200) {
-        onChangeStatus?.(nextStatus);
+        await onChangeStatus?.(nextStatus);
         popover.onClose();
       } else {
         console.error('No se pudo actualizar el estado del pedido.');

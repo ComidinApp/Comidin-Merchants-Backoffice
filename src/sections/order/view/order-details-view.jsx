@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSWRConfig } from 'swr';
 
 import Stack from '@mui/material/Stack';
 import Container from '@mui/material/Container';
@@ -19,9 +20,16 @@ import OrderDetailsHistory from '../order-details-history';
 
 // ----------------------------------------------------------------------
 
+const { VITE_API_COMIDIN } = import.meta.env;
+
 export default function OrderDetailsView({ id }) {
   const settings = useSettingsContext();
+  const { mutate } = useSWRConfig();
+
   const { order, orderLoading } = useGetOrder(id);
+
+  // OJO: este URL tiene que matchear EXACTO el que usa useGetOrder()
+  const orderURL = useMemo(() => (id ? `${VITE_API_COMIDIN}/order/${id}` : ''), [id]);
 
   const [status, setStatus] = useState('');
 
@@ -31,12 +39,28 @@ export default function OrderDetailsView({ id }) {
     }
   }, [order]);
 
-  const handleChangeStatus = useCallback((newValue) => {
-    setStatus(newValue);
-  }, []);
+  const handleChangeStatus = useCallback(
+    async (newStatus) => {
+      // 1) UI inmediata (actualiza label y estado actual)
+      setStatus(newStatus);
+
+      // 2) Refetch del pedido para traer order_history actualizado (sin F5)
+      if (orderURL) {
+        await mutate(orderURL);
+
+        // Opcional: refresca también caches de listados (si volvés atrás y querés ver el status actualizado)
+        await mutate(
+          (key) =>
+            typeof key === 'string' &&
+            (key === `${VITE_API_COMIDIN}/order` ||
+              key.startsWith(`${VITE_API_COMIDIN}/order/commerce/`))
+        );
+      }
+    },
+    [mutate, orderURL]
+  );
 
   if (orderLoading) return <div>Loading...</div>;
-
   if (!order) return <div>No se encontró la orden.</div>;
 
   return (
@@ -53,12 +77,9 @@ export default function OrderDetailsView({ id }) {
       <Grid container spacing={3}>
         <Grid xs={12} md={8}>
           <Stack spacing={3} direction={{ xs: 'column-reverse', md: 'column' }}>
-            <OrderDetailsItems
-              items={order.order_details}
-              totalAmount={Number(order.total_amount)}
-            />
+            <OrderDetailsItems items={order.order_details} totalAmount={Number(order.total_amount)} />
 
-            <OrderDetailsHistory orderHistory={order.order_history} currentStatus={order.status} />
+            <OrderDetailsHistory orderHistory={order.order_history} currentStatus={status} />
           </Stack>
         </Grid>
 
