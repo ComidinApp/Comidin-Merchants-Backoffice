@@ -208,6 +208,7 @@ const handleDeleteRows = useCallback(
       headerName: 'Categoria',
       width: 140,
       editable: false,
+      valueGetter: (params) => params.row.product_category?.name ?? '',
       renderCell: (params) => <RenderCellProductCategory params={params} />,
     },
     ...(authUser.user.role_id === 1
@@ -217,6 +218,7 @@ const handleDeleteRows = useCallback(
             headerName: 'Comercio',
             width: 140,
             editable: false,
+            valueGetter: (params) => params.row.commerce?.name ?? '',
             renderCell: (params) => <RenderCellCommerce params={params} />,
           },
         ]
