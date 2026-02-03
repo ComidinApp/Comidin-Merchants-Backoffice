@@ -20,9 +20,9 @@ import { fDate, fTime } from 'src/utils/format-time';
 
 import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import {
-  normalizeOrderStatus,
   getOrderStatusLabel,
   getOrderStatusColor,
+  normalizeOrderStatus,
 } from 'src/constants/order-status';
 
 import Label from 'src/components/label';
