@@ -13,13 +13,27 @@ import { varBounce, MotionContainer } from 'src/components/animate';
 
 /**
  * Mapeo de role_id numérico a nombre de rol.
- * Ajustar según los roles definidos en el backend.
+ * Ajustar según los roles definidos en el backend (04_roleSeeder.js).
  */
 const ROLE_ID_TO_NAME = {
-  1: 'admin',
-  2: 'supervisor',
-  3: 'delivery',
-  6: 'new_user',
+  1: 'admin',           // Administrador - Acceso completo
+  2: 'cocinero',        // Cocinero - Solo pedidos
+  3: 'repartidor',      // Repartidor
+  4: 'cajero',          // Cajero - Pedidos, Publicaciones
+  5: 'supervisor_ventas', // Supervisor de Ventas - Reseñas, Pedidos, Publicaciones, Productos, Estadísticas
+  6: 'propietario',     // Propietario - Todo lo de su comercio
+};
+
+/**
+ * IDs de roles para usar en allowedRoleIds
+ */
+export const ROLE_IDS = {
+  ADMIN: 1,
+  COCINERO: 2,
+  REPARTIDOR: 3,
+  CAJERO: 4,
+  SUPERVISOR_VENTAS: 5,
+  PROPIETARIO: 6,
 };
 
 // ----------------------------------------------------------------------

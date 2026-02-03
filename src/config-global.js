@@ -46,4 +46,6 @@ export const SUPABASE_API = {
 export const MAPBOX_API = import.meta.env.VITE_MAPBOX_API;
 
 // ROOT PATH AFTER LOGIN SUCCESSFUL
-export const PATH_AFTER_LOGIN = paths.dashboard.general.analytics; // as '/dashboard'
+// Redirige a /dashboard, donde DashboardRedirect se encarga de enviar al usuario
+// a la sección correcta según su rol (analytics para admin/supervisor/propietario, pedidos para cocinero/cajero)
+export const PATH_AFTER_LOGIN = paths.dashboard.root;

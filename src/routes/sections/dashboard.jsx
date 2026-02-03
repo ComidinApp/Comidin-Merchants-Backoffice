@@ -1,10 +1,54 @@
-import { lazy, Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 import DashboardLayout from 'src/layouts/dashboard';
-import { AuthGuard, RoleBasedGuard } from 'src/auth/guard';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
+import { ROLE_IDS, AuthGuard, RoleBasedGuard } from 'src/auth/guard';
 
 import { LoadingScreen } from 'src/components/loading-screen';
+
+// ----------------------------------------------------------------------
+// PERMISOS POR SECCIÓN:
+// - Admin (1): Todo
+// - Cocinero (2): Pedidos
+// - Repartidor (3): (sin acceso definido)
+// - Cajero (4): Pedidos, Publicaciones
+// - Supervisor de Ventas (5): Reseñas, Pedidos, Publicaciones, Productos, Estadísticas/Reportes
+// - Propietario (6): Todo lo de su comercio
+// ----------------------------------------------------------------------
+
+/**
+ * Componente que redirige a la sección inicial apropiada según el rol del usuario
+ */
+function DashboardRedirect() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuthContext();
+  const roleId = user?.role_id;
+
+  useEffect(() => {
+    // Esperar a que el usuario esté cargado
+    if (loading || !user) return;
+
+    // Ruta por defecto según el rol
+    const getDefaultRoute = () => {
+      switch (roleId) {
+        case ROLE_IDS.ADMIN:
+        case ROLE_IDS.SUPERVISOR_VENTAS:
+        case ROLE_IDS.PROPIETARIO:
+          return '/dashboard/analytics';
+        case ROLE_IDS.COCINERO:
+        case ROLE_IDS.CAJERO:
+        case ROLE_IDS.REPARTIDOR:
+        default:
+          return '/dashboard/order';
+      }
+    };
+
+    navigate(getDefaultRoute(), { replace: true });
+  }, [roleId, navigate, loading, user]);
+
+  return <LoadingScreen />;
+}
 
 // ----------------------------------------------------------------------
 // PRICING
@@ -53,10 +97,30 @@ export const dashboardRoutes = [
       </AuthGuard>
     ),
     children: [
-      { element: <OverviewAnalyticsPage />, index: true },
-      { path: 'analytics', element: <OverviewAnalyticsPage /> },
+      // Redirige automáticamente a la sección correcta según el rol del usuario
+      {
+        element: <DashboardRedirect />,
+        index: true
+      },
+
+      // ANALYTICS/REPORTES - Admin, Supervisor de Ventas, Propietario
+      {
+        path: 'analytics',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.SUPERVISOR_VENTAS, ROLE_IDS.PROPIETARIO]} hasContent>
+            <OverviewAnalyticsPage />
+          </RoleBasedGuard>
+        )
+      },
+
+      // USUARIOS - Admin, Propietario
       {
         path: 'user',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.PROPIETARIO]} hasContent>
+            <Outlet />
+          </RoleBasedGuard>
+        ),
         children: [
           { element: <UserListPage />, index: true },
           { path: 'list', element: <UserListPage /> },
@@ -65,10 +129,25 @@ export const dashboardRoutes = [
           { path: 'account', element: <UserAccountPage /> },
         ],
       },
-      // RESEÑAS - Todos pueden ver, la página maneja internamente qué muestra
-      { path: 'reviews', element: <ReviewsPage /> },
+
+      // RESEÑAS - Admin, Supervisor de Ventas, Propietario
+      {
+        path: 'reviews',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.SUPERVISOR_VENTAS, ROLE_IDS.PROPIETARIO]} hasContent>
+            <ReviewsPage />
+          </RoleBasedGuard>
+        )
+      },
+
+      // PRODUCTOS - Admin, Supervisor de Ventas, Propietario
       {
         path: 'product',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.SUPERVISOR_VENTAS, ROLE_IDS.PROPIETARIO]} hasContent>
+            <Outlet />
+          </RoleBasedGuard>
+        ),
         children: [
           { element: <ProductListPage />, index: true },
           { path: 'list', element: <ProductListPage /> },
@@ -77,20 +156,22 @@ export const dashboardRoutes = [
           { path: ':id/edit', element: <ProductEditPage /> },
         ],
       },
-      // MI COMERCIO - Supervisores y admins (role_id = 1, 2)
+
+      // MI COMERCIO - Solo Propietario
       {
         path: 'my-commerce',
         element: (
-          <RoleBasedGuard allowedRoleIds={[1, 6]} hasContent>
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.PROPIETARIO]} hasContent>
             <MyCommercePage />
           </RoleBasedGuard>
         ),
       },
-      // COMERCIOS - Solo administradores (role_id = 1)
+
+      // COMERCIOS - Solo Admin
       {
         path: 'commerce',
         element: (
-          <RoleBasedGuard allowedRoleIds={[1]} hasContent>
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN]} hasContent>
             <Outlet />
           </RoleBasedGuard>
         ),
@@ -102,8 +183,15 @@ export const dashboardRoutes = [
           { path: ':id/edit', element: <CommerceEditPage /> },
         ],
       },
+
+      // PUBLICACIONES - Admin, Cajero, Supervisor de Ventas, Propietario
       {
         path: 'publication',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.CAJERO, ROLE_IDS.SUPERVISOR_VENTAS, ROLE_IDS.PROPIETARIO]} hasContent>
+            <Outlet />
+          </RoleBasedGuard>
+        ),
         children: [
           { element: <PublicationListPage />, index: true },
           { path: 'list', element: <PublicationListPage /> },
@@ -112,15 +200,31 @@ export const dashboardRoutes = [
           { path: ':id/edit', element: <PublicationEditPage /> },
         ],
       },
+
+      // PEDIDOS - Admin, Cocinero, Cajero, Supervisor de Ventas, Propietario
       {
         path: 'order',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.COCINERO, ROLE_IDS.CAJERO, ROLE_IDS.SUPERVISOR_VENTAS, ROLE_IDS.PROPIETARIO]} hasContent>
+            <Outlet />
+          </RoleBasedGuard>
+        ),
         children: [
           { element: <OrderListPage />, index: true },
           { path: 'list', element: <OrderListPage /> },
           { path: ':id', element: <OrderDetailsPage /> },
         ],
       },
-      { path: 'pricing', element: <PricingPage /> },
+
+      // SUSCRIPCIONES/PRICING - Admin, Propietario
+      {
+        path: 'pricing',
+        element: (
+          <RoleBasedGuard allowedRoleIds={[ROLE_IDS.ADMIN, ROLE_IDS.PROPIETARIO]} hasContent>
+            <PricingPage />
+          </RoleBasedGuard>
+        )
+      },
     ],
   },
 ];
