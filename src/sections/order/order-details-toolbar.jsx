@@ -135,13 +135,6 @@ export default function OrderDetailsToolbar({
             {getOrderStatusLabel(currentStatus)}
           </Button>
 
-          <Button
-            color="inherit"
-            variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-          >
-            Imprimir
-          </Button>
         </Stack>
       </Stack>
 

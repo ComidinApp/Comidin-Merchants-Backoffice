@@ -75,10 +75,34 @@ export default function OrderDetailsInfo({
     </>
   );
 
+  const renderCommerce = (
+    <>
+      <CardHeader
+        title="Informacion del Comercio"
+        sx={{ color: "#C2672D", fontWeight: 'bold' }}
+      />
+      <Stack spacing={1.5} sx={{ p: 3, typography: 'body2' }}>
+        <Stack direction="row">
+          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
+            Nombre
+          </Box>
+          {commerce?.name || '-'}
+        </Stack>
+
+        <Stack direction="row">
+          <Box component="span" sx={{ color: 'text.secondary', width: 120, flexShrink: 0 }}>
+            Dirección
+          </Box>
+          {`${commerce?.street_name || ''} ${commerce?.number || ''} | ${commerce?.postal_code || ''}`.trim() || '-'}
+        </Stack>
+      </Stack>
+    </>
+  );
+
   const renderShipping = (
     <>
       <CardHeader
-        title="Direccion del usuario"
+        title="Direccion del Cliente"
         sx={{ color: "#C2672D", fontWeight: 'bold' }}
         /* action={
           <IconButton>
@@ -151,6 +175,10 @@ export default function OrderDetailsInfo({
 
   return (
     <Card sx={{ border: '2px solid #C2672D' }}>
+      {renderCommerce}
+
+      <Divider sx={{ borderStyle: 'dashed' }} />
+
       {renderCustomer}
 
       <Divider sx={{ borderStyle: 'dashed' }} />
