@@ -63,11 +63,12 @@ export default function OrderTableRow({ row, selected, onViewRow, onSelectRow, o
 
   const renderPrimary = (
     <TableRow hover selected={selected}>
-      <TableCell padding="checkbox">
+      {/* Checkbox de selección deshabilitado */}
+      {/* <TableCell padding="checkbox">
         <Checkbox checked={selected} onClick={onSelectRow} />
-      </TableCell>
+      </TableCell> */}
 
-      <TableCell>
+      <TableCell align="center">
         <Box
           onClick={onViewRow}
           sx={{
