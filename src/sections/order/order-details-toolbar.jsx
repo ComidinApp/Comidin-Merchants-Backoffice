@@ -126,7 +126,7 @@ export default function OrderDetailsToolbar({
         >
           <Button
             color="inherit"
-            variant="outlined"
+            variant="contained"
             endIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}
             onClick={popover.onOpen}
             sx={{ textTransform: 'none' }}
