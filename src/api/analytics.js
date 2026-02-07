@@ -26,11 +26,12 @@ function getToken() {
  * Pide el overview de analytics.
  * Requiere SIEMPRE commerceId (según tu dominio, incluso para admins).
  *
- * @param {string} period 'last30d' | 'prev_month'
+ * @param {string} period 'last30d' | 'prev_month' | 'custom' etc
  * @param {number} commerceId  // requerido
+ * @param {{startDate?: string, endDate?: string}} opts // ✅ NUEVO para custom (YYYY-MM-DD)
  * @returns {Promise<any>}
  */
-export async function fetchOverview(period = 'last30d', commerceId) {
+export async function fetchOverview(period = 'last30d', commerceId, opts = {}) {
   const token = getToken();
 
   if (commerceId == null) {
@@ -39,6 +40,12 @@ export async function fetchOverview(period = 'last30d', commerceId) {
   }
 
   const qs = new URLSearchParams({ period, commerceId: String(commerceId) });
+
+  // ✅ NUEVO: custom range
+  if (String(period).toLowerCase() === 'custom') {
+    if (opts?.startDate) qs.set('startDate', String(opts.startDate));
+    if (opts?.endDate) qs.set('endDate', String(opts.endDate));
+  }
 
   console.debug('[fetchOverview] qs:', qs.toString()); // DEBUG
 
