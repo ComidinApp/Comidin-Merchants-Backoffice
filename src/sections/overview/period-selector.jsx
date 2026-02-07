@@ -8,7 +8,8 @@ const OPTIONS = [
   { value: 'last3m', label: 'Últimos 3 meses' },
   { value: 'last6m', label: 'Últimos 6 meses' },
   { value: 'last12m', label: 'Últimos 12 meses' },
-   { value: 'all',    label: 'Histórico' },
+  { value: 'custom', label: 'Rango personalizado' }, // ✅ NUEVO
+  { value: 'all',    label: 'Histórico' },
 ];
 
 export default function PeriodSelector({ value, onChange }) {
@@ -31,6 +32,6 @@ export default function PeriodSelector({ value, onChange }) {
 }
 
 PeriodSelector.propTypes = {
-  value: PropTypes.oneOf(['last1m', 'last3m', 'last6m', 'last12m', 'all']).isRequired,
+  value: PropTypes.oneOf(['last1m', 'last3m', 'last6m', 'last12m', 'custom', 'all']).isRequired,
   onChange: PropTypes.func.isRequired,
 };
