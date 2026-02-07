@@ -14,7 +14,7 @@ import Label from 'src/components/label';
 // ----------------------------------------------------------------------
 
 export function RenderCellPrice({ params }) {
-  return <>{fCurrency(params.row.price)}</>;
+  return <Box sx={{ display: 'flex', justifyContent: 'center' }}>{fCurrency(params.row.price)}</Box>;
 }
 
 RenderCellPrice.propTypes = {
@@ -34,7 +34,7 @@ RenderCellCommerce.propTypes = {
 };
 
 export function RenderCellDiscountedPrice({ params }) {
-  return <>{fCurrency(params.row.discounted_price)}</>;
+  return <Box sx={{ display: 'flex', justifyContent: 'center' }}>{fCurrency(params.row.discounted_price)}</Box>;
 }
 
 RenderCellDiscountedPrice.propTypes = {
@@ -45,7 +45,7 @@ RenderCellDiscountedPrice.propTypes = {
 
 export function RenderCellDiscount({ params }) {
   const discount = params.row.discount_percentaje || 0;
-  return <>{`${discount}%`}</>;
+  return <Box sx={{ display: 'flex', justifyContent: 'center' }}>{`${discount}%`}</Box>;
 }
 
 RenderCellDiscount.propTypes = {
@@ -93,7 +93,7 @@ RenderCellCreatedAt.propTypes = {
 export function RenderCellStock({ params }) {
 
   return (
-    <Stack sx={{ typography: 'caption', color: 'text.secondary', width: 80 }}>
+    <Stack sx={{ typography: 'caption', color: 'text.secondary', width: 80, alignItems: 'center', justifyContent: 'center' }}>
       {params.row.available_stock} <br />
     </Stack>
   );
