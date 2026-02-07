@@ -449,11 +449,6 @@ export default function PublicationNewEditForm({ currentPublication }) {
               </Typography>
             )}
 
-            {stockLocked && !limitBlock.blocked && (
-              <Typography sx={{ color: 'error.main', fontWeight: 600 }}>
-                Tu suscripción no permite tener más stock.
-              </Typography>
-            )}
 
             <Box
               columnGap={2}
