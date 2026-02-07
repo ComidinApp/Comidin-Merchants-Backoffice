@@ -250,6 +250,14 @@ export const _postTitles = [
 
 // ----------------------------------------------------------------------
 
+export const _postImagesUrl = [
+  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-1.jfif',
+  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-2.jfif',
+  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-3.jfif',
+];
+
+// ----------------------------------------------------------------------
+
 export const _productNames = [
   'Nike Air Force 1 NDESTRUKT',
   'Foundations Matte Flip Flop',
