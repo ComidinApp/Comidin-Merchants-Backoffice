@@ -204,21 +204,27 @@ export default function OrderListView() {
 
         <Card sx={{ borderColor: 'common.orangeDark', borderWidth: 2, borderStyle: 'solid', borderRadius: 2 }}>
           <Tabs
+            key={isMobile ? 'tabs-mobile' : 'tabs-desktop'}  
             value={filters.status}
             onChange={handleFilterStatus}
-            variant={isMobile ? 'scrollable' : 'fullWidth'}
-            scrollButtons={isMobile ? 'auto' : false}
+            variant="scrollable"
+            scrollButtons="auto"
             allowScrollButtonsMobile
             sx={{
-              px: isMobile ? 0 : 2,
+              px: 1,
+              '& .MuiTabs-scroller': {
+                overflowX: 'auto !important',
+              },
               '& .MuiTabs-flexContainer': {
-                justifyContent: isMobile ? 'flex-start' : 'space-between',
+                justifyContent: 'flex-start',            
+                gap: 1,
               },
               '& .MuiTab-root': {
                 minHeight: 48,
                 textTransform: 'none',
-                px: 1.5,
-                minWidth: isMobile ? 140 : 0,
+                px: 1.25,
+                minWidth: 120,                             
+                flexShrink: 0, 
               },
             }}
           >

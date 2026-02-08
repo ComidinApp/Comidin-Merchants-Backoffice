@@ -5,6 +5,7 @@ export const ORDER_STATUS = Object.freeze({
   DELIVERED: "delivered",
   CLAIMED: "claimed",
   CANCELLED: "cancelled",
+  RESOLVED: "resolved",
 });
 
 export const ORDER_STATUS_OPTIONS = [
@@ -14,6 +15,7 @@ export const ORDER_STATUS_OPTIONS = [
   ORDER_STATUS.DELIVERED,
   ORDER_STATUS.CLAIMED,
   ORDER_STATUS.CANCELLED,
+  ORDER_STATUS.RESOLVED,
 ];
 
 export const ORDER_STATUS_LABEL_ES = Object.freeze({
@@ -23,6 +25,7 @@ export const ORDER_STATUS_LABEL_ES = Object.freeze({
   [ORDER_STATUS.DELIVERED]: "Entregado",
   [ORDER_STATUS.CLAIMED]: "Reclamado",
   [ORDER_STATUS.CANCELLED]: "Cancelado",
+  [ORDER_STATUS.RESOLVED]: "Resuelto",
 });
 
 export const ORDER_STATUS_TRANSITIONS = Object.freeze({
@@ -30,7 +33,7 @@ export const ORDER_STATUS_TRANSITIONS = Object.freeze({
   [ORDER_STATUS.CONFIRMED]: [ORDER_STATUS.COMPLETED],
   [ORDER_STATUS.COMPLETED]: [ORDER_STATUS.DELIVERED],
   [ORDER_STATUS.DELIVERED]: [ORDER_STATUS.CLAIMED],
-  [ORDER_STATUS.CLAIMED]: [],
+  [ORDER_STATUS.CLAIMED]: [ORDER_STATUS.RESOLVED],
   [ORDER_STATUS.CANCELLED]: [],
 });
 
@@ -61,6 +64,8 @@ export function getOrderStatusColor(status) {
       return "secondary";
     case ORDER_STATUS.CANCELLED:
       return "error";
+    case ORDER_STATUS.RESOLVED:
+      return "success";
     default:
       return "default";
   }

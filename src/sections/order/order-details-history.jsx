@@ -25,6 +25,7 @@ const STATUS_LABELS = {
   COMPLETED: 'Pedido completado',
   CANCELLED: 'Pedido cancelado',
   DELIVERED: 'Pedido entregado',
+  RESOLVED: 'Pedido con reclamo resuelto',
 };
 
 export default function OrderDetailsHistory({ orderHistory, currentStatus }) {
