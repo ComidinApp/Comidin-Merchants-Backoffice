@@ -91,7 +91,17 @@ export default function OrderTableToolbar({ filters, onFilters, dateError }) {
             fullWidth
             value={filters.name}
             onChange={handleFilterName}
-            placeholder="Buscar cliente o número de pedido..."
+            placeholder="Buscar cliente o pedido..."
+            name="search_orders"
+            autoComplete="off"
+            inputProps={{
+              name: 'search_orders',
+              autoComplete: 'new-password',
+              autoCorrect: 'off',
+              autoCapitalize: 'off',
+              spellCheck: 'false',
+              inputMode: 'search',
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
