@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
+import { useMemo, useContext, useReducer, useCallback, createContext } from 'react';
 
 const NotificationsContext = createContext(null);
 

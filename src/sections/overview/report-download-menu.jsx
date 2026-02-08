@@ -47,7 +47,12 @@ export default function ReportDownloadMenu({ period, commerceId, startDate, endD
 
   return (
     <>
-      <Button variant="outlined" onClick={(e) => setAnchorEl(e.currentTarget)}>
+      <Button
+        variant="outlined"
+        color="inherit"
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+      >
         Descargar reporte
       </Button>
 

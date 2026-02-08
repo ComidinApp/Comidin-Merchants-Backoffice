@@ -18,13 +18,13 @@ export default function Page500() {
       <MotionContainer>
         <m.div variants={varBounce().in}>
           <Typography variant="h3" sx={{ mb: 2 }}>
-            Tu comercio esta en proceso de evaluación
+            Tu comercio está en proceso de evaluación
           </Typography>
         </m.div>
 
         <m.div variants={varBounce().in}>
           <Typography sx={{ color: 'text.secondary' }}>
-            Recibiras un correo con el estado actualizado de tu solicitud en las proximas horas.
+            Recibirás un correo con el estado actualizado de tu solicitud en las próximas horas.
           </Typography>
         </m.div>
 

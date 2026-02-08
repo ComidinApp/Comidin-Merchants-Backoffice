@@ -1,18 +1,18 @@
 import { useState } from 'react';
 
 import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
 import { useRouter } from 'src/routes/hooks';
 
-import { useMockedUser } from 'src/hooks/use-mocked-user';
-
 import { useAuthContext } from 'src/auth/hooks';
+import { useGetCommerce } from 'src/api/commerce';
 
-import Label from 'src/components/label';
 import { useSnackbar } from 'src/components/snackbar';
 // import { usePopover } from 'src/components/custom-popover';
 import { SplashScreen } from 'src/components/loading-screen';
@@ -21,15 +21,16 @@ import { SplashScreen } from 'src/components/loading-screen';
 export default function NavUpgrade() {
   const router = useRouter();
 
-  const { user } = useMockedUser();
-
   const authUser = useAuthContext();
 
   const { logout } = useAuthContext();
 
   const { enqueueSnackbar } = useSnackbar();
 
-  // const popover = usePopover();
+  const commerceId =
+    authUser.user?.commerce?.id ?? authUser.user?.commerce_id ?? authUser.user?.commerceId ?? null;
+
+  const { commerce } = useGetCommerce(commerceId);
 
   const [logoutLoading, setLogoutLoading] = useState(false);
 
@@ -45,51 +46,87 @@ export default function NavUpgrade() {
     }
   };
 
+  const avatarSrc = commerce?.image_url ?? authUser.user?.commerce?.image_url ?? null;
+  const avatarAlt = commerce?.name ?? authUser.user?.commerce?.name ?? 'Usuario';
+  const avatarFallback = avatarAlt?.charAt(0)?.toUpperCase() ?? authUser.user?.first_name?.charAt(0)?.toUpperCase() ?? '?';
+
+  const commerceName = commerce?.name || authUser.user?.commerce?.name;
+  const userName = `${authUser.user?.first_name || ''} ${authUser.user?.last_name || ''}`.trim();
+
+  const AVATAR_SIZE = 40;
+
   return (
   <>
-    <Stack
-      sx={{
-        px: 2,
-        py: 5,
-        textAlign: 'center',
-      }}
-    >
-      <Stack alignItems="center">
-        <Box sx={{ position: 'relative' }}>
-          <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 48, height: 48 }}>
-            {user?.displayName?.charAt(0).toUpperCase()}
-          </Avatar>
-
-          <Label
-            color="success"
-            variant="filled"
-            sx={{
-              top: -6,
-              px: 0.5,
-              left: 40,
-              height: 20,
-              position: 'absolute',
-              borderBottomLeftRadius: 2,
-            }}
+    <Stack sx={{ px: 2, py: 3, alignItems: 'stretch' }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          width: '100%',
+          p: 1.5,
+          mb: 2,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 1,
+          bgcolor: (theme) => alpha(theme.palette.grey[500], 0.08),
+          borderColor: (theme) => alpha(theme.palette.grey[500], 0.12),
+        }}
+      >
+        <Stack
+          spacing={0.75}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          {commerceName && (
+            <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+                Comercio
+              </Typography>
+              <Typography
+                variant="subtitle2"
+                noWrap
+                sx={{ fontWeight: 600, lineHeight: 1.3, color: 'text.primary' }}
+              >
+                {commerceName}
+              </Typography>
+            </Box>
+          )}
+          <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.65rem' }}>
+              Usuario
+            </Typography>
+            <Typography variant="subtitle2" noWrap sx={{ lineHeight: 1.3, color: 'text.primary' }}>
+              {userName || '—'}
+            </Typography>
+          </Box>
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{ color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis' }}
           >
-            Hola!
-          </Label>
-        </Box>
-
-        <Stack spacing={0.5} sx={{ mb: 2, mt: 1.5, width: 1 }}>
-          <Typography variant="subtitle2" noWrap>
-            {`${authUser.user?.first_name} ${authUser.user?.last_name}`}
-          </Typography>
-
-          <Typography variant="body2" noWrap sx={{ color: 'text.disabled' }}>
             {authUser.user?.email}
           </Typography>
         </Stack>
 
-        <Button variant="contained" onClick={handleLogout}>
-          Cerrar Sesión
-        </Button>
-      </Stack>
+        <Avatar
+          src={avatarSrc}
+          alt={avatarAlt}
+          sx={{
+            width: AVATAR_SIZE,
+            height: AVATAR_SIZE,
+            flexShrink: 0,
+          }}
+        >
+          {avatarFallback}
+        </Avatar>
+      </Paper>
+
+      <Button variant="contained" onClick={handleLogout} fullWidth>
+        Cerrar Sesión
+      </Button>
     </Stack>
 
     {logoutLoading && (

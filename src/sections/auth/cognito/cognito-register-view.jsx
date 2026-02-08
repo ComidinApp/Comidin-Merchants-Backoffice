@@ -959,7 +959,7 @@ export default function CognitoRegisterView() {
   return (
     <>
       <Stack spacing={2} sx={{ mb: 3, position: 'relative' }}>
-        <Typography variant="h4">¡Registrá tu comercio ahora mismo!</Typography>
+        <Typography variant="h4">Registrá tu comercio</Typography>
       </Stack>
 
       {!!errorMsg && (

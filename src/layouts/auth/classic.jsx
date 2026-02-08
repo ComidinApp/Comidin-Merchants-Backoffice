@@ -101,7 +101,7 @@ export default function AuthClassicLayout({ children, image, title }) {
 
       }}
     >
-      <Typography variant="h3" sx={{ maxWidth: 480, textAlign: 'center', color: 'common.orange' }}>
+      <Typography variant="h3" sx={{ maxWidth: 480, textAlign: 'center', color: 'common.orangeDark' }}>
         {title || '¡Bienvenido de vuelta!'}
       </Typography>
 

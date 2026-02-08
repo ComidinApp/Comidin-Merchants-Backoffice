@@ -4,8 +4,8 @@ import PropTypes from 'prop-types';
 import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Stack from '@mui/material/Stack';
+import { alpha } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { alpha, useTheme } from '@mui/material/styles';
 
 import Image from 'src/components/image';
 import { varFade, MotionContainer } from 'src/components/animate';
@@ -51,7 +51,6 @@ AppFeatured.propTypes = {
 // ----------------------------------------------------------------------
 
 function CarouselItem({ item, active }) {
-  const theme = useTheme();
 
   const { coverUrl, title, description } = item;
 

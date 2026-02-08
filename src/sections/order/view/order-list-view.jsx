@@ -7,11 +7,9 @@ import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 import Container from '@mui/material/Container';
 import TableBody from '@mui/material/TableBody';
 import { useTheme } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import TableContainer from '@mui/material/TableContainer';
 
@@ -32,7 +30,6 @@ import {
 } from "src/constants/order-status";
 
 import Label from 'src/components/label';
-import Iconify from 'src/components/iconify';
 import Scrollbar from 'src/components/scrollbar';
 import { useSnackbar } from 'src/components/snackbar';
 import { ConfirmDialog } from 'src/components/custom-dialog';
@@ -42,10 +39,8 @@ import {
   useTable,
   emptyRows,
   TableNoData,
-  getComparator,
   TableEmptyRows,
   TableHeadCustom,
-  TableSelectedAction,
   TablePaginationCustom,
 } from 'src/components/table';
 
@@ -67,6 +62,48 @@ const defaultFilters = {
   startDate: null,
   endDate: null,
 };
+
+// Mapeo orderBy (TABLE_HEAD id) → valor real del pedido del backend
+function getOrderSortValue(order, orderBy) {
+  switch (orderBy) {
+    case 'order_id':
+      return order.id;
+    case 'company':
+      return order.commerce?.name ?? '';
+    case 'name':
+      return `${order.user?.first_name || ''} ${order.user?.last_name || ''}`.trim().toLowerCase();
+    case 'createdAt':
+      return order.created_at ?? '';
+    case 'totalQuantity':
+      return Number(order.items_quantity) ?? 0;
+    case 'totalAmount':
+      return Number(order.total_amount) ?? 0;
+    case 'status':
+      return order.status ?? '';
+    default:
+      return order[orderBy];
+  }
+}
+
+function getOrderComparator(order, orderBy) {
+  return (a, b) => {
+    const aVal = getOrderSortValue(a, orderBy);
+    const bVal = getOrderSortValue(b, orderBy);
+
+    if (aVal == null || aVal === '') return 1;
+    if (bVal == null || bVal === '') return -1;
+
+    let cmp = 0;
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      cmp = bVal - aVal;
+    } else if (orderBy === 'createdAt') {
+      cmp = new Date(bVal) - new Date(aVal);
+    } else {
+      cmp = String(bVal).localeCompare(String(aVal));
+    }
+    return order === 'desc' ? cmp : -cmp;
+  };
+}
 
 // ----------------------------------------------------------------------
 
@@ -113,7 +150,7 @@ export default function OrderListView() {
 
   const dataFiltered = applyFilter({
     inputData: tableData,
-    comparator: getComparator(table.order, table.orderBy),
+    comparator: getOrderComparator(table.order, table.orderBy),
     filters,
     dateError,
   });
@@ -204,7 +241,7 @@ export default function OrderListView() {
 
         <Card sx={{ borderColor: 'common.orangeDark', borderWidth: 2, borderStyle: 'solid', borderRadius: 2 }}>
           <Tabs
-            key={isMobile ? 'tabs-mobile' : 'tabs-desktop'}  
+            key={isMobile ? 'tabs-mobile' : 'tabs-desktop'}
             value={filters.status}
             onChange={handleFilterStatus}
             variant="scrollable"
@@ -216,15 +253,15 @@ export default function OrderListView() {
                 overflowX: 'auto !important',
               },
               '& .MuiTabs-flexContainer': {
-                justifyContent: 'flex-start',            
+                justifyContent: 'flex-start',
                 gap: 1,
               },
               '& .MuiTab-root': {
                 minHeight: 48,
                 textTransform: 'none',
                 px: 1.25,
-                minWidth: 120,                             
-                flexShrink: 0, 
+                minWidth: 120,
+                flexShrink: 0,
               },
             }}
           >

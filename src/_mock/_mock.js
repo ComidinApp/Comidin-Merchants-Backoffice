@@ -21,13 +21,13 @@ import {
   _jobTitles,
   _taskNames,
   _postTitles,
-  _postImagesUrl,
   _firstNames,
   _fullAddress,
   _companyNames,
   _productNames,
   _descriptions,
   _phoneNumbers,
+  _postImagesUrl,
 } from './assets';
 
 // ----------------------------------------------------------------------

@@ -15,12 +15,12 @@ const OPTIONS = [
 export default function PeriodSelector({ value, onChange }) {
   return (
     <ToggleButtonGroup
-      color="primary"
+      color="standard"
       exclusive
       size="small"
       value={value}
       onChange={(_, v) => v && onChange(v)}
-      sx={{ mb: 2, flexWrap: 'wrap' }}
+      sx={{ flexWrap: 'wrap' }}
     >
       {OPTIONS.map((opt) => (
         <ToggleButton key={opt.value} value={opt.value}>

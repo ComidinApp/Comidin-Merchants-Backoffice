@@ -1,6 +1,7 @@
 import merge from 'lodash/merge';
 // date fns
 import {
+  es as esAdapter,
   fr as frFRAdapter,
   vi as viVNAdapter,
   enUS as enUSAdapter,
@@ -11,6 +12,7 @@ import {
 // date pickers (MUI)
 import {
   enUS as enUSDate,
+  esES as esESDate,
   frFR as frFRDate,
   viVN as viVNDate,
   zhCN as zhCNDate,
@@ -18,6 +20,7 @@ import {
 // core (MUI)
 import {
   enUS as enUSCore,
+  esES as esESCore,
   frFR as frFRCore,
   viVN as viVNCore,
   zhCN as zhCNCore,
@@ -26,6 +29,7 @@ import {
 // data grid (MUI)
 import {
   enUS as enUSDataGrid,
+  esES as esESDataGrid,
   frFR as frFRDataGrid,
   viVN as viVNDataGrid,
   zhCN as zhCNDataGrid,
@@ -36,6 +40,17 @@ import {
 // ----------------------------------------------------------------------
 
 export const allLangs = [
+  {
+    label: 'Español',
+    value: 'es',
+    systemValue: merge(esESDate, esESDataGrid, esESCore),
+    adapterLocale: esAdapter,
+    icon: 'flagpack:es',
+    numberFormat: {
+      code: 'es-AR',
+      currency: 'ARS',
+    },
+  },
   {
     label: 'English',
     value: 'en',
@@ -93,7 +108,7 @@ export const allLangs = [
   },
 ];
 
-export const defaultLang = allLangs[0]; // English
+export const defaultLang = allLangs[0]; // Español
 
 // GET MORE COUNTRY FLAGS
 // https://icon-sets.iconify.design/flagpack/

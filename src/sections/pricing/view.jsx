@@ -34,7 +34,7 @@ export default function PricingView() {
   // Vista de usuario normal: cards de planes
   return (
     <Container sx={{ pt: 15, pb: 10, minHeight: 1 }}>
-      <Typography variant="h3" align="center" sx={{ mb: 2 }}>
+      <Typography variant="h3" align="center" sx={{ mb: 2, color: 'common.orangeDark' }}>
         Suscripciones flexibles para el
         <br /> tamaño y necesidades de tu comercio
       </Typography>

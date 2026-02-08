@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
-import { useEffect, useRef } from 'react';
+import { useRef, useEffect } from 'react';
 
 import { useAuthContext } from 'src/auth/hooks';
+
 import { useNotifications } from './notifications-context';
 
 const { VITE_WS_URL } = import.meta.env;

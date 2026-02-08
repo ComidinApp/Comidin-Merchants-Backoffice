@@ -1,9 +1,12 @@
 import { useMemo, useState, useEffect } from 'react';
+import { format, isAfter, isBefore, endOfMonth, startOfMonth } from 'date-fns';
 
+import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
+import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
-import TextField from '@mui/material/TextField'; // ✅ NUEVO
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import {
   _appFeatured,
@@ -34,8 +37,20 @@ function monthKeyToShortLabel(key) {
   }).format(d);
 }
 
-function buildMonthlyChart(overview) {
-  const months = overview?.salesByMonth ?? [];
+function buildMonthlyChart(overview, period, customRange) {
+  let months = overview?.salesByMonth ?? [];
+
+  if (String(period).toLowerCase() === 'custom' && customRange?.startDate && customRange?.endDate) {
+    const start = customRange.startDate;
+    const end = customRange.endDate;
+    months = months.filter((m) => {
+      const [y, mo] = m.month.split('-').map((n) => parseInt(n, 10));
+      const monthStart = startOfMonth(new Date(y, mo - 1, 1));
+      const monthEnd = endOfMonth(new Date(y, mo - 1, 1));
+      return !isAfter(monthStart, end) && !isBefore(monthEnd, start);
+    });
+  }
+
   const labels = months.map((m) => monthKeyToShortLabel(m.month));
   const ordersSeries = months.map((m) => Number(m.ordersCount ?? 0));
   const amountSeries = months.map((m) => Number(m.totalAmount ?? 0));
@@ -61,7 +76,7 @@ function subheaderFromPeriod(period, customRange) {
       return 'Últimos 12 meses';
     case 'custom':
       return customRange?.startDate && customRange?.endDate
-        ? `Personalizado: ${customRange.startDate} a ${customRange.endDate}`
+        ? `Personalizado: ${format(customRange.startDate, 'dd/MM/yyyy')} a ${format(customRange.endDate, 'dd/MM/yyyy')}`
         : 'Personalizado';
     case 'all':
       return 'Histórico (línea: últimos 12 meses)';
@@ -80,8 +95,7 @@ export default function OverviewAnalyticsView() {
 
   const [period, setPeriod] = useState('last3m');
 
-  // ✅ NUEVO: rango custom (YYYY-MM-DD)
-  const [customRange, setCustomRange] = useState({ startDate: '', endDate: '' });
+  const [customRange, setCustomRange] = useState({ startDate: null, endDate: null });
 
   const [benefits, setBenefits] = useState(null);
   const [benefitsLoading, setBenefitsLoading] = useState(false);
@@ -151,7 +165,6 @@ export default function OverviewAnalyticsView() {
       return;
     }
 
-    // ✅ si es custom y falta algo, no pegamos al backend
     if (String(period).toLowerCase() === 'custom') {
       if (!customRange.startDate || !customRange.endDate) {
         setOverview(null);
@@ -160,12 +173,17 @@ export default function OverviewAnalyticsView() {
       }
     }
 
+    const startDateStr = customRange.startDate
+      ? format(customRange.startDate, 'yyyy-MM-dd')
+      : '';
+    const endDateStr = customRange.endDate ? format(customRange.endDate, 'yyyy-MM-dd') : '';
+
     setError('');
     fetchOverview(
       period,
       Number(userCommerceId),
       String(period).toLowerCase() === 'custom'
-        ? { startDate: customRange.startDate, endDate: customRange.endDate }
+        ? { startDate: startDateStr, endDate: endDateStr }
         : {}
     )
       .then(setOverview)
@@ -177,8 +195,8 @@ export default function OverviewAnalyticsView() {
   }, [userCommerceId, period, hasReportsAccess, benefitsLoading, customRange.startDate, customRange.endDate]);
 
   const monthlyChart = useMemo(
-    () => buildMonthlyChart(overview),
-    [overview]
+    () => buildMonthlyChart(overview, period, customRange),
+    [overview, period, customRange]
   );
 
   return (
@@ -211,29 +229,56 @@ export default function OverviewAnalyticsView() {
       )}
 
       {hasReportsAccess && (
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', margin: '12px 0', flexWrap: 'wrap' }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            my: 2,
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            bgcolor: 'background.paper',
+          }}
+        >
           <PeriodSelector value={period} onChange={setPeriod} />
 
-          {/* ✅ NUEVO: inputs custom, estilo MUI */}
           {String(period).toLowerCase() === 'custom' && (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <TextField
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'nowrap' }}>
+              <DatePicker
                 label="Desde"
-                type="date"
-                size="small"
                 value={customRange.startDate}
-                onChange={(e) => setCustomRange((p) => ({ ...p, startDate: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
+                onChange={(date) => {
+                  setCustomRange((p) => {
+                    const next = { ...p, startDate: date };
+                    if (date && p.endDate && date > p.endDate) {
+                      next.endDate = null;
+                    }
+                    return next;
+                  });
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                  },
+                }}
+                sx={{ minWidth: 160, maxWidth: 200 }}
               />
-              <TextField
+              <DatePicker
                 label="Hasta"
-                type="date"
-                size="small"
                 value={customRange.endDate}
-                onChange={(e) => setCustomRange((p) => ({ ...p, endDate: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
+                onChange={(date) => setCustomRange((p) => ({ ...p, endDate: date }))}
+                minDate={customRange.startDate ?? undefined}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                  },
+                }}
+                sx={{ minWidth: 160, maxWidth: 200 }}
               />
-            </div>
+            </Box>
           )}
 
           {userCommerceId != null && (
@@ -241,15 +286,20 @@ export default function OverviewAnalyticsView() {
               period={period}
               commerceId={Number(userCommerceId)}
               token={authToken}
-              // ✅ IMPORTANTE: pasamos rango para que el menu arme URLs con start/end
-              startDate={customRange.startDate}
-              endDate={customRange.endDate}
+              startDate={
+                customRange.startDate ? format(customRange.startDate, 'yyyy-MM-dd') : ''
+              }
+              endDate={customRange.endDate ? format(customRange.endDate, 'yyyy-MM-dd') : ''}
             />
           )}
-        </div>
-      )}
 
-      {!!error && <div style={{ color: 'crimson', marginTop: 12 }}>{error}</div>}
+          {!!error && (
+            <Box sx={{ width: '100%', color: 'error.main', typography: 'body2', mt: 0.5 }}>
+              {error}
+            </Box>
+          )}
+        </Paper>
+      )}
 
       {!hasReportsAccess ? null : (
         <Grid container spacing={3}>

@@ -83,7 +83,7 @@ export default function Header() {
                 },
               }}
             >
-              Registrá tu Comercio
+              Registrar Comercio
             </Button>
 
             {mdUp && (
