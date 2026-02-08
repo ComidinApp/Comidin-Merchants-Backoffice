@@ -251,9 +251,9 @@ export const _postTitles = [
 // ----------------------------------------------------------------------
 
 export const _postImagesUrl = [
-  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-1.jfif',
-  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-2.jfif',
-  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-3.jfif',
+  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-1.png',
+  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-2.png',
+  'https://comidin-assets-tjff.s3.us-east-1.amazonaws.com/carrousel/carrousel-3.png',
 ];
 
 // ----------------------------------------------------------------------
