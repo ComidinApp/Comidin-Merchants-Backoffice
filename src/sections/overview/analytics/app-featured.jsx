@@ -59,8 +59,8 @@ function CarouselItem({ item, active }) {
     <Image
       alt={title}
       src={coverUrl}
-      overlay={`linear-gradient(to bottom, ${alpha(theme.palette.grey[900], 0)} 0%, ${
-        theme.palette.grey[900]
+      overlay={`linear-gradient(to bottom, ${alpha('#f3a87a', 0)} 0%, ${
+        alpha('#8f4517', 0.7)
       } 75%)`}
       sx={{
         width: 1,
