@@ -4,17 +4,25 @@ import { format, isAfter, isBefore, endOfMonth, startOfMonth } from 'date-fns';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Unstable_Grid2';
 import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Autocomplete from '@mui/material/Autocomplete';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import CircularProgress from '@mui/material/CircularProgress';
+
+import { usePermissions } from 'src/hooks/use-permissions';
 
 import {
   _appFeatured,
 } from 'src/_mock';
 import { fetchOverview } from 'src/api/analytics';
+import { useGetCommerces } from 'src/api/commerce';
 import { SeoIllustration } from 'src/assets/illustrations';
-import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 import { fetchBenefitsByCommerceId } from 'src/api/subscription';
+import { useAuthContext } from 'src/auth/hooks/use-auth-context';
 
 import { useSettingsContext } from 'src/components/settings';
 
@@ -89,6 +97,7 @@ function subheaderFromPeriod(period, customRange) {
 export default function OverviewAnalyticsView() {
   const auth = useAuthContext();
   const settings = useSettingsContext();
+  const { isAdmin } = usePermissions();
 
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState('');
@@ -101,6 +110,11 @@ export default function OverviewAnalyticsView() {
   const [benefitsLoading, setBenefitsLoading] = useState(false);
   const [benefitsError, setBenefitsError] = useState('');
 
+  // Estado para el selector de comercio (solo admin)
+  const [selectedCommerce, setSelectedCommerce] = useState(null);
+
+  const { commerces, commercesLoading } = useGetCommerces();
+
   const userCommerceId =
     auth?.user?.commerce?.id ??
     auth?.user?.commerce_id ??
@@ -108,26 +122,34 @@ export default function OverviewAnalyticsView() {
     auth?.commerce_id ??
     null;
 
+  // Si es admin, usar el comercio seleccionado; si no, usar el del usuario
+  const activeCommerceId = isAdmin ? selectedCommerce?.id : userCommerceId;
+
   const authToken =
     auth?.accessToken ||
     auth?.token ||
     localStorage.getItem('accessToken') ||
     '';
 
-  const hasReportsAccess = benefits?.access_reports === true;
+  // Admin siempre tiene acceso a reportes; el resto depende del plan del comercio
+  const hasReportsAccess = isAdmin || benefits?.access_reports === true;
 
   // ---------- Beneficios (FIX build: siempre retorna cleanup) ----------
   useEffect(() => {
     let alive = true;
 
-    if (userCommerceId == null) {
+    if (activeCommerceId == null) {
       setBenefits(null);
-      setBenefitsError('No se pudo determinar tu comercio (commerceId).');
+      if (!isAdmin) {
+        setBenefitsError('No se pudo determinar tu comercio (commerceId).');
+      } else {
+        setBenefitsError('');
+      }
     } else {
       setBenefitsLoading(true);
       setBenefitsError('');
 
-      fetchBenefitsByCommerceId(Number(userCommerceId))
+      fetchBenefitsByCommerceId(Number(activeCommerceId))
         .then((b) => {
           if (alive) setBenefits(b);
         })
@@ -147,17 +169,21 @@ export default function OverviewAnalyticsView() {
     return () => {
       alive = false;
     };
-  }, [userCommerceId]);
+  }, [activeCommerceId, isAdmin]);
 
   // ---------- Analytics ----------
   useEffect(() => {
-    if (userCommerceId == null) {
+    if (activeCommerceId == null) {
       setOverview(null);
-      setError('No se pudo determinar tu comercio (commerceId).');
+      if (!isAdmin) {
+        setError('No se pudo determinar tu comercio (commerceId).');
+      } else {
+        setError('');
+      }
       return;
     }
 
-    if (benefitsLoading) return;
+    if (benefitsLoading && !isAdmin) return;
 
     if (!hasReportsAccess) {
       setOverview(null);
@@ -181,7 +207,7 @@ export default function OverviewAnalyticsView() {
     setError('');
     fetchOverview(
       period,
-      Number(userCommerceId),
+      Number(activeCommerceId),
       String(period).toLowerCase() === 'custom'
         ? { startDate: startDateStr, endDate: endDateStr }
         : {}
@@ -192,7 +218,7 @@ export default function OverviewAnalyticsView() {
         setOverview(null);
         setError(err?.message || 'No se pudieron cargar las métricas');
       });
-  }, [userCommerceId, period, hasReportsAccess, benefitsLoading, customRange.startDate, customRange.endDate]);
+  }, [activeCommerceId, period, hasReportsAccess, benefitsLoading, isAdmin, customRange.startDate, customRange.endDate]);
 
   const monthlyChart = useMemo(
     () => buildMonthlyChart(overview, period, customRange),
@@ -216,19 +242,57 @@ export default function OverviewAnalyticsView() {
         </Grid>
       </Grid>
 
-      {!!benefitsError && (
+      {isAdmin && (
+        <Stack sx={{ mb: 3, mt: 2 }}>
+          <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
+            Seleccioná un comercio para ver sus estadísticas
+          </Typography>
+          <Autocomplete
+            value={selectedCommerce}
+            onChange={(_, newValue) => setSelectedCommerce(newValue)}
+            options={commerces || []}
+            getOptionLabel={(option) => option?.name || ''}
+            loading={commercesLoading}
+            isOptionEqualToValue={(option, value) => option?.id === value?.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Buscar comercio..."
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {commercesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            sx={{ maxWidth: 400 }}
+          />
+        </Stack>
+      )}
+
+      {!!benefitsError && !isAdmin && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {benefitsError}
         </Alert>
       )}
 
-      {!benefitsLoading && benefits && !hasReportsAccess && (
+      {!benefitsLoading && benefits && !hasReportsAccess && !isAdmin && (
         <Alert severity="warning" sx={{ mt: 2 }}>
           Tu suscripción actual no incluye <b>reportes</b> ni <b>estadísticas</b>.
         </Alert>
       )}
 
-      {hasReportsAccess && (
+      {isAdmin && !selectedCommerce && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Seleccioná un comercio arriba para ver sus estadísticas (pedidos, ingresos, productos vendidos, etc.).
+        </Alert>
+      )}
+
+      {hasReportsAccess && activeCommerceId != null && (
         <Paper
           variant="outlined"
           sx={{
@@ -281,10 +345,10 @@ export default function OverviewAnalyticsView() {
             </Box>
           )}
 
-          {userCommerceId != null && (
+          {activeCommerceId != null && (
             <ReportDownloadMenu
               period={period}
-              commerceId={Number(userCommerceId)}
+              commerceId={Number(activeCommerceId)}
               token={authToken}
               startDate={
                 customRange.startDate ? format(customRange.startDate, 'yyyy-MM-dd') : ''
@@ -301,11 +365,11 @@ export default function OverviewAnalyticsView() {
         </Paper>
       )}
 
-      {!hasReportsAccess ? null : (
+      {!hasReportsAccess || activeCommerceId == null ? null : (
         <Grid container spacing={3}>
           <Grid xs={12} sm={6} md={3}>
             <AnalyticsWidgetSummary
-              title="Ingresos (período)"
+              title="Ingresos / Facturado (período)"
               total={Number(overview?.totalRevenue ?? 0)}
               icon={<img alt="icon" src="/assets/icons/glass/ic_glass_bag.png" />}
             />
