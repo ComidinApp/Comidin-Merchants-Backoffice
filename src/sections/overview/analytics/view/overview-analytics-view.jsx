@@ -225,6 +225,14 @@ export default function OverviewAnalyticsView() {
     [overview, period, customRange]
   );
 
+  const resolvedCount = Number(
+    overview?.resolvedOrders ?? overview?.pieOrders?.resolvedOrders ?? 0
+  );
+  const claimedTotal = Number(
+    overview?.claimedOrders ?? overview?.pieOrders?.claimedOrders ?? 0
+  );
+  const claimedUnresolved = Math.max(0, claimedTotal - resolvedCount);
+
   return (
     <Container maxWidth={settings.themeStretch ? false : 'xl'}>
       <Grid container spacing={3}>
@@ -367,7 +375,7 @@ export default function OverviewAnalyticsView() {
 
       {!hasReportsAccess || activeCommerceId == null ? null : (
         <Grid container spacing={3}>
-          <Grid xs={12} sm={6} md={3}>
+          <Grid xs={12} sm={6} md={4}>
             <AnalyticsWidgetSummary
               title="Ingresos / Facturado (período)"
               total={Number(overview?.totalRevenue ?? 0)}
@@ -375,7 +383,7 @@ export default function OverviewAnalyticsView() {
             />
           </Grid>
 
-          <Grid xs={12} sm={6} md={3}>
+          <Grid xs={12} sm={6} md={4}>
             <AnalyticsWidgetSummary
               title="Pedidos realizados (período)"
               total={Number(overview?.totalOrders ?? 0)}
@@ -384,7 +392,7 @@ export default function OverviewAnalyticsView() {
             />
           </Grid>
 
-          <Grid xs={12} sm={6} md={3}>
+          <Grid xs={12} sm={6} md={4}>
             <AnalyticsWidgetSummary
               title="Pedidos reclamados (período)"
               total={Number(
@@ -397,7 +405,16 @@ export default function OverviewAnalyticsView() {
             />
           </Grid>
 
-          <Grid xs={12} sm={6} md={3}>
+          <Grid xs={12} sm={6} md={6}>
+            <AnalyticsWidgetSummary
+              title="Pedidos con reclamo resuelto (período)"
+              total={resolvedCount}
+              color="success"
+              icon={<img alt="icon" src="/assets/icons/glass/ic_glass_message.png" />}
+            />
+          </Grid>
+
+          <Grid xs={12} sm={6} md={6}>
             <AnalyticsWidgetSummary
               title="Productos vencidos (período)"
               total={Number(overview?.expiredProducts ?? 0)}
@@ -439,7 +456,8 @@ export default function OverviewAnalyticsView() {
               chart={{
                 series: [
                   { label: 'Realizados', value: Number(overview?.pieOrders?.completedOrders ?? 0) },
-                  { label: 'Reclamados', value: Number(overview?.pieOrders?.claimedOrders ?? 0) },
+                  { label: 'Reclamados (no resueltos)', value: claimedUnresolved },
+                  { label: 'Reclamados resueltos', value: resolvedCount },
                 ],
               }}
             />
